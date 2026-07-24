@@ -100,4 +100,4 @@ table fact_activity
 		source
 			entityName: fact_activity
 			schemaName: dbo
-			expressionSource: 'DirectLake - lh_gold_governance_dev'
+			expressionSource: 'DirectLake - lh_governance_gold_dev'

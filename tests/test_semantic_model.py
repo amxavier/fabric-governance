@@ -31,7 +31,7 @@ EXPECTED_RELATIONSHIPS = [
 ]
 
 # Real DEV workspace (reused from the sibling microsoft-fabric-medallion-lakehouse
-# project's workspace) is committed directly; lh_gold_governance doesn't exist yet,
+# project's workspace) is committed directly; lh_governance_gold doesn't exist yet,
 # so its lakehouse GUID is still a placeholder until it's created and this repo is
 # redeployed with the real ID.
 DEV_WORKSPACE_GUID = "dc072922-4ffb-4424-868c-28087b02ecba"

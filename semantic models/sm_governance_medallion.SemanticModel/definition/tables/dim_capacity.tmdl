@@ -62,4 +62,4 @@ table dim_capacity
 		source
 			entityName: dim_capacity
 			schemaName: dbo
-			expressionSource: 'DirectLake - lh_gold_governance_dev'
+			expressionSource: 'DirectLake - lh_governance_gold_dev'

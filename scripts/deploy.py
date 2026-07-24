@@ -153,7 +153,7 @@ def main() -> None:
     if notebook_replacements:
         dev_items = {i["displayName"]: i["id"] for i in client.get_workspace_items(dev_workspace_id) if i.get("type") == "Lakehouse"}
         target_items = {i["displayName"]: i["id"] for i in client.get_workspace_items(workspace_id) if i.get("type") == "Lakehouse"}
-        for lh_name in ["lh_bronze_governance", "lh_silver_governance", "lh_gold_governance"]:
+        for lh_name in ["lh_governance_bronze", "lh_governance_silver", "lh_governance_gold"]:
             if lh_name in dev_items and lh_name in target_items:
                 notebook_replacements[dev_items[lh_name]] = target_items[lh_name]
         print(f"Notebook lakehouse ID map: {len(notebook_replacements) - 1} lakehouses resolved\n")

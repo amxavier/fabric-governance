@@ -21,9 +21,9 @@ jobs:
           echo "Validating Fabric artifacts..."
 
           required=(
-            "lh_bronze_governance.Lakehouse"
-            "lh_silver_governance.Lakehouse"
-            "lh_gold_governance.Lakehouse"
+            "lh_governance_bronze.Lakehouse"
+            "lh_governance_silver.Lakehouse"
+            "lh_governance_gold.Lakehouse"
             "notebooks/nb_bronze_capacities.Notebook"
             "notebooks/nb_bronze_workspaces.Notebook"
             "notebooks/nb_bronze_items.Notebook"

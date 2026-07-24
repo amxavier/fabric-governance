@@ -75,7 +75,7 @@ qa branch   →  QA workspace   (4bf443aa-d454-4c66-9025-a67fe4a287a8)
 main branch →  PRD workspace  (990e6ef6-cc9a-47cf-8258-af5bc66bbad8)
 ```
 
-Within each of those workspaces, this project adds its **own**, separately-named Lakehouse trio — `lh_bronze_governance`, `lh_silver_governance`, `lh_gold_governance` — so governance tables never mix with the crypto project's `lh_bronze`/`lh_silver`/`lh_gold` tables in the same workspace. Environment-specific GUIDs are managed in `config/valueSets/` — the `workspace_id` values are the real, already-existing IDs above; the `lh_gold_governance` lakehouse ID is still a placeholder until that lakehouse is created (see [Getting Started](#getting-started)).
+Within each of those workspaces, this project adds its **own**, separately-named Lakehouse trio — `lh_governance_bronze`, `lh_governance_silver`, `lh_governance_gold` — so governance tables never mix with the crypto project's `lh_bronze`/`lh_silver`/`lh_gold` tables in the same workspace. Environment-specific GUIDs are managed in `config/valueSets/` — the `workspace_id` values are the real, already-existing IDs above; the `lh_governance_gold` lakehouse ID is still a placeholder until that lakehouse is created (see [Getting Started](#getting-started)).
 
 ---
 
@@ -109,9 +109,9 @@ Same 3-phase deploy order and patching strategy (pipeline notebook IDs, report `
 ```
 fabric-governance/
 │
-├── lh_bronze_governance.Lakehouse/
-├── lh_silver_governance.Lakehouse/
-├── lh_gold_governance.Lakehouse/
+├── lh_governance_bronze.Lakehouse/
+├── lh_governance_silver.Lakehouse/
+├── lh_governance_gold.Lakehouse/
 │
 ├── .github/workflows/
 │   ├── ci.yml
@@ -156,7 +156,7 @@ This project deliberately reuses existing infrastructure rather than provisionin
 
 ### Remaining manual step (not automatable via CI/CD)
 
-**Create `lh_bronze_governance`, `lh_silver_governance`, and `lh_gold_governance`** in each of the three existing workspaces (DEV/QA/PRD), then replace the placeholder lakehouse GUID (`00000000-0000-0000-0000-0000000000e3`, currently used for `lh_gold_governance` in every environment's `onelake_url` and in every notebook's METADATA/`known_lakehouses`) with the real ID Fabric assigns to `lh_gold_governance` once created — same pattern the sibling project uses for its own lakehouses. The Service Principal already has Contributor/Admin access to these workspaces, so no new role assignment is needed for `deploy.py` to publish into the new lakehouses.
+**Create `lh_governance_bronze`, `lh_governance_silver`, and `lh_governance_gold`** in each of the three existing workspaces (DEV/QA/PRD), then replace the placeholder lakehouse GUID (`00000000-0000-0000-0000-0000000000e3`, currently used for `lh_governance_gold` in every environment's `onelake_url` and in every notebook's METADATA/`known_lakehouses`) with the real ID Fabric assigns to `lh_governance_gold` once created — same pattern the sibling project uses for its own lakehouses. The Service Principal already has Contributor/Admin access to these workspaces, so no new role assignment is needed for `deploy.py` to publish into the new lakehouses.
 
 ### Required GitHub Secrets
 
@@ -172,8 +172,8 @@ Same Service Principal as the sibling repo — these are the same *values*, just
 
 ### Setup
 
-1. Create `lh_bronze_governance`, `lh_silver_governance`, `lh_gold_governance` in the DEV workspace (`dc072922-4ffb-4424-868c-28087b02ecba`).
-2. Replace the placeholder lakehouse GUID `00000000-0000-0000-0000-0000000000e3` in `config/valueSets/dev.json` and in every notebook's METADATA block with the real `lh_gold_governance` ID (and the corresponding `lh_bronze_governance`/`lh_silver_governance` placeholders `...-e1`/`...-e2` where each notebook references its own default lakehouse).
+1. Create `lh_governance_bronze`, `lh_governance_silver`, `lh_governance_gold` in the DEV workspace (`dc072922-4ffb-4424-868c-28087b02ecba`).
+2. Replace the placeholder lakehouse GUID `00000000-0000-0000-0000-0000000000e3` in `config/valueSets/dev.json` and in every notebook's METADATA block with the real `lh_governance_gold` ID (and the corresponding `lh_governance_bronze`/`lh_governance_silver` placeholders `...-e1`/`...-e2` where each notebook references its own default lakehouse).
 3. Add the GitHub secrets above (reuse the same Service Principal values already used by the sibling repo).
 4. Run `CD - Deploy to Fabric` in **full** mode to bootstrap DEV.
 5. Repeat steps 1–2 for QA and PRD once DEV is validated, then push to `qa`/`main` to promote.

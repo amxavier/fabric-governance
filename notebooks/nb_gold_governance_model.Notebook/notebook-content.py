@@ -9,7 +9,7 @@
 # META   "dependencies": {
 # META     "lakehouse": {
 # META       "default_lakehouse": "00000000-0000-0000-0000-0000000000e3",
-# META       "default_lakehouse_name": "lh_gold_governance",
+# META       "default_lakehouse_name": "lh_governance_gold",
 # META       "default_lakehouse_workspace_id": "dc072922-4ffb-4424-868c-28087b02ecba",
 # META       "known_lakehouses": [
 # META         {
@@ -28,8 +28,8 @@
 # ### nb_gold_governance_model
 #
 # **Layer:** Gold — Governance Star Schema
-# **Source:** `lh_silver_governance` → `silver_capacities`, `silver_workspaces`, `silver_items`, `silver_activity_events`, `silver_refresh_history`
-# **Destination:** `lh_gold_governance` → `dim_capacity`, `dim_workspace`, `dim_item`, `dim_user`, `dim_date`, `fact_activity`, `fact_refresh`
+# **Source:** `lh_governance_silver` → `silver_capacities`, `silver_workspaces`, `silver_items`, `silver_activity_events`, `silver_refresh_history`
+# **Destination:** `lh_governance_gold` → `dim_capacity`, `dim_workspace`, `dim_item`, `dim_user`, `dim_date`, `fact_activity`, `fact_refresh`
 # **Depends on:** all five Silver notebooks
 # **Schedule:** Daily (last step in the pipeline)
 #
@@ -49,13 +49,13 @@
 from pyspark.sql import functions as F
 from pyspark.sql.types import DateType
 
-_lh_silver = notebookutils.lakehouse.get("lh_silver_governance")
-_lh_gold = notebookutils.lakehouse.get("lh_gold_governance")
+_lh_silver = notebookutils.lakehouse.get("lh_governance_silver")
+_lh_gold = notebookutils.lakehouse.get("lh_governance_gold")
 SILVER_ABFS = _lh_silver["properties"]["abfsPath"]
 GOLD_ABFS = _lh_gold["properties"]["abfsPath"]
 
-print(f"[Gold] lh_silver_governance id : {_lh_silver['id']}")
-print(f"[Gold] lh_gold_governance id   : {_lh_gold['id']}")
+print(f"[Gold] lh_governance_silver id : {_lh_silver['id']}")
+print(f"[Gold] lh_governance_gold id   : {_lh_gold['id']}")
 
 
 # METADATA ********************

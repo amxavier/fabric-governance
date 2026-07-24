@@ -9,7 +9,7 @@
 # META   "dependencies": {
 # META     "lakehouse": {
 # META       "default_lakehouse": "00000000-0000-0000-0000-0000000000e1",
-# META       "default_lakehouse_name": "lh_bronze_governance",
+# META       "default_lakehouse_name": "lh_governance_bronze",
 # META       "default_lakehouse_workspace_id": "dc072922-4ffb-4424-868c-28087b02ecba",
 # META       "known_lakehouses": [
 # META         {
@@ -26,7 +26,7 @@
 #
 # **Layer:** Bronze — Raw Ingestion, append-only
 # **Source:** Power BI Admin REST API — `GET /v1.0/myorg/admin/datasets/{id}/refreshhistory`
-# **Destination:** `lh_bronze_governance` → Delta Table `raw_refresh_history`
+# **Destination:** `lh_governance_bronze` → Delta Table `raw_refresh_history`
 # **Depends on:** `nb_bronze_items` (needs the current list of SemanticModel ids)
 # **Schedule:** Daily, after nb_bronze_items
 #
@@ -61,11 +61,11 @@ REFRESH_HISTORY_TOP = 30  # per dataset, per run — enough to cover a daily sch
 TOKEN = notebookutils.credentials.getToken("pbi")
 HEADERS = {"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"}
 
-_lh_bronze = notebookutils.lakehouse.get("lh_bronze_governance")
+_lh_bronze = notebookutils.lakehouse.get("lh_governance_bronze")
 BRONZE_PATH = f"{_lh_bronze['properties']['abfsPath']}/Tables/{DESTINATION_TABLE}"
 ITEMS_PATH = f"{_lh_bronze['properties']['abfsPath']}/Tables/raw_items"
 
-print(f"[Bronze] lh_bronze_governance id : {_lh_bronze['id']}")
+print(f"[Bronze] lh_governance_bronze id : {_lh_bronze['id']}")
 print(f"[Bronze] Write path   : {BRONZE_PATH}")
 
 

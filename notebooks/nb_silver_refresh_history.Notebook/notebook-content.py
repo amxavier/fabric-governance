@@ -9,7 +9,7 @@
 # META   "dependencies": {
 # META     "lakehouse": {
 # META       "default_lakehouse": "00000000-0000-0000-0000-0000000000e2",
-# META       "default_lakehouse_name": "lh_silver_governance",
+# META       "default_lakehouse_name": "lh_governance_silver",
 # META       "default_lakehouse_workspace_id": "dc072922-4ffb-4424-868c-28087b02ecba",
 # META       "known_lakehouses": [
 # META         {
@@ -28,8 +28,8 @@
 # ### nb_silver_refresh_history
 #
 # **Layer:** Silver — Cleansing & Enrichment, append-only
-# **Source:** `lh_bronze_governance` → Delta Table `raw_refresh_history`, joined to `lh_silver_governance` → `silver_items`
-# **Destination:** `lh_silver_governance` → Delta Table `silver_refresh_history`
+# **Source:** `lh_governance_bronze` → Delta Table `raw_refresh_history`, joined to `lh_governance_silver` → `silver_items`
+# **Destination:** `lh_governance_silver` → Delta Table `silver_refresh_history`
 # **Depends on:** `nb_silver_items`
 # **Schedule:** Daily (after Bronze and nb_silver_items)
 #
@@ -47,8 +47,8 @@
 from pyspark.sql import functions as F
 from delta.tables import DeltaTable
 
-_lh_bronze = notebookutils.lakehouse.get("lh_bronze_governance")
-_lh_silver = notebookutils.lakehouse.get("lh_silver_governance")
+_lh_bronze = notebookutils.lakehouse.get("lh_governance_bronze")
+_lh_silver = notebookutils.lakehouse.get("lh_governance_silver")
 BRONZE_PATH = f"{_lh_bronze['properties']['abfsPath']}/Tables/raw_refresh_history"
 ITEMS_PATH = f"{_lh_silver['properties']['abfsPath']}/Tables/silver_items"
 SILVER_PATH = f"{_lh_silver['properties']['abfsPath']}/Tables/silver_refresh_history"
