@@ -70,6 +70,38 @@ print(f"[Bronze] Write path   : {BRONZE_PATH}")
 
 # MARKDOWN ********************
 
+# ### TEMPORARY DIAGNOSTIC — Inspect Token Identity
+#
+# Decodes the JWT payload from `notebookutils.credentials.getToken("pbi")` to
+# confirm which principal it actually represents when this notebook runs as
+# part of the pipeline (vs. a manual interactive run). Remove this cell once
+# the identity-resolution question is settled.
+
+# CELL ********************
+
+import base64 as _b64
+import json as _json_diag
+
+def _decode_jwt_payload(tok):
+    payload_b64 = tok.split(".")[1]
+    padded = payload_b64 + "=" * (-len(payload_b64) % 4)
+    return _json_diag.loads(_b64.urlsafe_b64decode(padded))
+
+_claims = _decode_jwt_payload(TOKEN)
+for _key in ["appid", "azp", "oid", "upn", "unique_name", "name", "idtyp", "app_displayname", "given_name", "aud"]:
+    if _key in _claims:
+        print(f"{_key}: {_claims[_key]}")
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
 # ### Fetch Workspaces from Admin API (paginated)
 
 # CELL ********************
