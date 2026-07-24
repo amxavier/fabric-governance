@@ -62,4 +62,4 @@ table dim_workspace
 		source
 			entityName: dim_workspace
 			schemaName: dbo
-			expressionSource: 'DirectLake - lh_gold_dev'
+			expressionSource: 'DirectLake - lh_gold_governance_dev'

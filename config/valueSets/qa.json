@@ -1,5 +1,5 @@
 {
   "environment": "qa",
-  "workspace_id": "REPLACE_WITH_QA_WORKSPACE_ID",
-  "onelake_url": "REPLACE_WITH_QA_LH_GOLD_ONELAKE_URL"
+  "workspace_id": "4bf443aa-d454-4c66-9025-a67fe4a287a8",
+  "onelake_url": "https://onelake.dfs.fabric.microsoft.com/4bf443aa-d454-4c66-9025-a67fe4a287a8/00000000-0000-0000-0000-0000000000e3"
 }

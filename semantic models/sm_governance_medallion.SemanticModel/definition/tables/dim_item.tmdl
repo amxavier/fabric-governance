@@ -61,4 +61,4 @@ table dim_item
 		source
 			entityName: dim_item
 			schemaName: dbo
-			expressionSource: 'DirectLake - lh_gold_dev'
+			expressionSource: 'DirectLake - lh_gold_governance_dev'

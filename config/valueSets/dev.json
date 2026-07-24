@@ -1,5 +1,5 @@
 {
   "environment": "dev",
-  "workspace_id": "REPLACE_WITH_DEV_WORKSPACE_ID",
-  "onelake_url": "REPLACE_WITH_DEV_LH_GOLD_ONELAKE_URL"
+  "workspace_id": "dc072922-4ffb-4424-868c-28087b02ecba",
+  "onelake_url": "https://onelake.dfs.fabric.microsoft.com/dc072922-4ffb-4424-868c-28087b02ecba/00000000-0000-0000-0000-0000000000e3"
 }

@@ -84,4 +84,4 @@ table dim_date
 		source
 			entityName: dim_date
 			schemaName: dbo
-			expressionSource: 'DirectLake - lh_gold_dev'
+			expressionSource: 'DirectLake - lh_gold_governance_dev'

@@ -67,15 +67,15 @@ The core diagnostic pattern this schema enables: join `fact_refresh` failures ag
 
 ## Environments
 
-Three isolated workspaces map 1:1 to Git branches, same convention as the sibling lakehouse project:
+This project **reuses the same three Fabric workspaces** as the sibling [microsoft-fabric-medallion-lakehouse](https://github.com/amxavier/microsoft-fabric-medallion-lakehouse) project — same Service Principal, same tenant Admin API consent, same branch-to-workspace mapping. It does not provision separate infrastructure:
 
 ```
-dev branch  →  DEV workspace   (development)
-qa branch   →  QA workspace    (validation)
-main branch →  PRD workspace   (production)
+dev branch  →  DEV workspace  (dc072922-4ffb-4424-868c-28087b02ecba)
+qa branch   →  QA workspace   (4bf443aa-d454-4c66-9025-a67fe4a287a8)
+main branch →  PRD workspace  (990e6ef6-cc9a-47cf-8258-af5bc66bbad8)
 ```
 
-Each workspace contains its own `lh_bronze`, `lh_silver`, and `lh_gold` Lakehouses. Environment-specific GUIDs are managed in `config/valueSets/` — **currently placeholders**, see [Getting Started](#getting-started).
+Within each of those workspaces, this project adds its **own**, separately-named Lakehouse trio — `lh_bronze_governance`, `lh_silver_governance`, `lh_gold_governance` — so governance tables never mix with the crypto project's `lh_bronze`/`lh_silver`/`lh_gold` tables in the same workspace. Environment-specific GUIDs are managed in `config/valueSets/` — the `workspace_id` values are the real, already-existing IDs above; the `lh_gold_governance` lakehouse ID is still a placeholder until that lakehouse is created (see [Getting Started](#getting-started)).
 
 ---
 
@@ -109,13 +109,17 @@ Same 3-phase deploy order and patching strategy (pipeline notebook IDs, report `
 ```
 fabric-governance/
 │
+├── lh_bronze_governance.Lakehouse/
+├── lh_silver_governance.Lakehouse/
+├── lh_gold_governance.Lakehouse/
+│
 ├── .github/workflows/
 │   ├── ci.yml
 │   ├── cd_deploy.yml
 │   └── schedule_ingestion.yml
 │
 ├── config/valueSets/
-│   ├── dev.json / qa.json / main.json   # workspace ID + OneLake URL (placeholders)
+│   ├── dev.json / qa.json / main.json   # real workspace ID (reused) + OneLake URL (lakehouse ID still placeholder)
 │
 ├── scripts/
 │   ├── deploy.py                        # 3-phase deploy orchestration
@@ -148,35 +152,31 @@ fabric-governance/
 
 ## Getting Started
 
-### Prerequisites (manual — not automatable via CI/CD)
+This project deliberately reuses existing infrastructure rather than provisioning its own — the three Fabric workspaces, the Service Principal, and its tenant Admin API consent already exist for the sibling [microsoft-fabric-medallion-lakehouse](https://github.com/amxavier/microsoft-fabric-medallion-lakehouse) project. The only new infrastructure this project needs is its own Lakehouse trio inside those same workspaces.
 
-1. **Three Fabric workspaces** (DEV/QA/PRD), each with `lh_bronze`, `lh_silver`, `lh_gold` Lakehouses.
-2. **A dedicated Service Principal** (recommended: `sp-fabric-governance`, separate from the sibling project's `sp-fabric-cicd` — tenant-wide Admin API access is a much larger privilege scope than per-workspace deploy):
-   - Entra ID API permission: Power BI Service → `Tenant.Read.All` (Application, admin consent granted)
-   - Enabled in the Fabric Admin Portal tenant settings: "Service principals can access read-only Admin APIs" (and the Power BI equivalent for Activity Events), with the SP in the allowed security group
-   - Workspace Admin/Contributor role on the 3 governance workspaces (needed for `deploy.py` to publish notebooks/pipeline/semantic model/report — not for the Bronze notebooks' own tenant-wide reads, which go through the Admin API instead)
+### Remaining manual step (not automatable via CI/CD)
+
+**Create `lh_bronze_governance`, `lh_silver_governance`, and `lh_gold_governance`** in each of the three existing workspaces (DEV/QA/PRD), then replace the placeholder lakehouse GUID (`00000000-0000-0000-0000-0000000000e3`, currently used for `lh_gold_governance` in every environment's `onelake_url` and in every notebook's METADATA/`known_lakehouses`) with the real ID Fabric assigns to `lh_gold_governance` once created — same pattern the sibling project uses for its own lakehouses. The Service Principal already has Contributor/Admin access to these workspaces, so no new role assignment is needed for `deploy.py` to publish into the new lakehouses.
 
 ### Required GitHub Secrets
+
+Same Service Principal as the sibling repo — these are the same *values*, just configured as secrets in this repository too (GitHub secrets don't cross repositories even when the underlying identity is shared):
 
 | Secret | Description |
 |--------|-------------|
 | `AZURE_TENANT_ID` | Azure AD Tenant ID |
-| `AZURE_CLIENT_ID` | `sp-fabric-governance` Application (Client) ID |
-| `AZURE_CLIENT_SECRET` | `sp-fabric-governance` Client Secret (Value, not ID) |
-| `FABRIC_WORKSPACE_ID_DEV` / `_QA` / `_PRD` | Workspace GUIDs |
-| `FABRIC_PIPELINE_ID_DEV` / `_QA` / `_PRD` | `pl_governance_orchestration` item GUID per environment |
+| `AZURE_CLIENT_ID` | Shared Service Principal Application (Client) ID |
+| `AZURE_CLIENT_SECRET` | Shared Service Principal Client Secret (Value, not ID) |
+| `FABRIC_WORKSPACE_ID_DEV` / `_QA` / `_PRD` | Same workspace GUIDs as `config/valueSets/*.json` (not sensitive, but `schedule_ingestion.yml` reads them from secrets rather than the repo) |
+| `FABRIC_PIPELINE_ID_DEV` / `_QA` / `_PRD` | `pl_governance_orchestration` item GUID per environment — only known after the first deploy |
 
 ### Setup
 
-1. Create the three Fabric workspaces and their Lakehouses.
-2. Register `sp-fabric-governance` and grant it the Admin API permissions above; add it as a Member to all three workspaces.
-3. Replace the DEV placeholder GUIDs before the first deploy:
-   - `config/valueSets/dev.json` — `workspace_id`, `onelake_url`
-   - Every notebook's `.platform`/METADATA lakehouse IDs (`00000000-...-0001` workspace, `...-b0`/`-c0`/`-d0` lakehouses) — these mirror the sibling project's convention of storing real DEV IDs in the repo, patched only for QA/PRD by `deploy.py`
-   - `semantic models/sm_governance_medallion.SemanticModel/definition/expressions.tmdl` — the DirectLake OneLake URL
-4. Add all required secrets to GitHub repository settings.
-5. Run `CD - Deploy to Fabric` in **full** mode for each environment to bootstrap.
-6. Push to `dev` to trigger selective deploys automatically.
+1. Create `lh_bronze_governance`, `lh_silver_governance`, `lh_gold_governance` in the DEV workspace (`dc072922-4ffb-4424-868c-28087b02ecba`).
+2. Replace the placeholder lakehouse GUID `00000000-0000-0000-0000-0000000000e3` in `config/valueSets/dev.json` and in every notebook's METADATA block with the real `lh_gold_governance` ID (and the corresponding `lh_bronze_governance`/`lh_silver_governance` placeholders `...-e1`/`...-e2` where each notebook references its own default lakehouse).
+3. Add the GitHub secrets above (reuse the same Service Principal values already used by the sibling repo).
+4. Run `CD - Deploy to Fabric` in **full** mode to bootstrap DEV.
+5. Repeat steps 1–2 for QA and PRD once DEV is validated, then push to `qa`/`main` to promote.
 
 ---
 

@@ -30,9 +30,12 @@ EXPECTED_RELATIONSHIPS = [
     ("dim_workspace.capacity_id", "dim_capacity.capacity_id"),
 ]
 
-# Repository always stores the DEV OneLake workspace/lakehouse placeholders; replaced at deploy time.
-DEV_WORKSPACE_GUID = "00000000-0000-0000-0000-000000000001"
-DEV_LH_GOLD_GUID = "00000000-0000-0000-0000-0000000000d0"
+# Real DEV workspace (reused from the sibling microsoft-fabric-medallion-lakehouse
+# project's workspace) is committed directly; lh_gold_governance doesn't exist yet,
+# so its lakehouse GUID is still a placeholder until it's created and this repo is
+# redeployed with the real ID.
+DEV_WORKSPACE_GUID = "dc072922-4ffb-4424-868c-28087b02ecba"
+DEV_LH_GOLD_GUID = "00000000-0000-0000-0000-0000000000e3"
 
 
 def test_semantic_model_folder_exists():

@@ -8,15 +8,15 @@
 # META   },
 # META   "dependencies": {
 # META     "lakehouse": {
-# META       "default_lakehouse": "00000000-0000-0000-0000-0000000000c0",
-# META       "default_lakehouse_name": "lh_silver",
-# META       "default_lakehouse_workspace_id": "00000000-0000-0000-0000-000000000001",
+# META       "default_lakehouse": "00000000-0000-0000-0000-0000000000e2",
+# META       "default_lakehouse_name": "lh_silver_governance",
+# META       "default_lakehouse_workspace_id": "dc072922-4ffb-4424-868c-28087b02ecba",
 # META       "known_lakehouses": [
 # META         {
-# META           "id": "00000000-0000-0000-0000-0000000000c0"
+# META           "id": "00000000-0000-0000-0000-0000000000e2"
 # META         },
 # META         {
-# META           "id": "00000000-0000-0000-0000-0000000000b0"
+# META           "id": "00000000-0000-0000-0000-0000000000e1"
 # META         }
 # META       ]
 # META     }
@@ -28,8 +28,8 @@
 # ### nb_silver_activity_events
 #
 # **Layer:** Silver — Cleansing & Enrichment, append-only
-# **Source:** `lh_bronze` → Delta Table `raw_activity_events`, joined to `lh_silver` → `silver_items`
-# **Destination:** `lh_silver` → Delta Table `silver_activity_events`
+# **Source:** `lh_bronze_governance` → Delta Table `raw_activity_events`, joined to `lh_silver_governance` → `silver_items`
+# **Destination:** `lh_silver_governance` → Delta Table `silver_activity_events`
 # **Depends on:** `nb_silver_items`
 # **Schedule:** Daily (after Bronze and nb_silver_items)
 #
@@ -47,8 +47,8 @@
 from pyspark.sql import functions as F
 from delta.tables import DeltaTable
 
-_lh_bronze = notebookutils.lakehouse.get("lh_bronze")
-_lh_silver = notebookutils.lakehouse.get("lh_silver")
+_lh_bronze = notebookutils.lakehouse.get("lh_bronze_governance")
+_lh_silver = notebookutils.lakehouse.get("lh_silver_governance")
 BRONZE_PATH = f"{_lh_bronze['properties']['abfsPath']}/Tables/raw_activity_events"
 ITEMS_PATH = f"{_lh_silver['properties']['abfsPath']}/Tables/silver_items"
 SILVER_PATH = f"{_lh_silver['properties']['abfsPath']}/Tables/silver_activity_events"

@@ -8,12 +8,12 @@
 # META   },
 # META   "dependencies": {
 # META     "lakehouse": {
-# META       "default_lakehouse": "00000000-0000-0000-0000-0000000000b0",
-# META       "default_lakehouse_name": "lh_bronze",
-# META       "default_lakehouse_workspace_id": "00000000-0000-0000-0000-000000000001",
+# META       "default_lakehouse": "00000000-0000-0000-0000-0000000000e1",
+# META       "default_lakehouse_name": "lh_bronze_governance",
+# META       "default_lakehouse_workspace_id": "dc072922-4ffb-4424-868c-28087b02ecba",
 # META       "known_lakehouses": [
 # META         {
-# META           "id": "00000000-0000-0000-0000-0000000000b0"
+# META           "id": "00000000-0000-0000-0000-0000000000e1"
 # META         }
 # META       ]
 # META     }
@@ -26,7 +26,7 @@
 #
 # **Layer:** Bronze — Raw Ingestion, SCD Type 2
 # **Source:** Fabric Admin REST API — `GET /v1/admin/capacities`
-# **Destination:** `lh_bronze` → Delta Table `raw_capacities`
+# **Destination:** `lh_bronze_governance` → Delta Table `raw_capacities`
 # **Schedule:** Daily (before workspaces/items, since workspaces reference capacityId)
 #
 # Capacity assignment is a governance signal in its own right — moving a workspace
@@ -60,10 +60,10 @@ TOKEN = notebookutils.credentials.getToken("pbi")
 HEADERS = {"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"}
 CAPACITIES_URL = "https://api.fabric.microsoft.com/v1/admin/capacities"
 
-_lh_bronze = notebookutils.lakehouse.get("lh_bronze")
+_lh_bronze = notebookutils.lakehouse.get("lh_bronze_governance")
 BRONZE_PATH = f"{_lh_bronze['properties']['abfsPath']}/Tables/{DESTINATION_TABLE}"
 
-print(f"[Bronze] lh_bronze id : {_lh_bronze['id']}")
+print(f"[Bronze] lh_bronze_governance id : {_lh_bronze['id']}")
 print(f"[Bronze] Write path   : {BRONZE_PATH}")
 
 

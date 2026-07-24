@@ -8,12 +8,12 @@
 # META   },
 # META   "dependencies": {
 # META     "lakehouse": {
-# META       "default_lakehouse": "00000000-0000-0000-0000-0000000000b0",
-# META       "default_lakehouse_name": "lh_bronze",
-# META       "default_lakehouse_workspace_id": "00000000-0000-0000-0000-000000000001",
+# META       "default_lakehouse": "00000000-0000-0000-0000-0000000000e1",
+# META       "default_lakehouse_name": "lh_bronze_governance",
+# META       "default_lakehouse_workspace_id": "dc072922-4ffb-4424-868c-28087b02ecba",
 # META       "known_lakehouses": [
 # META         {
-# META           "id": "00000000-0000-0000-0000-0000000000b0"
+# META           "id": "00000000-0000-0000-0000-0000000000e1"
 # META         }
 # META       ]
 # META     }
@@ -26,7 +26,7 @@
 #
 # **Layer:** Bronze — Raw Ingestion, append-only
 # **Source:** Power BI Admin REST API — `GET /v1.0/myorg/admin/activityevents`
-# **Destination:** `lh_bronze` → Delta Table `raw_activity_events`
+# **Destination:** `lh_bronze_governance` → Delta Table `raw_activity_events`
 # **Schedule:** Daily
 #
 # This is the "who did it" source: publish, refresh, view, delete and other
@@ -71,11 +71,11 @@ ACTIVITY_EVENTS_URL = (
     f"&endDateTime='{WINDOW_END.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3]}Z'"
 )
 
-_lh_bronze = notebookutils.lakehouse.get("lh_bronze")
+_lh_bronze = notebookutils.lakehouse.get("lh_bronze_governance")
 BRONZE_PATH = f"{_lh_bronze['properties']['abfsPath']}/Tables/{DESTINATION_TABLE}"
 
 print(f"[Bronze] Window       : {WINDOW_START.isoformat()} -> {WINDOW_END.isoformat()}")
-print(f"[Bronze] lh_bronze id : {_lh_bronze['id']}")
+print(f"[Bronze] lh_bronze_governance id : {_lh_bronze['id']}")
 print(f"[Bronze] Write path   : {BRONZE_PATH}")
 
 
