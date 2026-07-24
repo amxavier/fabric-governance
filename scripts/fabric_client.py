@@ -184,8 +184,12 @@ class FabricClient:
         return items
 
     def list_capacities_admin(self) -> list[dict]:
+        # No /admin/capacities endpoint exists — capacities are listed via the
+        # Core API (/v1/capacities), unlike workspaces/items which do have a
+        # dedicated /admin/ namespace. Confirmed via a real 404 during the
+        # first live deploy against the tenant.
         resp = requests.get(
-            f"{_FABRIC_BASE_URL}/admin/capacities",
+            f"{_FABRIC_BASE_URL}/capacities",
             headers=self._headers(_FABRIC_SCOPE),
             timeout=30,
         )

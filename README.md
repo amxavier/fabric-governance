@@ -6,7 +6,7 @@
 
 Tenant-wide governance for **Microsoft Fabric**, built as a Medallion Architecture pipeline: who published or refreshed what, when, and whether it failed — so an incident like "this report stopped refreshing" can be diagnosed from data instead of digging through the Fabric portal by hand.
 
-Data sources: Fabric Admin REST API (`/admin/workspaces`, `/admin/items`, `/admin/capacities`) and the Power BI Admin REST API (`/admin/activityevents`, `/admin/datasets/{id}/refreshhistory`).
+Data sources: Fabric Admin REST API (`/admin/workspaces`, `/admin/items`), Fabric Core REST API (`/capacities` — there's no admin-scoped equivalent), and the Power BI Admin REST API (`/admin/activityevents`, `/admin/datasets/{id}/refreshhistory`).
 
 Sibling project: [microsoft-fabric-medallion-lakehouse](https://github.com/amxavier/microsoft-fabric-medallion-lakehouse) — this repo reuses its CI/CD and notebook conventions, but is architecturally independent (tenant-wide Admin API scope vs. per-workspace scope).
 
@@ -16,7 +16,8 @@ Sibling project: [microsoft-fabric-medallion-lakehouse](https://github.com/amxav
 
 ```mermaid
 flowchart LR
-    ADM["Fabric Admin API\n/admin/workspaces, /admin/items, /admin/capacities"]
+    ADM["Fabric Admin API\n/admin/workspaces, /admin/items"]
+    CAP["Fabric Core API\n/capacities"]
     AE["Power BI Admin API\n/admin/activityevents"]
     RH["Power BI Admin API\n/admin/datasets/{id}/refreshhistory"]
 
@@ -27,6 +28,7 @@ flowchart LR
     PBI["Power BI Report\nrpt_governance_dashboard"]
 
     ADM --> B
+    CAP --> B
     AE --> B
     RH --> B
     B -->|"Clean &\nEnrich"| S

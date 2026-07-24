@@ -25,7 +25,7 @@
 # ### nb_bronze_capacities
 #
 # **Layer:** Bronze — Raw Ingestion, SCD Type 2
-# **Source:** Fabric Admin REST API — `GET /v1/admin/capacities`
+# **Source:** Fabric REST API (Core, not Admin) — `GET /v1/capacities`
 # **Destination:** `lh_governance_bronze` → Delta Table `raw_capacities`
 # **Schedule:** Daily (before workspaces/items, since workspaces reference capacityId)
 #
@@ -58,7 +58,11 @@ INGESTION_DATE = INGESTION_TS.date().isoformat()
 # runs outside Fabric and must request each scope explicitly).
 TOKEN = notebookutils.credentials.getToken("pbi")
 HEADERS = {"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"}
-CAPACITIES_URL = "https://api.fabric.microsoft.com/v1/admin/capacities"
+# There is no /v1/admin/capacities endpoint — capacity listing lives on the
+# Core API (/v1/capacities), not the Admin API namespace like workspaces/items.
+# With a Capacity.Read.All-equivalent grant this still returns every tenant
+# capacity, not just ones the caller is explicitly assigned to.
+CAPACITIES_URL = "https://api.fabric.microsoft.com/v1/capacities"
 
 _lh_bronze = notebookutils.lakehouse.get("lh_governance_bronze")
 BRONZE_PATH = f"{_lh_bronze['properties']['abfsPath']}/Tables/{DESTINATION_TABLE}"
