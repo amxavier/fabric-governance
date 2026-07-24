@@ -3,6 +3,7 @@ relationship 612d8756-49f4-4f9a-ada8-b0bde6c2bec7
 	toColumn: dim_item.item_id
 
 relationship ee775ab1-dc68-4649-9584-8c5280ba8919
+	isActive: false
 	fromColumn: fact_activity.workspace_id
 	toColumn: dim_workspace.workspace_id
 
