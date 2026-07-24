@@ -31,11 +31,9 @@ EXPECTED_RELATIONSHIPS = [
 ]
 
 # Real DEV workspace (reused from the sibling microsoft-fabric-medallion-lakehouse
-# project's workspace) is committed directly; lh_governance_gold doesn't exist yet,
-# so its lakehouse GUID is still a placeholder until it's created and this repo is
-# redeployed with the real ID.
+# project's workspace) and lh_governance_gold (created directly for this project).
 DEV_WORKSPACE_GUID = "dc072922-4ffb-4424-868c-28087b02ecba"
-DEV_LH_GOLD_GUID = "00000000-0000-0000-0000-0000000000e3"
+DEV_LH_GOLD_GUID = "50efdcbf-bfca-48a0-ab39-8b5a52ed407f"
 
 
 def test_semantic_model_folder_exists():
