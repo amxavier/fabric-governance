@@ -1,0 +1,64 @@
+table dim_item
+	lineageTag: 9b564221-cbfd-4350-95ba-76509ee67c5a
+	sourceLineageTag: [dbo].[dim_item]
+
+	column item_id
+		dataType: string
+		lineageTag: b4337600-bb02-470c-be32-45a698b9e261
+		sourceLineageTag: item_id
+		summarizeBy: none
+		sourceColumn: item_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column item_name
+		dataType: string
+		lineageTag: 885b327d-ffa5-46ed-853b-39df694eaddc
+		sourceLineageTag: item_name
+		summarizeBy: none
+		sourceColumn: item_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column item_type
+		dataType: string
+		lineageTag: a5dcd66a-68fc-4534-8bea-f3084548fb3c
+		sourceLineageTag: item_type
+		summarizeBy: none
+		sourceColumn: item_type
+
+		annotation SummarizationSetBy = Automatic
+
+	column workspace_id
+		dataType: string
+		lineageTag: 76da7515-0cba-41d7-9d39-5a0dd8242fce
+		sourceLineageTag: workspace_id
+		summarizeBy: none
+		sourceColumn: workspace_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column state
+		dataType: string
+		lineageTag: fae844b6-c263-4cd7-affd-b459c0a2d4fe
+		sourceLineageTag: state
+		summarizeBy: none
+		sourceColumn: state
+
+		annotation SummarizationSetBy = Automatic
+
+	column description
+		dataType: string
+		lineageTag: e09f463b-682c-4c9d-ad3d-8678052d1b52
+		sourceLineageTag: description
+		summarizeBy: none
+		sourceColumn: description
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_item = entity
+		mode: directLake
+		source
+			entityName: dim_item
+			schemaName: dbo
+			expressionSource: 'DirectLake - lh_gold_dev'

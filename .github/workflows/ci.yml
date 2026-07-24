@@ -1,0 +1,63 @@
+
+# Validates that all expected Fabric artifacts exist in the repository
+# and runs Python tests against the Semantic Model, Report, and Bronze
+# notebook definitions. Runs on every push to catch missing or
+# misconfigured objects early.
+name: CI - Validate Fabric Artifacts
+
+on:
+  push:
+    branches: ["**"]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate Fabric artifact structure
+        run: |
+          echo "Validating Fabric artifacts..."
+
+          required=(
+            "lh_bronze.Lakehouse"
+            "lh_silver.Lakehouse"
+            "lh_gold.Lakehouse"
+            "notebooks/nb_bronze_capacities.Notebook"
+            "notebooks/nb_bronze_workspaces.Notebook"
+            "notebooks/nb_bronze_items.Notebook"
+            "notebooks/nb_bronze_activity_events.Notebook"
+            "notebooks/nb_bronze_refresh_history.Notebook"
+            "notebooks/nb_silver_capacities.Notebook"
+            "notebooks/nb_silver_workspaces.Notebook"
+            "notebooks/nb_silver_items.Notebook"
+            "notebooks/nb_silver_activity_events.Notebook"
+            "notebooks/nb_silver_refresh_history.Notebook"
+            "notebooks/nb_gold_governance_model.Notebook"
+            "pipelines/pl_governance_orchestration.DataPipeline"
+            "semantic models/sm_governance_medallion.SemanticModel"
+            "report/rpt_governance_dashboard.Report"
+          )
+
+          for artifact in "${required[@]}"; do
+            if [ ! -d "$artifact" ]; then
+              echo "MISSING: $artifact"
+              exit 1
+            else
+              echo "OK: $artifact"
+            fi
+          done
+
+          echo "All artifacts validated successfully."
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install pytest
+
+      - name: Run Semantic Model, Report, and Bronze SCD tests
+        run: pytest tests/ -v

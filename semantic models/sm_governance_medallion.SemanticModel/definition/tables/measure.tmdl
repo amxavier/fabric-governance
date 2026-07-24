@@ -1,0 +1,75 @@
+table measure
+	lineageTag: 27316928-2317-4dee-a1ba-3c288a5e8d80
+
+	measure 'Total Refreshes' = ```
+
+			COUNTROWS(fact_refresh)
+
+			```
+		formatString: 0
+		lineageTag: ea72af87-8591-45f8-9300-8b2557ebdb70
+
+	measure 'Failed Refreshes' = ```
+
+			CALCULATE(COUNTROWS(fact_refresh), fact_refresh[is_failure] = TRUE)
+
+			```
+		formatString: 0
+		lineageTag: 692c2389-115a-4bd9-abd8-48e56ab20fdd
+
+	measure 'Refresh Success Rate %' = ```
+
+			DIVIDE(
+			    CALCULATE(COUNTROWS(fact_refresh), fact_refresh[is_failure] = FALSE),
+			    [Total Refreshes]
+			) * 100
+
+			```
+		formatString: 0.0"%"
+		lineageTag: f0ed1d84-2b33-419e-8a87-8659a13af328
+
+	measure 'Avg Refresh Duration (s)' = ```
+
+			AVERAGE(fact_refresh[duration_seconds])
+
+			```
+		formatString: #,0.0
+		lineageTag: 0856e1d4-1f2c-4bcc-8924-b47d1c34643a
+
+	measure 'Distinct Publishers' = ```
+
+			DISTINCTCOUNT(fact_activity[user_id])
+
+			```
+		formatString: 0
+		lineageTag: ca0eaba2-78f5-4979-b62c-7f3164c84cf8
+
+	measure 'Days Since Last Successful Refresh' = ```
+
+			VAR LastSuccess =
+			    CALCULATE(
+			        MAX(fact_refresh[end_time]),
+			        fact_refresh[is_failure] = FALSE,
+			        ALLSELECTED(fact_refresh)
+			    )
+			RETURN
+			    DATEDIFF(LastSuccess, NOW(), DAY)
+
+			```
+		formatString: 0
+		lineageTag: e4d75a14-939e-464c-8378-8b913151df83
+
+	column Column
+		formatString: 0
+		lineageTag: 5214aca8-d595-406e-9334-b4a427bdd0f7
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [Column]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition measure = calculated
+		mode: import
+		source = Row("Column", BLANK())
+
+	annotation PBI_Id = 8f6c1f0b6dfb4e6c9f9c1a2b3c4d5e6f

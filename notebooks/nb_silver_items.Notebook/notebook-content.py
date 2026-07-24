@@ -1,0 +1,151 @@
+# Fabric notebook source
+
+# METADATA ********************
+
+# META {
+# META   "kernel_info": {
+# META     "name": "synapse_pyspark"
+# META   },
+# META   "dependencies": {
+# META     "lakehouse": {
+# META       "default_lakehouse": "00000000-0000-0000-0000-0000000000c0",
+# META       "default_lakehouse_name": "lh_silver",
+# META       "default_lakehouse_workspace_id": "00000000-0000-0000-0000-000000000001",
+# META       "known_lakehouses": [
+# META         {
+# META           "id": "00000000-0000-0000-0000-0000000000c0"
+# META         },
+# META         {
+# META           "id": "00000000-0000-0000-0000-0000000000b0"
+# META         }
+# META       ]
+# META     }
+# META   }
+# META }
+
+# MARKDOWN ********************
+
+# ### nb_silver_items
+#
+# **Layer:** Silver — Cleansing & Enrichment
+# **Source:** `lh_bronze` → Delta Table `raw_items`, joined to `lh_silver` → `silver_workspaces`
+# **Destination:** `lh_silver` → Delta Table `silver_items`
+# **Depends on:** `nb_silver_workspaces`
+# **Schedule:** Daily (after Bronze and nb_silver_workspaces)
+#
+# Adds the workspace's friendly name and capacity context to every item, so
+# downstream Gold/reporting never has to join back through raw workspace IDs.
+
+
+# MARKDOWN ********************
+
+# ### Imports and Configuration
+
+# CELL ********************
+
+from pyspark.sql import functions as F
+
+_lh_bronze = notebookutils.lakehouse.get("lh_bronze")
+_lh_silver = notebookutils.lakehouse.get("lh_silver")
+BRONZE_PATH = f"{_lh_bronze['properties']['abfsPath']}/Tables/raw_items"
+WORKSPACES_PATH = f"{_lh_silver['properties']['abfsPath']}/Tables/silver_workspaces"
+SILVER_PATH = f"{_lh_silver['properties']['abfsPath']}/Tables/silver_items"
+
+print(f"[Silver] Bronze path     : {BRONZE_PATH}")
+print(f"[Silver] Workspaces path : {WORKSPACES_PATH}")
+print(f"[Silver] Silver path     : {SILVER_PATH}")
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
+# ### Clean and Enrich
+
+# CELL ********************
+
+df_bronze = spark.read.format("delta").load(BRONZE_PATH)
+
+# Join against the workspace's FULL history (not just is_current), matched by
+# validity window, for the same reason nb_silver_workspaces joins capacities
+# by window rather than by is_current — see that notebook's comment.
+df_workspaces = (
+    spark.read.format("delta").load(WORKSPACES_PATH)
+    .select(
+        "workspace_id", "workspace_name", "capacity_name", "is_trial_sku",
+        F.col("valid_from").alias("ws_valid_from"),
+        F.col("valid_to").alias("ws_valid_to"),
+    )
+)
+
+df_silver = (
+    df_bronze.alias("i")
+    .join(
+        df_workspaces.alias("w"),
+        on=(
+            (F.col("i.workspace_id") == F.col("w.workspace_id"))
+            & (F.col("i.valid_from") >= F.col("w.ws_valid_from"))
+            & (F.col("w.ws_valid_to").isNull() | (F.col("i.valid_from") < F.col("w.ws_valid_to")))
+        ),
+        how="left",
+    )
+    .select("i.*", "workspace_name", "capacity_name", "is_trial_sku")
+    .dropDuplicates(["item_id", "valid_from"])
+)
+
+print(f"Rows: {df_silver.count()}")
+df_silver.printSchema()
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
+# ### Overwrite Silver
+
+# CELL ********************
+
+(df_silver.write.format("delta").mode("overwrite")
+    .option("mergeSchema", "true").option("overwriteSchema", "true")
+    .save(SILVER_PATH))
+
+print(f"{df_silver.count()} records written to {SILVER_PATH}")
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
+# ### Validation
+
+# CELL ********************
+
+(spark.read.format("delta").load(SILVER_PATH)
+    .filter("is_current = true")
+    .groupBy("item_type")
+    .count()
+    .orderBy(F.desc("count"))
+    .show())
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }

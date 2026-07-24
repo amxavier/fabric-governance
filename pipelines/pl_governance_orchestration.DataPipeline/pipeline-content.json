@@ -1,0 +1,139 @@
+{
+  "properties": {
+    "activities": [
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "b8c11757-e1d0-40be-898f-4a0be987c549",
+          "workspaceId": "00000000-0000-0000-0000-000000000000"
+        },
+        "policy": { "timeout": "0.12:00:00", "retry": 0, "retryIntervalInSeconds": 30, "secureInput": false, "secureOutput": false },
+        "name": "update_bronze_capacities",
+        "dependsOn": []
+      },
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "43044cbb-e853-47f2-802d-cbf29384956b",
+          "workspaceId": "00000000-0000-0000-0000-000000000000"
+        },
+        "policy": { "timeout": "0.12:00:00", "retry": 0, "retryIntervalInSeconds": 30, "secureInput": false, "secureOutput": false },
+        "name": "update_bronze_workspaces",
+        "dependsOn": [
+          { "activity": "update_bronze_capacities", "dependencyConditions": ["Succeeded"] }
+        ]
+      },
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "f52dfa8f-d7ab-4547-9405-c3c1512bdaae",
+          "workspaceId": "00000000-0000-0000-0000-000000000000"
+        },
+        "policy": { "timeout": "0.12:00:00", "retry": 0, "retryIntervalInSeconds": 30, "secureInput": false, "secureOutput": false },
+        "name": "update_bronze_items",
+        "dependsOn": [
+          { "activity": "update_bronze_workspaces", "dependencyConditions": ["Succeeded"] }
+        ]
+      },
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "c1474caf-ca0c-4dcd-addb-4788f27711fe",
+          "workspaceId": "00000000-0000-0000-0000-000000000000"
+        },
+        "policy": { "timeout": "0.12:00:00", "retry": 0, "retryIntervalInSeconds": 30, "secureInput": false, "secureOutput": false },
+        "name": "update_bronze_activity_events",
+        "dependsOn": []
+      },
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "9d5a6dff-583c-42e1-b557-429e4881acd1",
+          "workspaceId": "00000000-0000-0000-0000-000000000000"
+        },
+        "policy": { "timeout": "0.12:00:00", "retry": 0, "retryIntervalInSeconds": 30, "secureInput": false, "secureOutput": false },
+        "name": "update_bronze_refresh_history",
+        "dependsOn": [
+          { "activity": "update_bronze_items", "dependencyConditions": ["Succeeded"] }
+        ]
+      },
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "9b74debc-f670-4f3b-a2e2-b23e1f9f3c76",
+          "workspaceId": "00000000-0000-0000-0000-000000000000"
+        },
+        "policy": { "timeout": "0.12:00:00", "retry": 0, "retryIntervalInSeconds": 30, "secureInput": false, "secureOutput": false },
+        "name": "update_silver_capacities",
+        "dependsOn": [
+          { "activity": "update_bronze_capacities", "dependencyConditions": ["Succeeded"] }
+        ]
+      },
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "5c180560-a545-4a34-a180-8e275a3f913f",
+          "workspaceId": "00000000-0000-0000-0000-000000000000"
+        },
+        "policy": { "timeout": "0.12:00:00", "retry": 0, "retryIntervalInSeconds": 30, "secureInput": false, "secureOutput": false },
+        "name": "update_silver_workspaces",
+        "dependsOn": [
+          { "activity": "update_silver_capacities", "dependencyConditions": ["Succeeded"] },
+          { "activity": "update_bronze_workspaces", "dependencyConditions": ["Succeeded"] }
+        ]
+      },
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "8579513c-51ac-4078-b425-79b3b76f9c03",
+          "workspaceId": "00000000-0000-0000-0000-000000000000"
+        },
+        "policy": { "timeout": "0.12:00:00", "retry": 0, "retryIntervalInSeconds": 30, "secureInput": false, "secureOutput": false },
+        "name": "update_silver_items",
+        "dependsOn": [
+          { "activity": "update_silver_workspaces", "dependencyConditions": ["Succeeded"] },
+          { "activity": "update_bronze_items", "dependencyConditions": ["Succeeded"] }
+        ]
+      },
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "70c73414-dfa3-4941-bc66-d4b1d360bdfa",
+          "workspaceId": "00000000-0000-0000-0000-000000000000"
+        },
+        "policy": { "timeout": "0.12:00:00", "retry": 0, "retryIntervalInSeconds": 30, "secureInput": false, "secureOutput": false },
+        "name": "update_silver_activity_events",
+        "dependsOn": [
+          { "activity": "update_silver_items", "dependencyConditions": ["Succeeded"] },
+          { "activity": "update_bronze_activity_events", "dependencyConditions": ["Succeeded"] }
+        ]
+      },
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "80a25898-fc30-4bb5-ad6a-62973e9f994c",
+          "workspaceId": "00000000-0000-0000-0000-000000000000"
+        },
+        "policy": { "timeout": "0.12:00:00", "retry": 0, "retryIntervalInSeconds": 30, "secureInput": false, "secureOutput": false },
+        "name": "update_silver_refresh_history",
+        "dependsOn": [
+          { "activity": "update_silver_items", "dependencyConditions": ["Succeeded"] },
+          { "activity": "update_bronze_refresh_history", "dependencyConditions": ["Succeeded"] }
+        ]
+      },
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "ba596644-9fad-4f5c-837d-412655d730e9",
+          "workspaceId": "00000000-0000-0000-0000-000000000000"
+        },
+        "policy": { "timeout": "0.12:00:00", "retry": 0, "retryIntervalInSeconds": 30, "secureInput": false, "secureOutput": false },
+        "name": "update_gold_governance_model",
+        "dependsOn": [
+          { "activity": "update_silver_activity_events", "dependencyConditions": ["Succeeded"] },
+          { "activity": "update_silver_refresh_history", "dependencyConditions": ["Succeeded"] }
+        ]
+      }
+    ]
+  }
+}

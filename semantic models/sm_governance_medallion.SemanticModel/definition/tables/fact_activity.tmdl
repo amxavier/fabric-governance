@@ -1,0 +1,103 @@
+table fact_activity
+	lineageTag: 7119fd6f-6d05-4ccc-b803-5af75f6a184a
+	sourceLineageTag: [dbo].[fact_activity]
+
+	column event_id
+		dataType: string
+		lineageTag: 23727dd0-b362-4f2d-afbb-95043325d3b8
+		sourceLineageTag: event_id
+		summarizeBy: none
+		sourceColumn: event_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column creation_time
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: c1340cf8-f339-4d98-9d3a-c67213148edd
+		sourceLineageTag: creation_time
+		summarizeBy: none
+		sourceColumn: creation_time
+
+		annotation SummarizationSetBy = Automatic
+
+	column date_id
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 334d8bde-83cf-41fd-bae4-83d65a3d40d5
+		sourceLineageTag: date_id
+		summarizeBy: none
+		sourceColumn: date_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column activity
+		dataType: string
+		lineageTag: cbb57302-7821-4ccd-b24c-35935bc6f3df
+		sourceLineageTag: activity
+		summarizeBy: none
+		sourceColumn: activity
+
+		annotation SummarizationSetBy = Automatic
+
+	column user_id
+		dataType: string
+		lineageTag: 398fd643-e16d-427a-a889-01ac06c6881a
+		sourceLineageTag: user_id
+		summarizeBy: none
+		sourceColumn: user_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column item_id
+		dataType: string
+		lineageTag: 3b868c40-3b3a-4597-8baa-badc090dd619
+		sourceLineageTag: item_id
+		summarizeBy: none
+		sourceColumn: item_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column workspace_id
+		dataType: string
+		lineageTag: 839a8fa2-51c6-4f50-ae4d-c2e00cffeb6a
+		sourceLineageTag: workspace_id
+		summarizeBy: none
+		sourceColumn: workspace_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column refresh_type
+		dataType: string
+		lineageTag: dc8d0122-84a9-4c82-b9ef-3e6410d87868
+		sourceLineageTag: refresh_type
+		summarizeBy: none
+		sourceColumn: refresh_type
+
+		annotation SummarizationSetBy = Automatic
+
+	column result_status
+		dataType: string
+		lineageTag: 02ce1610-25c5-4580-81f2-ad437ac25d60
+		sourceLineageTag: result_status
+		summarizeBy: none
+		sourceColumn: result_status
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_failure
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 97f569cb-f205-454b-869a-9ea26ea036c1
+		sourceLineageTag: is_failure
+		summarizeBy: none
+		sourceColumn: is_failure
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_activity = entity
+		mode: directLake
+		source
+			entityName: fact_activity
+			schemaName: dbo
+			expressionSource: 'DirectLake - lh_gold_dev'

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Report",
+    "displayName": "rpt_governance_dashboard"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "6d02a7c4-bb1e-44d8-8221-364dbb9206fb"
+  }
+}

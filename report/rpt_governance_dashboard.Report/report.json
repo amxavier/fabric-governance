@@ -1,0 +1,114 @@
+{
+  "config": "{\"version\":\"5.72\",\"themeCollection\":{\"baseTheme\":{\"name\":\"CY26SU04\",\"type\":2,\"version\":{\"visual\":\"2.8.0\",\"report\":\"3.2.0\",\"page\":\"2.3.1\"}}},\"activeSectionIndex\":0,\"defaultDrillFilterOtherVisuals\":true,\"linguisticSchemaSyncVersion\":0,\"settings\":{\"useNewFilterPaneExperience\":true,\"allowChangeFilterTypes\":true,\"useStylableVisualContainerHeader\":true,\"queryLimitOption\":6,\"useEnhancedTooltips\":true,\"exportDataMode\":1,\"useDefaultAggregateDisplayName\":true},\"objects\":{\"section\":[{\"properties\":{\"verticalAlignment\":{\"expr\":{\"Literal\":{\"Value\":\"'Top'\"}}}}}],\"outspacePane\":[{\"properties\":{\"expanded\":{\"expr\":{\"Literal\":{\"Value\":\"false\"}}}}}]},\"creationSource\":\"QuickCreate\"}",
+  "layoutOptimization": 1,
+  "resourcePackages": [
+    {
+      "resourcePackage": {
+        "disabled": false,
+        "items": [
+          {
+            "name": "CY26SU04",
+            "path": "BaseThemes/CY26SU04.json",
+            "type": 202
+          }
+        ],
+        "name": "SharedResources",
+        "type": 2
+      }
+    }
+  ],
+  "sections": [
+    {
+      "config": "{}",
+      "displayName": "governance_overview",
+      "displayOption": 1,
+      "filters": "[]",
+      "height": 720.00,
+      "name": "a1947cdb89ad421e9f95",
+      "visualContainers": [
+        {
+          "config": "{\"name\":\"d4faff9595bb4532a1c1\",\"layouts\":[{\"id\":0,\"position\":{\"x\":10,\"y\":10,\"z\":0,\"width\":200,\"height\":100,\"tabOrder\":0}}],\"singleVisual\":{\"visualType\":\"cardVisual\",\"projections\":{\"Data\":[{\"queryRef\":\"measure.Total Refreshes\"}]},\"prototypeQuery\":{\"Version\":2,\"From\":[{\"Name\":\"m\",\"Entity\":\"measure\",\"Type\":0}],\"Select\":[{\"Measure\":{\"Expression\":{\"SourceRef\":{\"Source\":\"m\"}},\"Property\":\"Total Refreshes\"},\"Name\":\"measure.Total Refreshes\",\"NativeReferenceName\":\"Total Refreshes\"}]},\"drillFilterOtherVisuals\":true}}",
+          "filters": "[]",
+          "height": 100.00,
+          "width": 200.00,
+          "x": 10.00,
+          "y": 10.00,
+          "z": 0.00
+        },
+        {
+          "config": "{\"name\":\"f9b4e034f88b4da591a4\",\"layouts\":[{\"id\":0,\"position\":{\"x\":223,\"y\":10,\"z\":1,\"width\":200,\"height\":100,\"tabOrder\":1}}],\"singleVisual\":{\"visualType\":\"cardVisual\",\"projections\":{\"Data\":[{\"queryRef\":\"measure.Failed Refreshes\"}]},\"prototypeQuery\":{\"Version\":2,\"From\":[{\"Name\":\"m\",\"Entity\":\"measure\",\"Type\":0}],\"Select\":[{\"Measure\":{\"Expression\":{\"SourceRef\":{\"Source\":\"m\"}},\"Property\":\"Failed Refreshes\"},\"Name\":\"measure.Failed Refreshes\",\"NativeReferenceName\":\"Failed Refreshes\"}]},\"drillFilterOtherVisuals\":true}}",
+          "filters": "[]",
+          "height": 100.00,
+          "width": 200.00,
+          "x": 223.00,
+          "y": 10.00,
+          "z": 1.00
+        },
+        {
+          "config": "{\"name\":\"b897ae1fc43943479ee3\",\"layouts\":[{\"id\":0,\"position\":{\"x\":436,\"y\":10,\"z\":2,\"width\":200,\"height\":100,\"tabOrder\":2}}],\"singleVisual\":{\"visualType\":\"cardVisual\",\"projections\":{\"Data\":[{\"queryRef\":\"measure.Refresh Success Rate %\"}]},\"prototypeQuery\":{\"Version\":2,\"From\":[{\"Name\":\"m\",\"Entity\":\"measure\",\"Type\":0}],\"Select\":[{\"Measure\":{\"Expression\":{\"SourceRef\":{\"Source\":\"m\"}},\"Property\":\"Refresh Success Rate %\"},\"Name\":\"measure.Refresh Success Rate %\",\"NativeReferenceName\":\"Refresh Success Rate %\"}]},\"drillFilterOtherVisuals\":true}}",
+          "filters": "[]",
+          "height": 100.00,
+          "width": 200.00,
+          "x": 436.00,
+          "y": 10.00,
+          "z": 2.00
+        },
+        {
+          "config": "{\"name\":\"e4c710675ded4a4a8557\",\"layouts\":[{\"id\":0,\"position\":{\"x\":649,\"y\":10,\"z\":3,\"width\":200,\"height\":100,\"tabOrder\":3}}],\"singleVisual\":{\"visualType\":\"cardVisual\",\"projections\":{\"Data\":[{\"queryRef\":\"measure.Avg Refresh Duration (s)\"}]},\"prototypeQuery\":{\"Version\":2,\"From\":[{\"Name\":\"m\",\"Entity\":\"measure\",\"Type\":0}],\"Select\":[{\"Measure\":{\"Expression\":{\"SourceRef\":{\"Source\":\"m\"}},\"Property\":\"Avg Refresh Duration (s)\"},\"Name\":\"measure.Avg Refresh Duration (s)\",\"NativeReferenceName\":\"Avg Refresh Duration (s)\"}]},\"drillFilterOtherVisuals\":true}}",
+          "filters": "[]",
+          "height": 100.00,
+          "width": 200.00,
+          "x": 862.00,
+          "y": 10.00,
+          "z": 3.00
+        },
+        {
+          "config": "{\"name\":\"7e85edd4dd9c4f87baf0\",\"layouts\":[{\"id\":0,\"position\":{\"x\":1068,\"y\":10,\"z\":4,\"width\":202,\"height\":100,\"tabOrder\":4}}],\"singleVisual\":{\"visualType\":\"cardVisual\",\"projections\":{\"Data\":[{\"queryRef\":\"measure.Distinct Publishers\"}]},\"prototypeQuery\":{\"Version\":2,\"From\":[{\"Name\":\"m\",\"Entity\":\"measure\",\"Type\":0}],\"Select\":[{\"Measure\":{\"Expression\":{\"SourceRef\":{\"Source\":\"m\"}},\"Property\":\"Distinct Publishers\"},\"Name\":\"measure.Distinct Publishers\",\"NativeReferenceName\":\"Distinct Publishers\"}]},\"drillFilterOtherVisuals\":true}}",
+          "filters": "[]",
+          "height": 100.00,
+          "width": 202.00,
+          "x": 1068.00,
+          "y": 10.00,
+          "z": 4.00
+        },
+        {
+          "config": "{\"name\":\"23262f4aa9594851b88d\",\"layouts\":[{\"id\":0,\"position\":{\"x\":10,\"y\":120,\"z\":5,\"width\":1260,\"height\":40,\"tabOrder\":5}}],\"singleVisual\":{\"visualType\":\"slicer\",\"projections\":{\"Values\":[{\"queryRef\":\"dim_item.item_type\",\"active\":true}]},\"prototypeQuery\":{\"Version\":2,\"From\":[{\"Name\":\"i\",\"Entity\":\"dim_item\",\"Type\":0}],\"Select\":[{\"Column\":{\"Expression\":{\"SourceRef\":{\"Source\":\"i\"}},\"Property\":\"item_type\"},\"Name\":\"dim_item.item_type\",\"NativeReferenceName\":\"item_type\"}]},\"drillFilterOtherVisuals\":true}}",
+          "filters": "[]",
+          "height": 40.00,
+          "width": 1260.00,
+          "x": 10.00,
+          "y": 120.00,
+          "z": 5.00
+        },
+        {
+          "config": "{\"name\":\"d630f810d6514fa7b32f\",\"layouts\":[{\"id\":0,\"position\":{\"x\":10,\"y\":170,\"z\":6,\"width\":620,\"height\":330,\"tabOrder\":6}}],\"singleVisual\":{\"visualType\":\"barChart\",\"projections\":{\"Category\":[{\"queryRef\":\"dim_item.item_name\",\"active\":true}],\"Y\":[{\"queryRef\":\"measure.Failed Refreshes\"}]},\"prototypeQuery\":{\"Version\":2,\"From\":[{\"Name\":\"i\",\"Entity\":\"dim_item\",\"Type\":0},{\"Name\":\"m\",\"Entity\":\"measure\",\"Type\":0}],\"Select\":[{\"Column\":{\"Expression\":{\"SourceRef\":{\"Source\":\"i\"}},\"Property\":\"item_name\"},\"Name\":\"dim_item.item_name\",\"NativeReferenceName\":\"item_name\"},{\"Measure\":{\"Expression\":{\"SourceRef\":{\"Source\":\"m\"}},\"Property\":\"Failed Refreshes\"},\"Name\":\"measure.Failed Refreshes\",\"NativeReferenceName\":\"Failed Refreshes\"}],\"OrderBy\":[{\"Direction\":2,\"Expression\":{\"Measure\":{\"Expression\":{\"SourceRef\":{\"Source\":\"m\"}},\"Property\":\"Failed Refreshes\"}}}]},\"drillFilterOtherVisuals\":true,\"hasDefaultSort\":true}}",
+          "filters": "[{\"$schema\":\"http://powerbi.com/product/schema#topN\",\"Target\":{\"Column\":{\"Expression\":{\"SourceRef\":{\"Entity\":\"dim_item\"}},\"Property\":\"item_name\"}},\"FilterType\":1,\"TopN\":{\"Type\":1,\"Count\":10,\"OrderBy\":[{\"Select\":1,\"Direction\":2}]}}]",
+          "height": 330.00,
+          "width": 620.00,
+          "x": 10.00,
+          "y": 170.00,
+          "z": 6.00
+        },
+        {
+          "config": "{\"name\":\"2d1235c1b95e44acb8ef\",\"layouts\":[{\"id\":0,\"position\":{\"x\":645,\"y\":170,\"z\":7,\"width\":625,\"height\":330,\"tabOrder\":7}}],\"singleVisual\":{\"visualType\":\"donutChart\",\"projections\":{\"Category\":[{\"queryRef\":\"dim_item.item_type\",\"active\":true}],\"Y\":[{\"queryRef\":\"measure.Total Refreshes\"}]},\"prototypeQuery\":{\"Version\":2,\"From\":[{\"Name\":\"i\",\"Entity\":\"dim_item\",\"Type\":0},{\"Name\":\"m\",\"Entity\":\"measure\",\"Type\":0}],\"Select\":[{\"Column\":{\"Expression\":{\"SourceRef\":{\"Source\":\"i\"}},\"Property\":\"item_type\"},\"Name\":\"dim_item.item_type\",\"NativeReferenceName\":\"item_type\"},{\"Measure\":{\"Expression\":{\"SourceRef\":{\"Source\":\"m\"}},\"Property\":\"Total Refreshes\"},\"Name\":\"measure.Total Refreshes\",\"NativeReferenceName\":\"Total Refreshes\"}],\"OrderBy\":[{\"Direction\":2,\"Expression\":{\"Measure\":{\"Expression\":{\"SourceRef\":{\"Source\":\"m\"}},\"Property\":\"Total Refreshes\"}}}]},\"drillFilterOtherVisuals\":true,\"hasDefaultSort\":true}}",
+          "filters": "[]",
+          "height": 330.00,
+          "width": 625.00,
+          "x": 645.00,
+          "y": 170.00,
+          "z": 7.00
+        },
+        {
+          "config": "{\"name\":\"e7fbd029d4ae4760b852\",\"layouts\":[{\"id\":0,\"position\":{\"x\":10,\"y\":510,\"z\":8,\"width\":1260,\"height\":200,\"tabOrder\":8}}],\"singleVisual\":{\"visualType\":\"tableEx\",\"projections\":{\"Values\":[{\"queryRef\":\"dim_item.item_name\"},{\"queryRef\":\"dim_item.item_type\"},{\"queryRef\":\"dim_workspace.workspace_name\"},{\"queryRef\":\"measure.Total Refreshes\"},{\"queryRef\":\"measure.Failed Refreshes\"},{\"queryRef\":\"measure.Refresh Success Rate %\"},{\"queryRef\":\"measure.Avg Refresh Duration (s)\"}]},\"prototypeQuery\":{\"Version\":2,\"From\":[{\"Name\":\"i\",\"Entity\":\"dim_item\",\"Type\":0},{\"Name\":\"w\",\"Entity\":\"dim_workspace\",\"Type\":0},{\"Name\":\"m\",\"Entity\":\"measure\",\"Type\":0}],\"Select\":[{\"Column\":{\"Expression\":{\"SourceRef\":{\"Source\":\"i\"}},\"Property\":\"item_name\"},\"Name\":\"dim_item.item_name\",\"NativeReferenceName\":\"item_name\"},{\"Column\":{\"Expression\":{\"SourceRef\":{\"Source\":\"i\"}},\"Property\":\"item_type\"},\"Name\":\"dim_item.item_type\",\"NativeReferenceName\":\"item_type\"},{\"Column\":{\"Expression\":{\"SourceRef\":{\"Source\":\"w\"}},\"Property\":\"workspace_name\"},\"Name\":\"dim_workspace.workspace_name\",\"NativeReferenceName\":\"workspace_name\"},{\"Measure\":{\"Expression\":{\"SourceRef\":{\"Source\":\"m\"}},\"Property\":\"Total Refreshes\"},\"Name\":\"measure.Total Refreshes\",\"NativeReferenceName\":\"Total Refreshes\"},{\"Measure\":{\"Expression\":{\"SourceRef\":{\"Source\":\"m\"}},\"Property\":\"Failed Refreshes\"},\"Name\":\"measure.Failed Refreshes\",\"NativeReferenceName\":\"Failed Refreshes\"},{\"Measure\":{\"Expression\":{\"SourceRef\":{\"Source\":\"m\"}},\"Property\":\"Refresh Success Rate %\"},\"Name\":\"measure.Refresh Success Rate %\",\"NativeReferenceName\":\"Refresh Success Rate %\"},{\"Measure\":{\"Expression\":{\"SourceRef\":{\"Source\":\"m\"}},\"Property\":\"Avg Refresh Duration (s)\"},\"Name\":\"measure.Avg Refresh Duration (s)\",\"NativeReferenceName\":\"Avg Refresh Duration (s)\"}],\"OrderBy\":[{\"Direction\":2,\"Expression\":{\"Measure\":{\"Expression\":{\"SourceRef\":{\"Source\":\"m\"}},\"Property\":\"Failed Refreshes\"}}}]},\"drillFilterOtherVisuals\":true,\"hasDefaultSort\":true}}",
+          "filters": "[]",
+          "height": 200.00,
+          "width": 1260.00,
+          "x": 10.00,
+          "y": 510.00,
+          "z": 8.00
+        }
+      ],
+      "width": 1280.00
+    }
+  ]
+}

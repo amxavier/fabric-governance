@@ -1,0 +1,65 @@
+table dim_workspace
+	lineageTag: 3b501ccb-68a8-4683-aa43-46ce8d982542
+	sourceLineageTag: [dbo].[dim_workspace]
+
+	column workspace_id
+		dataType: string
+		lineageTag: 79d84ca5-7c46-49fc-89d7-159c8c16ed46
+		sourceLineageTag: workspace_id
+		summarizeBy: none
+		sourceColumn: workspace_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column workspace_name
+		dataType: string
+		lineageTag: ecbbf798-183b-42f1-9bf4-2d64a350653d
+		sourceLineageTag: workspace_name
+		summarizeBy: none
+		sourceColumn: workspace_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column workspace_type
+		dataType: string
+		lineageTag: 6077958d-0095-4b67-a182-e65076bdc393
+		sourceLineageTag: workspace_type
+		summarizeBy: none
+		sourceColumn: workspace_type
+
+		annotation SummarizationSetBy = Automatic
+
+	column capacity_id
+		dataType: string
+		lineageTag: 3a27bcac-168b-4aa5-a175-e91463accf86
+		sourceLineageTag: capacity_id
+		summarizeBy: none
+		sourceColumn: capacity_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column state
+		dataType: string
+		lineageTag: 32674bfa-8508-43d6-a9d2-c9a3b1b3cac3
+		sourceLineageTag: state
+		summarizeBy: none
+		sourceColumn: state
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_trial_sku
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: cf6b48c3-30ed-4fdc-b36c-ecafad76aaf8
+		sourceLineageTag: is_trial_sku
+		summarizeBy: none
+		sourceColumn: is_trial_sku
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_workspace = entity
+		mode: directLake
+		source
+			entityName: dim_workspace
+			schemaName: dbo
+			expressionSource: 'DirectLake - lh_gold_dev'

@@ -1,0 +1,5 @@
+{
+  "environment": "qa",
+  "workspace_id": "REPLACE_WITH_QA_WORKSPACE_ID",
+  "onelake_url": "REPLACE_WITH_QA_LH_GOLD_ONELAKE_URL"
+}

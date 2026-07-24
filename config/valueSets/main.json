@@ -1,0 +1,5 @@
+{
+  "environment": "main",
+  "workspace_id": "REPLACE_WITH_PRD_WORKSPACE_ID",
+  "onelake_url": "REPLACE_WITH_PRD_LH_GOLD_ONELAKE_URL"
+}

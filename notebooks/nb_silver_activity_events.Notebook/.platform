@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Notebook",
+    "displayName": "nb_silver_activity_events"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "70c73414-dfa3-4941-bc66-d4b1d360bdfa"
+  }
+}

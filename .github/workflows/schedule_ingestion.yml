@@ -1,0 +1,67 @@
+
+# Triggers the Fabric governance orchestration pipeline daily at 6am UTC in
+# DEV, QA and PRD. 6am gives the Activity Events notebook (which pulls the
+# previous full UTC day) a comfortable margin past midnight.
+name: Schedule - Daily Governance Scan
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch: # allows manual trigger from GitHub UI
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Azure access token
+        id: auth
+        run: |
+          RESPONSE=$(curl -sf -X POST \
+            "https://login.microsoftonline.com/${{ secrets.AZURE_TENANT_ID }}/oauth2/v2.0/token" \
+            -d "grant_type=client_credentials" \
+            -d "client_id=${{ secrets.AZURE_CLIENT_ID }}" \
+            -d "client_secret=${{ secrets.AZURE_CLIENT_SECRET }}" \
+            -d "scope=https://api.fabric.microsoft.com/.default")
+          TOKEN=$(echo "$RESPONSE" | jq -r '.access_token')
+          if [ -z "$TOKEN" ] || [ "$TOKEN" == "null" ]; then
+            echo "Failed to retrieve access token."
+            exit 1
+          fi
+          echo "token=$TOKEN" >> $GITHUB_OUTPUT
+
+      - name: Trigger DEV orchestration pipeline
+        run: |
+          curl -sf -X POST \
+            "https://api.fabric.microsoft.com/v1/workspaces/${{ secrets.FABRIC_WORKSPACE_ID_DEV }}/dataPipelines/${{ secrets.FABRIC_PIPELINE_ID_DEV }}/jobs/instances?jobType=Pipeline" \
+            -H "Authorization: Bearer ${{ steps.auth.outputs.token }}" \
+            -H "Content-Type: application/json" \
+            -w "\nHTTP Status: %{http_code}\n"
+
+      - name: Trigger QA orchestration pipeline
+        run: |
+          curl -sf -X POST \
+            "https://api.fabric.microsoft.com/v1/workspaces/${{ secrets.FABRIC_WORKSPACE_ID_QA }}/dataPipelines/${{ secrets.FABRIC_PIPELINE_ID_QA }}/jobs/instances?jobType=Pipeline" \
+            -H "Authorization: Bearer ${{ steps.auth.outputs.token }}" \
+            -H "Content-Type: application/json" \
+            -w "\nHTTP Status: %{http_code}\n"
+
+      - name: Trigger PRD orchestration pipeline
+        run: |
+          curl -sf -X POST \
+            "https://api.fabric.microsoft.com/v1/workspaces/${{ secrets.FABRIC_WORKSPACE_ID_PRD }}/dataPipelines/${{ secrets.FABRIC_PIPELINE_ID_PRD }}/jobs/instances?jobType=Pipeline" \
+            -H "Authorization: Bearer ${{ steps.auth.outputs.token }}" \
+            -H "Content-Type: application/json" \
+            -w "\nHTTP Status: %{http_code}\n"
+
+      - name: Notify on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[Alert] Daily governance scan failed — ${new Date().toISOString().slice(0,10)}`,
+              body: `The scheduled pipeline trigger failed on ${new Date().toISOString()}.\n\nRun: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              labels: ['alert']
+            })

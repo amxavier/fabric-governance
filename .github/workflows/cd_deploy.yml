@@ -1,0 +1,48 @@
+# Deploys Fabric artifacts directly to the target workspace via REST API.
+# Triggered on push to dev, qa, or main — each branch maps to its own workspace
+# via config/valueSets/{branch}.json. No Git Integration or Deployment Pipeline needed.
+name: CD - Deploy to Fabric
+
+on:
+  push:
+    branches: [dev, qa, main]
+    paths:
+      - "notebooks/**"
+      - "pipelines/**"
+      - "semantic models/**"
+      - "report/**"
+  workflow_dispatch:
+    inputs:
+      deploy_mode:
+        description: "Deploy mode"
+        required: false
+        default: "selective"
+        type: choice
+        options:
+          - selective
+          - full
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # needed for git diff HEAD~1 in selective mode
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Deploy artifacts
+        env:
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          DEPLOY_MODE: ${{ github.event.inputs.deploy_mode || 'selective' }}
+        run: python scripts/deploy.py
