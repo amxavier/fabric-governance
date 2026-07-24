@@ -160,7 +160,9 @@ class FabricClient:
             resp = requests.get(url, headers=self._headers(_FABRIC_SCOPE), timeout=30)
             resp.raise_for_status()
             data = resp.json()
-            items.extend(data.get("value", []))
+            # Nested under "workspaces", not the generic "value" key most other
+            # Fabric REST endpoints use — confirmed against Microsoft Learn.
+            items.extend(data.get("workspaces", []))
             token = data.get("continuationToken")
             url = f"{_FABRIC_BASE_URL}/admin/workspaces?continuationToken={token}" if token else None
         return items
@@ -174,7 +176,8 @@ class FabricClient:
             resp = requests.get(url, headers=self._headers(_FABRIC_SCOPE), timeout=30)
             resp.raise_for_status()
             data = resp.json()
-            items.extend(data.get("value", []))
+            # Nested under "itemEntities", not "value" — same as workspaces above.
+            items.extend(data.get("itemEntities", []))
             token = data.get("continuationToken")
             if not token:
                 url = None

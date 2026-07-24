@@ -82,7 +82,10 @@ while url:
     response = requests.get(url, headers=HEADERS, timeout=60)
     response.raise_for_status()
     page = response.json()
-    data.extend(page.get("value", []))
+    # This Admin API nests results under "itemEntities", not the generic
+    # "value" key — same class of bug as nb_bronze_workspaces' "workspaces"
+    # key, confirmed against Microsoft Learn.
+    data.extend(page.get("itemEntities", []))
     token = page.get("continuationToken")
     url = f"{ITEMS_URL}?continuationToken={token}" if token else None
 

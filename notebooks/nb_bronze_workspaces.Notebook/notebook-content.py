@@ -85,7 +85,10 @@ while url:
     response = requests.get(url, headers=HEADERS, timeout=30)
     response.raise_for_status()
     page = response.json()
-    data.extend(page.get("value", []))
+    # This Admin API nests results under "workspaces", not the generic "value"
+    # key most other Fabric REST endpoints use — confirmed against Microsoft
+    # Learn after a live run silently returned 0 rows with the wrong key.
+    data.extend(page.get("workspaces", []))
     token = page.get("continuationToken")
     url = f"{WORKSPACES_URL}?continuationToken={token}" if token else None
 
@@ -108,7 +111,7 @@ print(f"Workspaces fetched: {len(data)}")
 rows = [
     {
         "workspace_id": w.get("id"),
-        "workspace_name": w.get("displayName"),
+        "workspace_name": w.get("name"),
         "workspace_type": w.get("type"),
         "capacity_id": w.get("capacityId"),
         "state": w.get("state"),
