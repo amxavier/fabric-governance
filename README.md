@@ -69,7 +69,7 @@ The core diagnostic pattern this schema enables: join `fact_refresh` failures ag
 
 ## Environments
 
-This project **reuses the same three Fabric workspaces** as the sibling [microsoft-fabric-medallion-lakehouse](https://github.com/amxavier/microsoft-fabric-medallion-lakehouse) project — same Service Principal, same tenant Admin API consent, same branch-to-workspace mapping. It does not provision separate infrastructure:
+This project **reuses the same three Fabric workspaces and Service Principal** as the sibling [microsoft-fabric-medallion-lakehouse](https://github.com/amxavier/microsoft-fabric-medallion-lakehouse) project, same branch-to-workspace mapping — but that project never needed tenant-wide Admin API access (it only deploys into workspaces it's already a member of), so that access had to be granted separately for this project — see [Getting Started](#getting-started).
 
 ```
 dev branch  →  DEV workspace  (dc072922-4ffb-4424-868c-28087b02ecba)
@@ -154,11 +154,17 @@ fabric-governance/
 
 ## Getting Started
 
-This project deliberately reuses existing infrastructure rather than provisioning its own — the three Fabric workspaces, the Service Principal, and its tenant Admin API consent already exist for the sibling [microsoft-fabric-medallion-lakehouse](https://github.com/amxavier/microsoft-fabric-medallion-lakehouse) project. The only new infrastructure this project needs is its own Lakehouse trio inside those same workspaces.
+This project deliberately reuses existing infrastructure rather than provisioning its own — the three Fabric workspaces and the Service Principal already exist for the sibling [microsoft-fabric-medallion-lakehouse](https://github.com/amxavier/microsoft-fabric-medallion-lakehouse) project. The only new infrastructure this project needs is its own Lakehouse trio inside those same workspaces, plus tenant-wide Admin API access for that same Service Principal (its existing per-workspace Contributor role does **not** cover the `/admin/*` endpoints this project depends on).
 
-### Remaining manual step (not automatable via CI/CD)
+### Remaining manual steps (not automatable via CI/CD)
 
-**Create `lh_governance_bronze`, `lh_governance_silver`, and `lh_governance_gold`** in each of the three existing workspaces (DEV/QA/PRD), then replace the placeholder lakehouse GUID (`00000000-0000-0000-0000-0000000000e3`, currently used for `lh_governance_gold` in every environment's `onelake_url` and in every notebook's METADATA/`known_lakehouses`) with the real ID Fabric assigns to `lh_governance_gold` once created — same pattern the sibling project uses for its own lakehouses. The Service Principal already has Contributor/Admin access to these workspaces, so no new role assignment is needed for `deploy.py` to publish into the new lakehouses.
+1. **Create `lh_governance_bronze`, `lh_governance_silver`, and `lh_governance_gold`** in each of the three existing workspaces (DEV/QA/PRD), then replace the placeholder lakehouse GUID with the real ID Fabric assigns to `lh_governance_gold` once created (bronze/silver too, in every notebook's METADATA/`known_lakehouses`) — same pattern the sibling project uses for its own lakehouses.
+
+2. **Grant the Service Principal tenant-wide Admin API access** — its existing per-workspace role does not cover this:
+   - Create a Microsoft Entra **Security Group** (type: Security) and add the Service Principal as a member (Azure Portal → Microsoft Entra ID → Groups → the group → Members).
+   - In the **Fabric Admin Portal → Tenant settings → Admin API settings** (a separate section from "Developer settings"), enable **"Service principals can access read-only admin APIs"** and **"Service principals can access admin APIs used for updates"**, both set to "Specific security groups" pointing at the group above.
+   - **Do not** add any admin-consent-required Application permissions (e.g. Power BI Service `Tenant.Read.All`) to the app registration in Entra — [Microsoft's own docs](https://learn.microsoft.com/en-us/fabric/admin/enable-service-principal-admin-apis) state this actively **breaks** service-principal auth for the read-only admin APIs. Check under Azure Portal → Microsoft Entra ID → Enterprise Applications → the app → Permissions, and remove any if present.
+   - Note: `/v1/capacities` (used by `nb_bronze_capacities`) is a **Core** API, not an Admin one — it doesn't need this setting, just normal Fabric API access.
 
 ### Required GitHub Secrets
 
