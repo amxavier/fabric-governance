@@ -60,8 +60,14 @@ INGESTION_DATE = INGESTION_TS.date().isoformat()
 
 # Pull the full previous UTC day — avoids partial-day gaps that would occur if
 # we used "last 24h from now" on a schedule that doesn't run at exactly midnight.
-WINDOW_END = datetime.combine(INGESTION_TS.date(), datetime.min.time(), tzinfo=timezone.utc)
-WINDOW_START = WINDOW_END - timedelta(days=1)
+# The API requires startDateTime/endDateTime to fall on the SAME UTC calendar
+# day — spanning midnight-to-midnight (00:00:00 one day to 00:00:00 the next)
+# fails with 400 Bad Request even though it's exactly 24h, because the end
+# timestamp's date component is technically the following day. End at
+# 23:59:59.999 of the same day instead.
+TARGET_DATE = INGESTION_TS.date() - timedelta(days=1)
+WINDOW_START = datetime.combine(TARGET_DATE, datetime.min.time(), tzinfo=timezone.utc)
+WINDOW_END = datetime.combine(TARGET_DATE, datetime.max.time(), tzinfo=timezone.utc)
 
 TOKEN = notebookutils.credentials.getToken("pbi")
 HEADERS = {"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"}

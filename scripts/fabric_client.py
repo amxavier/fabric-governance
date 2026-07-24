@@ -204,7 +204,9 @@ class FabricClient:
     def get_activity_events(self, start_iso: str, end_iso: str) -> list[dict]:
         """
         Fetch activity events for a window <= 24h (Power BI Admin API constraint).
-        start_iso/end_iso: e.g. "2026-07-23T00:00:00.000Z" (single-quoted by the API itself).
+        start_iso/end_iso must fall on the SAME UTC calendar day — e.g.
+        "2026-07-23T00:00:00.000Z" to "2026-07-23T23:59:59.999Z", not the
+        following day's midnight, or the API returns 400 Bad Request.
         """
         events = []
         url = (
