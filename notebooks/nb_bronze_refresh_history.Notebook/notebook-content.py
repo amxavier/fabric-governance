@@ -269,6 +269,14 @@ if new_count > 0:
     (df_new.write.format("delta").mode("append")
         .option("mergeSchema", "true").save(BRONZE_PATH))
     print(f"{new_count} records written to {BRONZE_PATH}")
+elif not DeltaTable.isDeltaTable(spark, BRONZE_PATH):
+    # First run with zero refresh history anywhere in the tenant yet (e.g. no
+    # semantic model has been refreshed at all) — still create the table with
+    # the right schema so downstream reads (Validation here, Silver later)
+    # don't fail with PATH_NOT_FOUND on a table that was never initialized.
+    (df_new.write.format("delta").mode("overwrite")
+        .option("mergeSchema", "true").save(BRONZE_PATH))
+    print(f"No refresh runs yet — initialized empty table at {BRONZE_PATH}")
 else:
     print("No new refresh runs. Nothing written.")
 
