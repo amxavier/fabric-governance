@@ -50,12 +50,10 @@ DESTINATION_TABLE = "raw_workspaces"
 INGESTION_TS = datetime.now(timezone.utc)
 INGESTION_DATE = INGESTION_TS.date().isoformat()
 
-TOKEN = notebookutils.credentials.getToken("pbi")
-HEADERS = {"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"}
-WORKSPACES_URL = "https://api.fabric.microsoft.com/v1/admin/workspaces"
-
 _lh_bronze = notebookutils.lakehouse.get("lh_governance_bronze")
 BRONZE_PATH = f"{_lh_bronze['properties']['abfsPath']}/Tables/{DESTINATION_TABLE}"
+AUTH_TABLE_PATH = f"{_lh_bronze['properties']['abfsPath']}/Tables/_auth_delegated"
+WORKSPACES_URL = "https://api.fabric.microsoft.com/v1/admin/workspaces"
 
 print(f"[Bronze] lh_governance_bronze id : {_lh_bronze['id']}")
 print(f"[Bronze] Write path   : {BRONZE_PATH}")
@@ -70,27 +68,55 @@ print(f"[Bronze] Write path   : {BRONZE_PATH}")
 
 # MARKDOWN ********************
 
-# ### TEMPORARY DIAGNOSTIC — Inspect Token Identity
+# ### Delegated Authentication
 #
-# Decodes the JWT payload from `notebookutils.credentials.getToken("pbi")` to
-# confirm which principal it actually represents when this notebook runs as
-# part of the pipeline (vs. a manual interactive run). Remove this cell once
-# the identity-resolution question is settled.
+# `/admin/*` endpoints (both Fabric's and Power BI's) rejected every app-only
+# Service Principal token tried here — `notebookutils.credentials.getToken()`
+# and a raw `client_credentials` OAuth call both got 403/401, while an
+# interactively-obtained delegated user token succeeded immediately. This
+# isn't a tenant misconfiguration; some Admin APIs simply don't support
+# app-only auth (confirmed against Microsoft Fabric community reports of the
+# same symptom). See the README for the full diagnosis.
+#
+# The fix: exchange a refresh token — obtained once via an interactive
+# device-code + MFA sign-in — for a fresh access token on every run, and
+# persist the rotated refresh token Microsoft returns back into this same
+# Delta table so the next run can still authenticate. tenant_id/client_id
+# aren't secrets; only the refresh token is, and it never leaves this
+# lakehouse (no Key Vault needed, no risk of it landing in git or in a public
+# GitHub Actions log).
 
 # CELL ********************
 
-import base64 as _b64
-import json as _json_diag
+def _get_delegated_token(scope: str) -> str:
+    auth_row = spark.read.format("delta").load(AUTH_TABLE_PATH).collect()[0]
+    resp = requests.post(
+        f"https://login.microsoftonline.com/{auth_row['tenant_id']}/oauth2/v2.0/token",
+        data={
+            "grant_type": "refresh_token",
+            "client_id": auth_row["client_id"],
+            "refresh_token": auth_row["refresh_token"],
+            "scope": f"{scope} offline_access",
+        },
+        timeout=30,
+    )
+    resp.raise_for_status()
+    token_data = resp.json()
 
-def _decode_jwt_payload(tok):
-    payload_b64 = tok.split(".")[1]
-    padded = payload_b64 + "=" * (-len(payload_b64) % 4)
-    return _json_diag.loads(_b64.urlsafe_b64decode(padded))
+    # Persist the rotated refresh token — Microsoft may issue a new one on
+    # every redemption, and the old one can stop working once that happens.
+    new_refresh_token = token_data.get("refresh_token", auth_row["refresh_token"])
+    spark.createDataFrame([{
+        "tenant_id": auth_row["tenant_id"],
+        "client_id": auth_row["client_id"],
+        "refresh_token": new_refresh_token,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }]).write.format("delta").mode("overwrite").save(AUTH_TABLE_PATH)
 
-_claims = _decode_jwt_payload(TOKEN)
-for _key in ["appid", "azp", "oid", "upn", "unique_name", "name", "idtyp", "app_displayname", "given_name", "aud"]:
-    if _key in _claims:
-        print(f"{_key}: {_claims[_key]}")
+    return token_data["access_token"]
+
+TOKEN = _get_delegated_token("https://api.fabric.microsoft.com/.default")
+HEADERS = {"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"}
 
 
 # METADATA ********************

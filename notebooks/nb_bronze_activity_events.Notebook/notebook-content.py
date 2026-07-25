@@ -69,8 +69,6 @@ TARGET_DATE = INGESTION_TS.date() - timedelta(days=1)
 WINDOW_START = datetime.combine(TARGET_DATE, datetime.min.time(), tzinfo=timezone.utc)
 WINDOW_END = datetime.combine(TARGET_DATE, datetime.max.time(), tzinfo=timezone.utc)
 
-TOKEN = notebookutils.credentials.getToken("pbi")
-HEADERS = {"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"}
 ACTIVITY_EVENTS_URL = (
     "https://api.powerbi.com/v1.0/myorg/admin/activityevents"
     f"?startDateTime='{WINDOW_START.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3]}Z'"
@@ -79,10 +77,72 @@ ACTIVITY_EVENTS_URL = (
 
 _lh_bronze = notebookutils.lakehouse.get("lh_governance_bronze")
 BRONZE_PATH = f"{_lh_bronze['properties']['abfsPath']}/Tables/{DESTINATION_TABLE}"
+AUTH_TABLE_PATH = f"{_lh_bronze['properties']['abfsPath']}/Tables/_auth_delegated"
 
 print(f"[Bronze] Window       : {WINDOW_START.isoformat()} -> {WINDOW_END.isoformat()}")
 print(f"[Bronze] lh_governance_bronze id : {_lh_bronze['id']}")
 print(f"[Bronze] Write path   : {BRONZE_PATH}")
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
+# ### Delegated Authentication
+#
+# `/admin/*` endpoints (both Fabric's and Power BI's) rejected every app-only
+# Service Principal token tried here — `notebookutils.credentials.getToken()`
+# and a raw `client_credentials` OAuth call both got 403/401, while an
+# interactively-obtained delegated user token succeeded immediately. This
+# isn't a tenant misconfiguration; some Admin APIs simply don't support
+# app-only auth (confirmed against Microsoft Fabric community reports of the
+# same symptom). See the README for the full diagnosis.
+#
+# The fix: exchange a refresh token — obtained once via an interactive
+# device-code + MFA sign-in — for a fresh access token on every run, and
+# persist the rotated refresh token Microsoft returns back into this same
+# Delta table so the next run can still authenticate. tenant_id/client_id
+# aren't secrets; only the refresh token is, and it never leaves this
+# lakehouse (no Key Vault needed, no risk of it landing in git or in a public
+# GitHub Actions log).
+
+# CELL ********************
+
+def _get_delegated_token(scope: str) -> str:
+    auth_row = spark.read.format("delta").load(AUTH_TABLE_PATH).collect()[0]
+    resp = requests.post(
+        f"https://login.microsoftonline.com/{auth_row['tenant_id']}/oauth2/v2.0/token",
+        data={
+            "grant_type": "refresh_token",
+            "client_id": auth_row["client_id"],
+            "refresh_token": auth_row["refresh_token"],
+            "scope": f"{scope} offline_access",
+        },
+        timeout=30,
+    )
+    resp.raise_for_status()
+    token_data = resp.json()
+
+    new_refresh_token = token_data.get("refresh_token", auth_row["refresh_token"])
+    spark.createDataFrame([{
+        "tenant_id": auth_row["tenant_id"],
+        "client_id": auth_row["client_id"],
+        "refresh_token": new_refresh_token,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }]).write.format("delta").mode("overwrite").save(AUTH_TABLE_PATH)
+
+    return token_data["access_token"]
+
+# Power BI's resource/audience, not Fabric's — activityevents lives on
+# api.powerbi.com, unlike nb_bronze_workspaces/items which call
+# api.fabric.microsoft.com.
+TOKEN = _get_delegated_token("https://analysis.windows.net/powerbi/api/.default")
+HEADERS = {"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"}
 
 
 # METADATA ********************

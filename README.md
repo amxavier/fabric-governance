@@ -154,17 +154,13 @@ fabric-governance/
 
 ## Getting Started
 
-This project deliberately reuses existing infrastructure rather than provisioning its own — the three Fabric workspaces and the Service Principal already exist for the sibling [microsoft-fabric-medallion-lakehouse](https://github.com/amxavier/microsoft-fabric-medallion-lakehouse) project. The only new infrastructure this project needs is its own Lakehouse trio inside those same workspaces, plus tenant-wide Admin API access for that same Service Principal (its existing per-workspace Contributor role does **not** cover the `/admin/*` endpoints this project depends on).
+This project deliberately reuses existing infrastructure rather than provisioning its own — the three Fabric workspaces and the Service Principal already exist for the sibling [microsoft-fabric-medallion-lakehouse](https://github.com/amxavier/microsoft-fabric-medallion-lakehouse) project. The only new infrastructure this project needs is its own Lakehouse trio inside those same workspaces.
 
 ### Remaining manual steps (not automatable via CI/CD)
 
 1. **Create `lh_governance_bronze`, `lh_governance_silver`, and `lh_governance_gold`** in each of the three existing workspaces (DEV/QA/PRD), then replace the placeholder lakehouse GUID with the real ID Fabric assigns to `lh_governance_gold` once created (bronze/silver too, in every notebook's METADATA/`known_lakehouses`) — same pattern the sibling project uses for its own lakehouses.
 
-2. **Grant the Service Principal tenant-wide Admin API access** — its existing per-workspace role does not cover this:
-   - Create a Microsoft Entra **Security Group** (type: Security) and add the Service Principal as a member (Azure Portal → Microsoft Entra ID → Groups → the group → Members).
-   - In the **Fabric Admin Portal → Tenant settings → Admin API settings** (a separate section from "Developer settings"), enable **"Service principals can access read-only admin APIs"** and **"Service principals can access admin APIs used for updates"**, both set to "Specific security groups" pointing at the group above.
-   - **Do not** add any admin-consent-required Application permissions (e.g. Power BI Service `Tenant.Read.All`) to the app registration in Entra — [Microsoft's own docs](https://learn.microsoft.com/en-us/fabric/admin/enable-service-principal-admin-apis) state this actively **breaks** service-principal auth for the read-only admin APIs. Check under Azure Portal → Microsoft Entra ID → Enterprise Applications → the app → Permissions, and remove any if present.
-   - Note: `/v1/capacities` (used by `nb_bronze_capacities`) is a **Core** API, not an Admin one — it doesn't need this setting, just normal Fabric API access.
+2. **Bootstrap delegated authentication for the four `/admin/*`-calling notebooks** (`nb_bronze_workspaces`, `nb_bronze_items`, `nb_bronze_activity_events`, `nb_bronze_refresh_history`) — see [Delegated Authentication](#delegated-authentication-for-admin) below for why this is needed and the one-time setup (interactive device-code sign-in), which populates a small Delta table (`_auth_delegated`) in `lh_governance_bronze` that these notebooks read from on every run.
 
 ### Required GitHub Secrets
 
@@ -184,7 +180,67 @@ Same Service Principal as the sibling repo — these are the same *values*, just
 2. Replace the placeholder lakehouse GUID `00000000-0000-0000-0000-0000000000e3` in `config/valueSets/dev.json` and in every notebook's METADATA block with the real `lh_governance_gold` ID (and the corresponding `lh_governance_bronze`/`lh_governance_silver` placeholders `...-e1`/`...-e2` where each notebook references its own default lakehouse).
 3. Add the GitHub secrets above (reuse the same Service Principal values already used by the sibling repo).
 4. Run `CD - Deploy to Fabric` in **full** mode to bootstrap DEV.
-5. Repeat steps 1–2 for QA and PRD once DEV is validated, then push to `qa`/`main` to promote.
+5. Run the one-time delegated-auth bootstrap described below.
+6. Repeat steps 1–2 for QA and PRD once DEV is validated, then push to `qa`/`main` to promote (each environment needs its own `_auth_delegated` bootstrap, since it's per-lakehouse).
+
+---
+
+## Delegated Authentication for `/admin/*`
+
+Every `/admin/*` endpoint this project depends on — Fabric's `/v1/admin/workspaces` and `/v1/admin/items`, and Power BI's `/admin/activityevents` and `/admin/datasets/{id}/refreshhistory` — **rejected the Service Principal outright**, no matter how it authenticated:
+
+- `notebookutils.credentials.getToken("pbi")` inside a pipeline-triggered notebook run → 403
+- A raw `client_credentials` OAuth call using the same SP's secret → 401 "Authorization Context Requested but not available"
+- Both produced a token that decoded to a genuine, correctly-scoped app-only SP token (`idtyp: app`, `oid` matching the SP's actual object ID) — so this isn't a misconfigured tenant setting or wrong credential, confirmed by exhaustively checking: Entra security group type and membership, the two "Admin API settings" toggles, absence of conflicting admin-consent permissions, and a Power BI `Tenant.Read.All` **Application** permission with admin consent (which per [Microsoft's own docs](https://learn.microsoft.com/en-us/fabric/admin/enable-service-principal-admin-apis) should not even be combined with the security-group method — tried anyway, no change)
+- An **interactively-obtained delegated user token** (Device Code flow + MFA + a `Tenant.Read.All` **Delegated** permission, admin-consented) succeeded immediately (`200 OK`)
+
+This matches reports from the [Fabric community](https://community.fabric.microsoft.com/t5/Developer/Admin-API-s-and-Service-Principal-Authentication-401/m-p/3134240) of the same symptom: some Admin APIs — likely because several are still **Preview** — simply don't support app-only authentication yet, regardless of tenant configuration.
+
+**The workaround**: the four affected notebooks exchange a stored **refresh token** (obtained once via interactive sign-in) for a fresh delegated access token on every run, via `_get_delegated_token()`. The refresh token — and the new one Microsoft issues on every redemption — lives in a small Delta table, `_auth_delegated`, inside `lh_governance_bronze`. This needed no new infrastructure (no Key Vault, no pipeline parameters): `tenant_id`/`client_id` aren't secrets, and the refresh token never leaves the lakehouse, which only the workspace's own members can see — same protection level a Key Vault would add here, at zero cost.
+
+### One-time bootstrap (per environment)
+
+Run this interactively in any notebook attached to the environment's `lh_governance_bronze` (delete the cell afterward — it briefly holds a device code, not a secret, so it's low-risk, but no need to leave it lying around):
+
+```python
+import requests
+from datetime import datetime, timezone
+
+TENANT_ID = "<tenant id>"          # not a secret
+CLIENT_ID = "<sp-fabric-cicd client id>"  # not a secret — but its App Registration
+                                            # needs "Allow public client flows" = Yes
+
+dc = requests.post(
+    f"https://login.microsoftonline.com/{TENANT_ID}/oauth2/v2.0/devicecode",
+    data={"client_id": CLIENT_ID, "scope": "https://api.fabric.microsoft.com/.default offline_access"},
+).json()
+print(dc["message"])  # open the URL, enter the code, sign in (MFA if prompted)
+
+# Run this cell AFTER completing the browser sign-in above:
+poll = requests.post(
+    f"https://login.microsoftonline.com/{TENANT_ID}/oauth2/v2.0/token",
+    data={
+        "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
+        "client_id": CLIENT_ID,
+        "device_code": dc["device_code"],
+    },
+).json()
+
+_lh = notebookutils.lakehouse.get("lh_governance_bronze")
+spark.createDataFrame([{
+    "tenant_id": TENANT_ID,
+    "client_id": CLIENT_ID,
+    "refresh_token": poll["refresh_token"],
+    "updated_at": datetime.now(timezone.utc).isoformat(),
+}]).write.format("delta").mode("overwrite").save(f"{_lh['properties']['abfsPath']}/Tables/_auth_delegated")
+```
+
+**Prerequisites for this to work:**
+- The app registration (`sp-fabric-cicd`) needs **"Allow public client flows"** enabled (Azure Portal → App registration → Authentication → Settings tab).
+- It needs a **Delegated** (not Application) `Tenant.Read.All` permission for Power BI Service, with admin consent granted.
+- The signed-in user needs whatever role actually grants Admin API visibility in this tenant (in practice: being able to open the Fabric Admin Portal was a reliable proxy for this).
+
+**Operational note:** the refresh token is valid on a sliding window (typically ~90 days of inactivity before Microsoft invalidates it) and is rotated automatically by `_get_delegated_token()` on every use, so daily runs should keep it alive indefinitely. If it ever does expire, re-run this bootstrap once per environment.
 
 ---
 
