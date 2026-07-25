@@ -85,7 +85,11 @@ else:
 new_count = df_new.count()
 print(f"New records to process: {new_count}")
 
-if new_count == 0:
+# Only skip if Silver already exists — a day with zero activity anywhere in
+# the tenant on a fresh deployment still needs Silver initialized with the
+# right schema, so Gold's read of silver_activity_events doesn't fail with
+# PATH_NOT_FOUND.
+if new_count == 0 and DeltaTable.isDeltaTable(spark, SILVER_PATH):
     print("Silver is already up to date. Nothing to process.")
     notebookutils.notebook.exit("UP_TO_DATE")
 

@@ -82,7 +82,11 @@ else:
 new_count = df_new.count()
 print(f"New refresh runs to process: {new_count}")
 
-if new_count == 0:
+# Only skip if Silver already exists — an empty Bronze on a fresh deployment
+# (no semantic model refreshed yet anywhere) still needs Silver initialized
+# with the right schema, so Gold's read of silver_refresh_history doesn't
+# fail with PATH_NOT_FOUND.
+if new_count == 0 and DeltaTable.isDeltaTable(spark, SILVER_PATH):
     print("Silver is already up to date. Nothing to process.")
     notebookutils.notebook.exit("UP_TO_DATE")
 
