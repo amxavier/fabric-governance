@@ -129,13 +129,130 @@ print(_json.dumps(cu_detail_rows[:5], indent=2, default=str))
 
 # MARKDOWN ********************
 
-# ### Next step
+# ### Confirmed grain (2026-07-28)
 #
-# Share: (1) the exact bracketed column names in the printed rows (does a
-# capacity id/name show up that the portal's column browser didn't list?),
-# (2) how many rows came back (tells us the real grain — hourly for 14 days
-# would be ~336 rows, 6-min buckets would be ~3,360), and (3) whether
-# `WindowStartTime` values are unique per row (confirms it's safe to
-# dedup/append by that column). The DataFrame build and append-only write
-# (deduplicated by the confirmed time-bucket key, mirroring
-# `nb_bronze_refresh_history`'s pattern) get added right after.
+# Real grain is **30 seconds** (`WindowStartTime`/`WindowEndTime` are
+# exactly 30s apart) — `StartOfHour`/`StartOf6min` are just pre-computed
+# bucket labels carried on every row for later grouping, not separate
+# grains. No capacity id/name column exists, only `SKU` ("FT1") — this
+# tenant has one capacity in scope, so `SKU` is a sufficient identifier for
+# now. 15,862 rows ≈ 5.5 days of retention at this fine grain (shorter than
+# the app's own 14-day report view, which likely aggregates to a coarser
+# level before display) — another reason to capture and accumulate this
+# daily rather than rely on the app to keep it around.
+#
+# `WindowStartTime` is unique per row (each 30s bucket happens once), so
+# it's the natural key for append-only dedup, same shape as
+# `nb_bronze_refresh_history`'s dedup by `refresh_id`. The duplicate
+# `"Start of Hour"` column (space-separated, same values as `StartOfHour`)
+# is dropped as redundant.
+
+# CELL ********************
+
+rows = [
+    {
+        "sku": r["CUDetail[SKU]"],
+        "window_start_time": r["CUDetail[WindowStartTime]"],
+        "window_end_time": r["CUDetail[WindowEndTime]"],
+        "start_of_hour": r["CUDetail[StartOfHour]"],
+        "start_of_6min": r["CUDetail[StartOf6min]"],
+        "cus": r["CUDetail[CUs]"],
+        "interactive": r["CUDetail[Interactive]"],
+        "background": r["CUDetail[Background]"],
+        "interactive_preview": r["CUDetail[InteractivePreview]"],
+        "background_preview": r["CUDetail[BackgroundPreview]"],
+        "base_capacity_units": r["CUDetail[BaseCapacityUnits]"],
+        "autoscale_capacity_units": r["CUDetail[AutoScaleCapacityUnits]"],
+        "cu_limit": r["CUDetail[CU Limit]"],
+        "threshold": r["CUDetail[Threshold]"],
+        "interactive_delay_pct": r["CUDetail[Interactive Delay %]"],
+        "interactive_rejection_pct": r["CUDetail[Interactive Rejection %]"],
+        "background_rejection_pct": r["CUDetail[Background Rejection %]"],
+        "peak6min_interactive": r["CUDetail[Peak6minInteractive]"],
+        "peak6min_background": r["CUDetail[Peak6minBackground]"],
+        "peak6min_interactive_preview": r["CUDetail[Peak6minInteractivePreview]"],
+        "peak6min_background_preview": r["CUDetail[Peak6minBackgroundPreview]"],
+        "peak6min_interactive_delay_pct": r["CUDetail[Peak6min Interactive Delay %]"],
+        "peak6min_interactive_rejection_pct": r["CUDetail[Peak6min Interactive Rejection %]"],
+        "peak6min_background_rejection_pct": r["CUDetail[Peak6min Background Rejection %]"],
+    }
+    for r in cu_detail_rows
+]
+
+df = spark.createDataFrame(rows)
+df = (
+    df.withColumn("window_start_time", F.to_timestamp("window_start_time"))
+      .withColumn("window_end_time", F.to_timestamp("window_end_time"))
+      .withColumn("start_of_hour", F.to_timestamp("start_of_hour"))
+      .withColumn("start_of_6min", F.to_timestamp("start_of_6min"))
+      .withColumn("ingestion_ts", F.lit(datetime.now(timezone.utc).isoformat()).cast("timestamp"))
+      .withColumn("ingestion_date", F.lit(datetime.now(timezone.utc).date().isoformat()).cast(DateType()))
+)
+
+print(f"Rows fetched: {df.count()}")
+df.printSchema()
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
+# ### Append-Only Write (deduplicated by sku + window_start_time)
+
+# CELL ********************
+
+if DeltaTable.isDeltaTable(spark, BRONZE_PATH):
+    existing_keys = (
+        spark.read.format("delta").load(BRONZE_PATH)
+        .select("sku", "window_start_time").distinct()
+    )
+    df_new = df.join(existing_keys, on=["sku", "window_start_time"], how="left_anti")
+else:
+    df_new = df
+
+new_count = df_new.count()
+print(f"New 30s buckets to write: {new_count}")
+
+if new_count > 0:
+    (df_new.write.format("delta").mode("append")
+        .option("mergeSchema", "true").save(BRONZE_PATH))
+    print(f"{new_count} records written to {BRONZE_PATH}")
+elif not DeltaTable.isDeltaTable(spark, BRONZE_PATH):
+    (df_new.write.format("delta").mode("overwrite")
+        .option("mergeSchema", "true").save(BRONZE_PATH))
+    print(f"No buckets yet — initialized empty table at {BRONZE_PATH}")
+else:
+    print("No new buckets. Nothing written.")
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
+# ### Validation
+
+# CELL ********************
+
+(spark.read.format("delta").load(BRONZE_PATH)
+    .groupBy(F.to_date("window_start_time").alias("day"))
+    .agg(F.count("*").alias("buckets"), F.sum("cus").alias("total_cu"))
+    .orderBy(F.desc("day"))
+    .show(20, truncate=False))
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }

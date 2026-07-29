@@ -28,8 +28,8 @@
 # ### nb_gold_governance_model
 #
 # **Layer:** Gold — Governance Star Schema
-# **Source:** `lh_governance_silver` → `silver_capacities`, `silver_workspaces`, `silver_items`, `silver_activity_events`, `silver_refresh_history`, `silver_capacity_metrics`
-# **Destination:** `lh_governance_gold` → `dim_capacity`, `dim_workspace`, `dim_item`, `dim_user`, `dim_date`, `fact_activity`, `fact_refresh`, `fact_capacity_consumption`
+# **Source:** `lh_governance_silver` → `silver_capacities`, `silver_workspaces`, `silver_items`, `silver_activity_events`, `silver_refresh_history`, `silver_capacity_metrics`, `silver_capacity_cu_detail`
+# **Destination:** `lh_governance_gold` → `dim_capacity`, `dim_workspace`, `dim_item`, `dim_user`, `dim_date`, `fact_activity`, `fact_refresh`, `fact_capacity_consumption`, `fact_capacity_utilization`
 # **Depends on:** all five Silver notebooks
 # **Schedule:** Daily (last step in the pipeline)
 #
@@ -190,7 +190,14 @@ capacity_metrics_dates = (
     spark.read.format("delta").load(f"{SILVER_ABFS}/Tables/silver_capacity_metrics")
     .select(F.col("ingestion_date").alias("d"))
 )
-observed = activity_dates.union(refresh_dates).union(capacity_metrics_dates).filter("d is not null")
+cu_detail_dates = (
+    spark.read.format("delta").load(f"{SILVER_ABFS}/Tables/silver_capacity_cu_detail")
+    .select(F.col("date_id").alias("d"))
+)
+observed = (
+    activity_dates.union(refresh_dates).union(capacity_metrics_dates).union(cu_detail_dates)
+    .filter("d is not null")
+)
 bounds = observed.agg(F.min("d").alias("min_d"), F.max("d").alias("max_d")).collect()[0]
 
 # On a fresh deployment (day 1), both fact sources are empty and min_d/max_d
@@ -345,11 +352,54 @@ print(f"fact_capacity_consumption: {fact_capacity_consumption.count()} rows")
 
 # MARKDOWN ********************
 
+# ### fact_capacity_utilization
+#
+# Grain: one row per SKU per day. Unlike `fact_capacity_consumption`
+# (item-level, rolling-window `sum_cu` — a trend indicator), `sum_cu` here
+# is a genuine daily total (rolled up from immutable 30-second buckets in
+# `silver_capacity_cu_detail`) — safe to sum across any date range for
+# real growth/capacity-planning numbers ("total CU used last quarter vs.
+# this quarter", "are we trending toward the SKU's ceiling").
+
+# CELL ********************
+
+fact_capacity_utilization = (
+    spark.read.format("delta").load(f"{SILVER_ABFS}/Tables/silver_capacity_cu_detail")
+    .select(
+        "sku",
+        "date_id",
+        "buckets_captured",
+        "sum_cu",
+        "avg_cu",
+        "max_cu",
+        "avg_interactive",
+        "avg_background",
+        "max_interactive_delay_pct",
+        "max_interactive_rejection_pct",
+        "max_background_rejection_pct",
+        "base_capacity_units",
+    )
+)
+
+(fact_capacity_utilization.write.format("delta").mode("overwrite")
+    .option("overwriteSchema", "true").save(f"{GOLD_ABFS}/Tables/fact_capacity_utilization"))
+print(f"fact_capacity_utilization: {fact_capacity_utilization.count()} rows")
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
 # ### Validation
 
 # CELL ********************
 
-for table in ["dim_capacity", "dim_workspace", "dim_item", "dim_user", "dim_date", "fact_activity", "fact_refresh", "fact_capacity_consumption"]:
+for table in ["dim_capacity", "dim_workspace", "dim_item", "dim_user", "dim_date", "fact_activity", "fact_refresh", "fact_capacity_consumption", "fact_capacity_utilization"]:
     count = spark.read.format("delta").load(f"{GOLD_ABFS}/Tables/{table}").count()
     print(f"{table:20s}: {count} rows")
 
