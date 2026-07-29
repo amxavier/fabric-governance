@@ -214,6 +214,15 @@ ROW_SCHEMA = StructType([
     StructField("peak6min_background_rejection_pct", DoubleType()),
 ])
 
+# Same DAX-serializes-whole-numbers-as-int gotcha as nb_bronze_capacity_metrics
+# — coerce every Double-typed field through float() so it always matches the
+# explicit schema regardless of what the source happened to serialize it as.
+def _f(x):
+    return float(x) if x is not None else None
+
+def _i(x):
+    return int(x) if x is not None else None
+
 rows = [
     {
         "sku": r["CUDetail[SKU]"],
@@ -221,25 +230,25 @@ rows = [
         "window_end_time": r["CUDetail[WindowEndTime]"],
         "start_of_hour": r["CUDetail[StartOfHour]"],
         "start_of_6min": r["CUDetail[StartOf6min]"],
-        "cus": r["CUDetail[CUs]"],
-        "interactive": r["CUDetail[Interactive]"],
-        "background": r["CUDetail[Background]"],
-        "interactive_preview": r["CUDetail[InteractivePreview]"],
-        "background_preview": r["CUDetail[BackgroundPreview]"],
-        "base_capacity_units": r["CUDetail[BaseCapacityUnits]"],
-        "autoscale_capacity_units": r["CUDetail[AutoScaleCapacityUnits]"],
-        "cu_limit": r["CUDetail[CU Limit]"],
-        "threshold": r["CUDetail[Threshold]"],
-        "interactive_delay_pct": r["CUDetail[Interactive Delay %]"],
-        "interactive_rejection_pct": r["CUDetail[Interactive Rejection %]"],
-        "background_rejection_pct": r["CUDetail[Background Rejection %]"],
-        "peak6min_interactive": r["CUDetail[Peak6minInteractive]"],
-        "peak6min_background": r["CUDetail[Peak6minBackground]"],
-        "peak6min_interactive_preview": r["CUDetail[Peak6minInteractivePreview]"],
-        "peak6min_background_preview": r["CUDetail[Peak6minBackgroundPreview]"],
-        "peak6min_interactive_delay_pct": r["CUDetail[Peak6min Interactive Delay %]"],
-        "peak6min_interactive_rejection_pct": r["CUDetail[Peak6min Interactive Rejection %]"],
-        "peak6min_background_rejection_pct": r["CUDetail[Peak6min Background Rejection %]"],
+        "cus": _f(r["CUDetail[CUs]"]),
+        "interactive": _f(r["CUDetail[Interactive]"]),
+        "background": _f(r["CUDetail[Background]"]),
+        "interactive_preview": _f(r["CUDetail[InteractivePreview]"]),
+        "background_preview": _f(r["CUDetail[BackgroundPreview]"]),
+        "base_capacity_units": _i(r["CUDetail[BaseCapacityUnits]"]),
+        "autoscale_capacity_units": _i(r["CUDetail[AutoScaleCapacityUnits]"]),
+        "cu_limit": _f(r["CUDetail[CU Limit]"]),
+        "threshold": _f(r["CUDetail[Threshold]"]),
+        "interactive_delay_pct": _f(r["CUDetail[Interactive Delay %]"]),
+        "interactive_rejection_pct": _f(r["CUDetail[Interactive Rejection %]"]),
+        "background_rejection_pct": _f(r["CUDetail[Background Rejection %]"]),
+        "peak6min_interactive": _f(r["CUDetail[Peak6minInteractive]"]),
+        "peak6min_background": _f(r["CUDetail[Peak6minBackground]"]),
+        "peak6min_interactive_preview": _f(r["CUDetail[Peak6minInteractivePreview]"]),
+        "peak6min_background_preview": _f(r["CUDetail[Peak6minBackgroundPreview]"]),
+        "peak6min_interactive_delay_pct": _f(r["CUDetail[Peak6min Interactive Delay %]"]),
+        "peak6min_interactive_rejection_pct": _f(r["CUDetail[Peak6min Interactive Rejection %]"]),
+        "peak6min_background_rejection_pct": _f(r["CUDetail[Peak6min Background Rejection %]"]),
     }
     for r in cu_detail_rows
 ]
