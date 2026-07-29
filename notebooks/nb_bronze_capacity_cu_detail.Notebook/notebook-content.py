@@ -52,6 +52,14 @@
 # bucket key, same shape as `nb_bronze_activity_events`/
 # `nb_bronze_refresh_history`) instead of the daily-snapshot-plus-delta
 # workaround `nb_bronze_capacity_metrics` needs for `MetricsByItem`.
+#
+# **Auth:** same delegated refresh-token workaround as
+# `nb_bronze_capacity_metrics` — `executeQueries` empirically 403s under the
+# `sp-fabric-cicd` Service Principal's own app-only identity regardless of
+# tenant/workspace/App-Registration configuration (see that notebook's
+# markdown for the full elimination process), so this uses the same
+# `_auth_delegated` refresh token instead of
+# `notebookutils.credentials.getToken("pbi")`.
 
 
 # MARKDOWN ********************
@@ -70,6 +78,7 @@ METRICS_DATASET_ID = "a2354849-42a1-40b1-80ed-473e68401b75"
 
 _lh_bronze = notebookutils.lakehouse.get("lh_governance_bronze")
 BRONZE_PATH = f"{_lh_bronze['properties']['abfsPath']}/Tables/{DESTINATION_TABLE}"
+AUTH_TABLE_PATH = f"{_lh_bronze['properties']['abfsPath']}/Tables/_auth_delegated"
 
 print(f"[Bronze] lh_governance_bronze id : {_lh_bronze['id']}")
 print(f"[Bronze] Write path              : {BRONZE_PATH}")
@@ -104,8 +113,33 @@ from pyspark.sql import functions as F
 from pyspark.sql.types import DateType
 from delta.tables import DeltaTable
 
+def _get_delegated_token(scope: str) -> str:
+    auth_row = spark.read.format("delta").load(AUTH_TABLE_PATH).collect()[0]
+    resp = requests.post(
+        f"https://login.microsoftonline.com/{auth_row['tenant_id']}/oauth2/v2.0/token",
+        data={
+            "grant_type": "refresh_token",
+            "client_id": auth_row["client_id"],
+            "refresh_token": auth_row["refresh_token"],
+            "scope": f"{scope} offline_access",
+        },
+        timeout=30,
+    )
+    resp.raise_for_status()
+    token_data = resp.json()
+
+    new_refresh_token = token_data.get("refresh_token", auth_row["refresh_token"])
+    spark.createDataFrame([{
+        "tenant_id": auth_row["tenant_id"],
+        "client_id": auth_row["client_id"],
+        "refresh_token": new_refresh_token,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }]).write.format("delta").mode("overwrite").save(AUTH_TABLE_PATH)
+
+    return token_data["access_token"]
+
 def _execute_dax(workspace_id: str, dataset_id: str, dax_query: str) -> list[dict]:
-    token = notebookutils.credentials.getToken("pbi")
+    token = _get_delegated_token("https://analysis.windows.net/powerbi/api/.default")
     resp = requests.post(
         f"https://api.powerbi.com/v1.0/myorg/groups/{workspace_id}/datasets/{dataset_id}/executeQueries",
         headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
