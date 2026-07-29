@@ -35,10 +35,10 @@
 # extend from "why did this break" to "was this worth what it's costing" and
 # "which process should we optimize first."
 #
-# Unlike the other Bronze sources, this is **not** an `/admin/*` endpoint —
-# it's a normal DAX query against a semantic model, so it does not need the
-# delegated refresh-token workaround used by the other four Bronze notebooks
-# (see their markdown / README for that saga).
+# This is **not** an `/admin/*` endpoint — it's a normal DAX query against a
+# semantic model — but empirically it turned out to need the exact same
+# delegated refresh-token workaround as the other four Bronze notebooks
+# anyway (see below), just for a different reason.
 #
 # **Why REST `executeQueries` instead of `semantic-link` (`sempy.fabric`):**
 # `semantic-link`'s `list_datasets`/`list_tables`/`evaluate_dax` all go
@@ -48,9 +48,25 @@
 # a structural limitation of the trial SKU, not a toggle we can enable, and
 # it doesn't matter which workspace is targeted since XMLA never worked
 # against this capacity to begin with. The plain `executeQueries` REST API
-# doesn't use XMLA, so it isn't affected by this — it only depends on the
-# tenant setting "Semantic Model Execute Queries REST API" being enabled
-# (already the case here, scoped to the `gp_sec_sp` security group).
+# doesn't use XMLA, so it isn't affected by this.
+#
+# **Why `executeQueries` still needs delegated auth, not
+# `notebookutils.credentials.getToken("pbi")`:** worked fine when run
+# interactively (as a real user), but failed with `403 Forbidden` every time
+# when run via the scheduled pipeline (as the `sp-fabric-cicd` Service
+# Principal) — even after confirming, one by one: the tenant setting
+# "Semantic Model Execute Queries REST API" enabled for the entire
+# organization, the SP has Admin access on the Capacity Metrics workspace
+# (both directly and via its security group), all relevant Developer
+# settings enabled for that group, and the SP's App Registration already
+# holds `Tenant.Read.All`/`Tenant.ReadWrite.All` (Application, admin-
+# consented) — Power BI Service doesn't even offer a narrower Application
+# permission than that. With every configuration angle ruled out, this
+# matches the same platform-level pattern as the `/admin/*` endpoints:
+# `executeQueries` behaves as if it doesn't support app-only Service
+# Principal auth here either. The fix is the same one already proven for
+# the other four Bronze notebooks: exchange a delegated user refresh token
+# for an access token instead of using the SP's own identity.
 #
 # The Capacity Metrics app only exposes a rolling 14-day window in its own
 # report — this notebook's job is to capture it daily, append-only, so we
@@ -75,6 +91,7 @@ METRICS_DATASET_ID = "a2354849-42a1-40b1-80ed-473e68401b75"
 
 _lh_bronze = notebookutils.lakehouse.get("lh_governance_bronze")
 BRONZE_PATH = f"{_lh_bronze['properties']['abfsPath']}/Tables/{DESTINATION_TABLE}"
+AUTH_TABLE_PATH = f"{_lh_bronze['properties']['abfsPath']}/Tables/_auth_delegated"
 
 print(f"[Bronze] lh_governance_bronze id : {_lh_bronze['id']}")
 print(f"[Bronze] Write path              : {BRONZE_PATH}")
@@ -148,8 +165,33 @@ from pyspark.sql import functions as F
 from pyspark.sql.types import DateType
 from delta.tables import DeltaTable
 
+def _get_delegated_token(scope: str) -> str:
+    auth_row = spark.read.format("delta").load(AUTH_TABLE_PATH).collect()[0]
+    resp = requests.post(
+        f"https://login.microsoftonline.com/{auth_row['tenant_id']}/oauth2/v2.0/token",
+        data={
+            "grant_type": "refresh_token",
+            "client_id": auth_row["client_id"],
+            "refresh_token": auth_row["refresh_token"],
+            "scope": f"{scope} offline_access",
+        },
+        timeout=30,
+    )
+    resp.raise_for_status()
+    token_data = resp.json()
+
+    new_refresh_token = token_data.get("refresh_token", auth_row["refresh_token"])
+    spark.createDataFrame([{
+        "tenant_id": auth_row["tenant_id"],
+        "client_id": auth_row["client_id"],
+        "refresh_token": new_refresh_token,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }]).write.format("delta").mode("overwrite").save(AUTH_TABLE_PATH)
+
+    return token_data["access_token"]
+
 def _execute_dax(workspace_id: str, dataset_id: str, dax_query: str) -> list[dict]:
-    token = notebookutils.credentials.getToken("pbi")
+    token = _get_delegated_token("https://analysis.windows.net/powerbi/api/.default")
     resp = requests.post(
         f"https://api.powerbi.com/v1.0/myorg/groups/{workspace_id}/datasets/{dataset_id}/executeQueries",
         headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
