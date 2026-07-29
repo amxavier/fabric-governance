@@ -12,11 +12,21 @@ EXPECTED_MEASURES = [
     "Avg Refresh Duration (s)",
     "Distinct Publishers",
     "Days Since Last Successful Refresh",
+    "Total CU (Item Trend)",
+    "Total CU (Capacity, Real)",
+    "Total CU (Item, by Date)",
+    "Avg Daily CU (Capacity)",
 ]
 
+# Table/measure home is "_measure" (not "measure") — renamed when the model
+# was rebuilt interactively so the Display Folder groups independently of
+# any real data table instead of nesting under whichever table a measure
+# happened to be created on (see project memory for why).
 EXPECTED_TABLES = [
     "dim_capacity", "dim_workspace", "dim_item", "dim_user", "dim_date",
-    "fact_activity", "fact_refresh", "measure",
+    "fact_activity", "fact_refresh",
+    "fact_capacity_consumption", "fact_capacity_utilization",
+    "_measure",
 ]
 
 EXPECTED_RELATIONSHIPS = [
@@ -28,6 +38,11 @@ EXPECTED_RELATIONSHIPS = [
     ("fact_refresh.date_id", "dim_date.date_id"),
     ("dim_item.workspace_id", "dim_workspace.workspace_id"),
     ("dim_workspace.capacity_id", "dim_capacity.capacity_id"),
+    ("dim_item.item_id", "fact_capacity_consumption.item_id"),
+    ("fact_capacity_consumption.workspace_id", "dim_workspace.workspace_id"),
+    ("fact_capacity_consumption.date_id", "dim_date.date_id"),
+    ("dim_date.date_id", "fact_capacity_utilization.date_id"),
+    ("fact_capacity_utilization.sku", "dim_capacity.sku"),
 ]
 
 # Real DEV workspace (reused from the sibling microsoft-fabric-medallion-lakehouse
@@ -63,7 +78,7 @@ def test_all_tables_present():
 
 
 def test_all_measures_defined():
-    content = (DEFINITION_PATH / "tables" / "measure.tmdl").read_text(encoding="utf-8")
+    content = (DEFINITION_PATH / "tables" / "_measure.tmdl").read_text(encoding="utf-8")
     for measure in EXPECTED_MEASURES:
         assert f"measure '{measure}'" in content, f"Missing DAX measure: {measure}"
 
