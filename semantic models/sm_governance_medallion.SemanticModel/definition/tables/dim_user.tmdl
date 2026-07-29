@@ -1,0 +1,28 @@
+table dim_user
+	lineageTag: 3e09f064-ab37-4a36-9b28-d48da3cc2882
+	sourceLineageTag: [dbo].[dim_user]
+
+	column user_key
+		dataType: string
+		lineageTag: a8325989-a53d-49a3-aa33-a6157ca44905
+		sourceLineageTag: user_key
+		summarizeBy: none
+		sourceColumn: user_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column user_email
+		dataType: string
+		lineageTag: 86721120-f754-4632-bb1d-d39f99c8e77e
+		sourceLineageTag: user_email
+		summarizeBy: none
+		sourceColumn: user_email
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_user = entity
+		mode: directLake
+		source
+			entityName: dim_user
+			expressionSource: 'DirectLake - lh_governance_gold_dev'
+

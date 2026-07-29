@@ -1,0 +1,65 @@
+table dim_capacity
+	lineageTag: 36b32435-2ffb-481e-927a-a1aadbc6cebb
+	sourceLineageTag: [dbo].[dim_capacity]
+
+	column capacity_id
+		dataType: string
+		lineageTag: 88be8d9a-7c3d-4ab1-a45b-b4b62166b0f4
+		sourceLineageTag: capacity_id
+		summarizeBy: none
+		sourceColumn: capacity_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column capacity_name
+		dataType: string
+		lineageTag: 1ca237ff-04c7-4711-be62-48ecbd10b491
+		sourceLineageTag: capacity_name
+		summarizeBy: none
+		sourceColumn: capacity_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column sku
+		dataType: string
+		lineageTag: 58f87d3d-60d2-417e-a517-733d2918874a
+		sourceLineageTag: sku
+		summarizeBy: none
+		sourceColumn: sku
+
+		annotation SummarizationSetBy = Automatic
+
+	column region
+		dataType: string
+		lineageTag: 3f642f8e-c921-4350-8ae3-e6508078cf9e
+		sourceLineageTag: region
+		summarizeBy: none
+		sourceColumn: region
+
+		annotation SummarizationSetBy = Automatic
+
+	column state
+		dataType: string
+		lineageTag: 35100b84-d373-4c2c-a911-8412587de41b
+		sourceLineageTag: state
+		summarizeBy: none
+		sourceColumn: state
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_trial_sku
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: b117dca3-8723-4f5b-86ab-ae8700ba74de
+		sourceLineageTag: is_trial_sku
+		summarizeBy: none
+		sourceColumn: is_trial_sku
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_capacity = entity
+		mode: directLake
+		source
+			entityName: dim_capacity
+			expressionSource: 'DirectLake - lh_governance_gold_dev'
+
