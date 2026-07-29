@@ -276,6 +276,18 @@ ROW_SCHEMA = StructType([
     StructField("throttling_min", DoubleType()),
 ])
 
+# DAX/JSON serializes a whole-number measure as a plain int (e.g. 45778
+# instead of 45778.0) — harmless normally, but createDataFrame with an
+# explicit DoubleType schema is strict and rejects an int object outright.
+# Coerce every Double-typed field through float() so the value's Python
+# type always matches the schema regardless of what the source happened to
+# serialize it as.
+def _f(x):
+    return float(x) if x is not None else None
+
+def _i(x):
+    return int(x) if x is not None else None
+
 rows = [
     {
         "item_id": r["MetricsByItem[ItemId]"].lower(),
@@ -283,20 +295,20 @@ rows = [
         "workspace_id": r["MetricsByItem[WorkspaceId]"].lower(),
         "premium_capacity_id": r["MetricsByItem[PremiumCapacityId]"],
         "billing_type": r["MetricsByItem[Billing type]"],
-        "sum_cu": r["MetricsByItem[sum_CU]"],
-        "sum_duration_s": r["MetricsByItem[sum_duration]"],
-        "avg_duration_ms": r["MetricsByItem[avg_DurationMs]"],
-        "percentile_duration_ms_50": r["MetricsByItem[percentile_DurationMs_50]"],
-        "percentile_duration_ms_90": r["MetricsByItem[percentile_DurationMs_90]"],
-        "count_operations": r["MetricsByItem[count_operations]"],
-        "count_successful_operations": r["MetricsByItem[count_successful_operations]"],
-        "count_failure_operations": r["MetricsByItem[count_failure_operations]"],
-        "count_cancelled_operations": r["MetricsByItem[count_cancelled_operations]"],
-        "count_rejected_operations": r["MetricsByItem[count_rejected_operations]"],
-        "count_inprogress_operations": r["MetricsByItem[count_InProgress_operations]"],
-        "count_invalid_operations": r["MetricsByItem[count_Invalid_operations]"],
-        "count_users": r["MetricsByItem[count_users]"],
-        "throttling_min": r["MetricsByItem[Throttling (min)]"],
+        "sum_cu": _f(r["MetricsByItem[sum_CU]"]),
+        "sum_duration_s": _f(r["MetricsByItem[sum_duration]"]),
+        "avg_duration_ms": _f(r["MetricsByItem[avg_DurationMs]"]),
+        "percentile_duration_ms_50": _f(r["MetricsByItem[percentile_DurationMs_50]"]),
+        "percentile_duration_ms_90": _f(r["MetricsByItem[percentile_DurationMs_90]"]),
+        "count_operations": _i(r["MetricsByItem[count_operations]"]),
+        "count_successful_operations": _i(r["MetricsByItem[count_successful_operations]"]),
+        "count_failure_operations": _i(r["MetricsByItem[count_failure_operations]"]),
+        "count_cancelled_operations": _i(r["MetricsByItem[count_cancelled_operations]"]),
+        "count_rejected_operations": _i(r["MetricsByItem[count_rejected_operations]"]),
+        "count_inprogress_operations": _i(r["MetricsByItem[count_InProgress_operations]"]),
+        "count_invalid_operations": _i(r["MetricsByItem[count_Invalid_operations]"]),
+        "count_users": _i(r["MetricsByItem[count_users]"]),
+        "throttling_min": _f(r["MetricsByItem[Throttling (min)]"]),
     }
     for r in metrics_rows
 ]
