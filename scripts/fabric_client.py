@@ -109,15 +109,18 @@ class FabricClient:
             return
         resp.raise_for_status()
 
-    def get_item_definition(self, workspace_id: str, item_id: str) -> list[dict]:
-        resp = requests.post(
-            f"{_FABRIC_BASE_URL}/workspaces/{workspace_id}/items/{item_id}/getDefinition",
-            headers=self._headers(_FABRIC_SCOPE),
-            timeout=60,
-        )
+    def get_item_definition(self, workspace_id: str, item_id: str, format: str | None = None) -> list[dict]:
+        # format=TMDL is required for SemanticModel items — without it, Fabric
+        # returns only the minimal .platform/definition.pbism stub instead of
+        # the actual model/tables/relationships TMDL files.
+        url = f"{_FABRIC_BASE_URL}/workspaces/{workspace_id}/items/{item_id}/getDefinition"
+        if format:
+            url += f"?format={format}"
+        resp = requests.post(url, headers=self._headers(_FABRIC_SCOPE), timeout=60)
         if resp.status_code == 202:
-            self._poll(resp.headers["Location"])
-            resp = requests.get(resp.headers["Location"], headers=self._headers(_FABRIC_SCOPE), timeout=30)
+            operation_url = resp.headers["Location"]
+            self._poll(operation_url)
+            resp = requests.get(f"{operation_url}/result", headers=self._headers(_FABRIC_SCOPE), timeout=30)
             resp.raise_for_status()
             return resp.json().get("definition", {}).get("parts", [])
         resp.raise_for_status()

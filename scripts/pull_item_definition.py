@@ -45,7 +45,7 @@ def main() -> None:
         sys.exit(1)
     item_id = items[display_name]
 
-    parts = client.get_item_definition(workspace_id, item_id)
+    parts = client.get_item_definition(workspace_id, item_id, format="TMDL")
     print(f"Pulled {len(parts)} parts for {display_name} ({item_id})")
 
     item_path = REPO_ROOT / target_folder
