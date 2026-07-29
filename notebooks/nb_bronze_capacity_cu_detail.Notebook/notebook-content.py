@@ -110,7 +110,7 @@ import requests
 import json as _json
 from datetime import datetime, timezone
 from pyspark.sql import functions as F
-from pyspark.sql.types import DateType
+from pyspark.sql.types import DateType, StructType, StructField, StringType, DoubleType, LongType
 from delta.tables import DeltaTable
 
 def _get_delegated_token(scope: str) -> str:
@@ -183,6 +183,37 @@ print(_json.dumps(cu_detail_rows[:5], indent=2, default=str))
 
 # CELL ********************
 
+# Explicit schema instead of relying on Spark's type inference: several
+# Peak6min* columns come back null in every single row of a run (Preview
+# features unused on this trial capacity), and an all-null column across the
+# whole sample makes inference fail outright with CANNOT_DETERMINE_TYPE.
+ROW_SCHEMA = StructType([
+    StructField("sku", StringType()),
+    StructField("window_start_time", StringType()),
+    StructField("window_end_time", StringType()),
+    StructField("start_of_hour", StringType()),
+    StructField("start_of_6min", StringType()),
+    StructField("cus", DoubleType()),
+    StructField("interactive", DoubleType()),
+    StructField("background", DoubleType()),
+    StructField("interactive_preview", DoubleType()),
+    StructField("background_preview", DoubleType()),
+    StructField("base_capacity_units", LongType()),
+    StructField("autoscale_capacity_units", LongType()),
+    StructField("cu_limit", DoubleType()),
+    StructField("threshold", DoubleType()),
+    StructField("interactive_delay_pct", DoubleType()),
+    StructField("interactive_rejection_pct", DoubleType()),
+    StructField("background_rejection_pct", DoubleType()),
+    StructField("peak6min_interactive", DoubleType()),
+    StructField("peak6min_background", DoubleType()),
+    StructField("peak6min_interactive_preview", DoubleType()),
+    StructField("peak6min_background_preview", DoubleType()),
+    StructField("peak6min_interactive_delay_pct", DoubleType()),
+    StructField("peak6min_interactive_rejection_pct", DoubleType()),
+    StructField("peak6min_background_rejection_pct", DoubleType()),
+])
+
 rows = [
     {
         "sku": r["CUDetail[SKU]"],
@@ -213,7 +244,7 @@ rows = [
     for r in cu_detail_rows
 ]
 
-df = spark.createDataFrame(rows)
+df = spark.createDataFrame(rows, schema=ROW_SCHEMA)
 df = (
     df.withColumn("window_start_time", F.to_timestamp("window_start_time"))
       .withColumn("window_end_time", F.to_timestamp("window_end_time"))

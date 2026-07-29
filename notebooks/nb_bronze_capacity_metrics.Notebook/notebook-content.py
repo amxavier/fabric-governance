@@ -162,7 +162,7 @@ import requests
 import json as _json
 from datetime import datetime, timezone
 from pyspark.sql import functions as F
-from pyspark.sql.types import DateType
+from pyspark.sql.types import DateType, StructType, StructField, StringType, DoubleType, LongType
 from delta.tables import DeltaTable
 
 def _get_delegated_token(scope: str) -> str:
@@ -250,6 +250,32 @@ print(_json.dumps(items_rows[:3], indent=2, default=str))
 
 # CELL ********************
 
+# Explicit schema instead of relying on Spark's type inference — a column
+# that's null across every row in a run (e.g. an item with no throttling
+# data at all) makes inference fail outright with CANNOT_DETERMINE_TYPE,
+# as found empirically with the sibling nb_bronze_capacity_cu_detail.
+ROW_SCHEMA = StructType([
+    StructField("item_id", StringType()),
+    StructField("artifact_kind", StringType()),
+    StructField("workspace_id", StringType()),
+    StructField("premium_capacity_id", StringType()),
+    StructField("billing_type", StringType()),
+    StructField("sum_cu", DoubleType()),
+    StructField("sum_duration_s", DoubleType()),
+    StructField("avg_duration_ms", DoubleType()),
+    StructField("percentile_duration_ms_50", DoubleType()),
+    StructField("percentile_duration_ms_90", DoubleType()),
+    StructField("count_operations", LongType()),
+    StructField("count_successful_operations", LongType()),
+    StructField("count_failure_operations", LongType()),
+    StructField("count_cancelled_operations", LongType()),
+    StructField("count_rejected_operations", LongType()),
+    StructField("count_inprogress_operations", LongType()),
+    StructField("count_invalid_operations", LongType()),
+    StructField("count_users", LongType()),
+    StructField("throttling_min", DoubleType()),
+])
+
 rows = [
     {
         "item_id": r["MetricsByItem[ItemId]"].lower(),
@@ -275,7 +301,7 @@ rows = [
     for r in metrics_rows
 ]
 
-df = spark.createDataFrame(rows)
+df = spark.createDataFrame(rows, schema=ROW_SCHEMA)
 df = (
     df.withColumn("ingestion_ts", F.lit(datetime.now(timezone.utc).isoformat()).cast("timestamp"))
       .withColumn("ingestion_date", F.lit(datetime.now(timezone.utc).date().isoformat()).cast(DateType()))
