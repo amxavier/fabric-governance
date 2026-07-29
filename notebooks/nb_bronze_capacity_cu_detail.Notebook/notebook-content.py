@@ -330,3 +330,51 @@ else:
 # META   "language": "python",
 # META   "language_group": "synapse_pyspark"
 # META }
+
+# MARKDOWN ********************
+
+# ### (Exploration only — do not schedule) Item × day × Background/Interactive grain
+#
+# Neither source captured so far crosses all three axes we need for "which
+# item was the biggest offender today, and was it Background or
+# Interactive load": `MetricsByItem` has item + CU but no Background/
+# Interactive split; `CUDetail` has the Background/Interactive split but no
+# ItemId (capacity-level only). Two tables spotted in the original table
+# listing but never queried — `MetricsByItemAndDayForWorkloadAutoscale` and
+# `CUDetailForWorkLoadAutoscale` — are candidates for combining item, day,
+# and workload type in one place. `TOPN` caps the pull since these could be
+# large; this is purely to see the real columns before deciding anything.
+
+# CELL ********************
+
+sample_a = _execute_dax(
+    METRICS_WORKSPACE_ID, METRICS_DATASET_ID,
+    "EVALUATE TOPN(5, MetricsByItemAndDayForWorkloadAutoscale)",
+)
+print(f"MetricsByItemAndDayForWorkloadAutoscale sample rows: {len(sample_a)}")
+print(_json.dumps(sample_a, indent=2, default=str))
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+sample_b = _execute_dax(
+    METRICS_WORKSPACE_ID, METRICS_DATASET_ID,
+    "EVALUATE TOPN(5, CUDetailForWorkLoadAutoscale)",
+)
+print(f"CUDetailForWorkLoadAutoscale sample rows: {len(sample_b)}")
+print(_json.dumps(sample_b, indent=2, default=str))
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
