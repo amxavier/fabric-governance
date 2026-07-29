@@ -146,6 +146,7 @@ import json as _json
 from datetime import datetime, timezone
 from pyspark.sql import functions as F
 from pyspark.sql.types import DateType
+from delta.tables import DeltaTable
 
 def _execute_dax(workspace_id: str, dataset_id: str, dax_query: str) -> list[dict]:
     token = notebookutils.credentials.getToken("pbi")
@@ -186,11 +187,125 @@ print(_json.dumps(items_rows[:3], indent=2, default=str))
 
 # MARKDOWN ********************
 
-# ### Next step
+# ### Confirmed columns (2026-07-28) and build DataFrame
 #
-# Run the two cells above and share: (1) whether `_execute_dax` succeeds at
-# all with `notebookutils.credentials.getToken("pbi")` (if it 403s, the
-# `gp_sec_sp`-scoped tenant setting needs broadening or this identity needs
-# adding to that group), and (2) the printed row samples — the exact
-# bracketed column names (`MetricsByItem[sum_CU]` etc.) so the DataFrame
-# build and the daily-snapshot append-only write can be finished.
+# `sum_CU`/`sum_duration` match the app report's "CU(s)"/"Duration(s)"
+# columns exactly (spot-checked against the same item) — confirms units are
+# CU-seconds and seconds, not some other scale. `sum_duration` itself has no
+# `Ms` suffix unlike the percentile/avg columns, which are in milliseconds.
+#
+# `ItemId`/`WorkspaceId` here come back as **uppercase** GUIDs, while this
+# project's other Bronze sources (`raw_items`, `raw_workspaces`, sourced
+# from the Fabric Admin API) use lowercase — normalizing to lowercase here
+# so Silver's join against `silver_items` actually matches instead of
+# silently returning zero rows.
+#
+# Not persisting the `Items` query result — it's redundant with this
+# project's own `raw_items`/`silver_items` (already sourced from the Fabric
+# Admin API with proper SCD2 history), so Silver will join `item_id`
+# straight into `silver_items` instead of carrying a second, competing
+# source of item names.
+
+# CELL ********************
+
+rows = [
+    {
+        "item_id": r["MetricsByItem[ItemId]"].lower(),
+        "artifact_kind": r["MetricsByItem[ArtifactKind]"],
+        "workspace_id": r["MetricsByItem[WorkspaceId]"].lower(),
+        "premium_capacity_id": r["MetricsByItem[PremiumCapacityId]"],
+        "billing_type": r["MetricsByItem[Billing type]"],
+        "sum_cu": r["MetricsByItem[sum_CU]"],
+        "sum_duration_s": r["MetricsByItem[sum_duration]"],
+        "avg_duration_ms": r["MetricsByItem[avg_DurationMs]"],
+        "percentile_duration_ms_50": r["MetricsByItem[percentile_DurationMs_50]"],
+        "percentile_duration_ms_90": r["MetricsByItem[percentile_DurationMs_90]"],
+        "count_operations": r["MetricsByItem[count_operations]"],
+        "count_successful_operations": r["MetricsByItem[count_successful_operations]"],
+        "count_failure_operations": r["MetricsByItem[count_failure_operations]"],
+        "count_cancelled_operations": r["MetricsByItem[count_cancelled_operations]"],
+        "count_rejected_operations": r["MetricsByItem[count_rejected_operations]"],
+        "count_inprogress_operations": r["MetricsByItem[count_InProgress_operations]"],
+        "count_invalid_operations": r["MetricsByItem[count_Invalid_operations]"],
+        "count_users": r["MetricsByItem[count_users]"],
+        "throttling_min": r["MetricsByItem[Throttling (min)]"],
+    }
+    for r in metrics_rows
+]
+
+df = spark.createDataFrame(rows)
+df = (
+    df.withColumn("ingestion_ts", F.lit(datetime.now(timezone.utc).isoformat()).cast("timestamp"))
+      .withColumn("ingestion_date", F.lit(datetime.now(timezone.utc).date().isoformat()).cast(DateType()))
+)
+
+print(f"Rows to write: {df.count()}")
+df.printSchema()
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
+# ### Daily Snapshot Write
+#
+# Unlike `raw_activity_events`/`raw_refresh_history` (naturally atomic,
+# already-happened events, deduplicated by their own id), this source has no
+# per-day key — the API only ever answers "the last 14 days, as of now." So
+# the idempotency guard here is the same shape as the *dimension* Bronze
+# notebooks: skip if this `ingestion_date` was already captured, otherwise
+# append one snapshot row per item for today. Silver is where day-over-day
+# deltas get derived from consecutive snapshots.
+
+# CELL ********************
+
+INGESTION_DATE = datetime.now(timezone.utc).date().isoformat()
+
+already_ingested = False
+if DeltaTable.isDeltaTable(spark, BRONZE_PATH):
+    count = (
+        spark.read.format("delta").load(BRONZE_PATH)
+        .filter(F.col("ingestion_date") == INGESTION_DATE)
+        .count()
+    )
+    already_ingested = count > 0
+
+if already_ingested:
+    print(f"Capacity metrics snapshot for {INGESTION_DATE} already captured. Skipping.")
+else:
+    (df.write.format("delta").mode("append")
+        .option("mergeSchema", "true").save(BRONZE_PATH))
+    print(f"{df.count()} records written to {BRONZE_PATH}")
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
+# ### Validation
+
+# CELL ********************
+
+(spark.read.format("delta").load(BRONZE_PATH)
+    .groupBy("ingestion_date")
+    .agg(F.count("*").alias("items"), F.sum("sum_cu").alias("total_cu"))
+    .orderBy(F.desc("ingestion_date"))
+    .show(20, truncate=False))
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
