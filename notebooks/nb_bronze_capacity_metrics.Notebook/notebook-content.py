@@ -146,10 +146,64 @@ for _, row in tables.iterrows():
 
 # MARKDOWN ********************
 
+# ### Confirmed schema (2026-07-28)
+#
+# `CUDetail` is capacity-level only (no ItemId/WorkspaceId) — not useful here.
+# `Items` is a dimension (ItemId, ItemName, WorkspaceId, WorkspaceName,
+# ItemKind — no CU numbers). The table that actually has what we need is
+# **`MetricsByItem`**: grain per `ItemId`, with `sum_CU`, `sum_duration`,
+# operation counts by status (`count_successful_operations`,
+# `count_failure_operations`, `count_cancelled_operations`,
+# `count_rejected_operations`), `WorkspaceId`, `PremiumCapacityId`.
+#
+# Open question this cell answers: `MetricsByItem` has no visible date
+# column, so it's unclear whether `EVALUATE MetricsByItem` returns totals
+# already sliced per day, or one rolled-up total per item across the app's
+# entire rolling 14-day window (in which case this notebook would need to
+# capture it daily as a snapshot and let Silver derive day-over-day deltas,
+# similar in spirit to the SCD2 dimension notebooks rather than the
+# already-granular append-only fact notebooks).
+
+# CELL ********************
+
+DAX_METRICS_BY_ITEM = "EVALUATE MetricsByItem"
+df_metrics_by_item = fabric.evaluate_dax(METRICS_DATASET_NAME, DAX_METRICS_BY_ITEM, workspace=METRICS_WORKSPACE_ID)
+
+print(f"Rows returned: {len(df_metrics_by_item)}")
+print(f"Distinct ItemIds: {df_metrics_by_item['MetricsByItem[ItemId]'].nunique() if 'MetricsByItem[ItemId]' in df_metrics_by_item.columns else df_metrics_by_item.filter(like='ItemId').iloc[:, 0].nunique()}")
+df_metrics_by_item.head(20)
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+DAX_ITEMS = "EVALUATE Items"
+df_items = fabric.evaluate_dax(METRICS_DATASET_NAME, DAX_ITEMS, workspace=METRICS_WORKSPACE_ID)
+
+print(f"Rows returned: {len(df_items)}")
+df_items.head(20)
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
 # ### Next step
 #
-# Run the three cells above and share the printed output — the DAX query,
-# the DataFrame build, and the append-only write (mirroring
-# `nb_bronze_activity_events`'s idempotency pattern, keyed by whatever this
-# model's unique row identifier turns out to be) will be added right after,
-# once the real table/column names are confirmed.
+# Run the two cells above and share: (1) the row count and column names
+# printed for `MetricsByItem`, (2) whether the same `ItemId` repeats more
+# than once (and if so, what differs between those rows — that's the real
+# grain/date key), and (3) the `Items` output so item/workspace names can be
+# joined in. The append-only write (mirroring `nb_bronze_activity_events`'s
+# idempotency pattern) gets added right after, once the grain is confirmed.
