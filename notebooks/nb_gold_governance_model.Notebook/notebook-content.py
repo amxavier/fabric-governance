@@ -28,8 +28,8 @@
 # ### nb_gold_governance_model
 #
 # **Layer:** Gold — Governance Star Schema
-# **Source:** `lh_governance_silver` → `silver_capacities`, `silver_workspaces`, `silver_items`, `silver_activity_events`, `silver_refresh_history`
-# **Destination:** `lh_governance_gold` → `dim_capacity`, `dim_workspace`, `dim_item`, `dim_user`, `dim_date`, `fact_activity`, `fact_refresh`
+# **Source:** `lh_governance_silver` → `silver_capacities`, `silver_workspaces`, `silver_items`, `silver_activity_events`, `silver_refresh_history`, `silver_capacity_metrics`
+# **Destination:** `lh_governance_gold` → `dim_capacity`, `dim_workspace`, `dim_item`, `dim_user`, `dim_date`, `fact_activity`, `fact_refresh`, `fact_capacity_consumption`
 # **Depends on:** all five Silver notebooks
 # **Schedule:** Daily (last step in the pipeline)
 #
@@ -186,7 +186,11 @@ refresh_dates = (
     spark.read.format("delta").load(f"{SILVER_ABFS}/Tables/silver_refresh_history")
     .select(F.to_date("start_time").alias("d"))
 )
-observed = activity_dates.union(refresh_dates).filter("d is not null")
+capacity_metrics_dates = (
+    spark.read.format("delta").load(f"{SILVER_ABFS}/Tables/silver_capacity_metrics")
+    .select(F.col("ingestion_date").alias("d"))
+)
+observed = activity_dates.union(refresh_dates).union(capacity_metrics_dates).filter("d is not null")
 bounds = observed.agg(F.min("d").alias("min_d"), F.max("d").alias("max_d")).collect()[0]
 
 # On a fresh deployment (day 1), both fact sources are empty and min_d/max_d
@@ -298,11 +302,54 @@ print(f"fact_refresh: {fact_refresh.count()} rows")
 
 # MARKDOWN ********************
 
+# ### fact_capacity_consumption
+#
+# Grain: one row per item per captured day. `date_id` is the snapshot's
+# `ingestion_date`, not an event timestamp like the other two facts — see
+# `nb_silver_capacity_metrics` for why `delta_cu` is a trend indicator, not
+# an exact daily cost, due to the source's rolling-14-day-window nature.
+
+# CELL ********************
+
+fact_capacity_consumption = (
+    spark.read.format("delta").load(f"{SILVER_ABFS}/Tables/silver_capacity_metrics")
+    .select(
+        "item_id",
+        "workspace_id",
+        F.col("ingestion_date").alias("date_id"),
+        "artifact_kind",
+        "billing_type",
+        "sum_cu",
+        "sum_duration_s",
+        "delta_cu",
+        "count_operations",
+        "count_successful_operations",
+        "count_failure_operations",
+        "count_cancelled_operations",
+        "count_rejected_operations",
+        "count_users",
+    )
+)
+
+(fact_capacity_consumption.write.format("delta").mode("overwrite")
+    .option("overwriteSchema", "true").save(f"{GOLD_ABFS}/Tables/fact_capacity_consumption"))
+print(f"fact_capacity_consumption: {fact_capacity_consumption.count()} rows")
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
 # ### Validation
 
 # CELL ********************
 
-for table in ["dim_capacity", "dim_workspace", "dim_item", "dim_user", "dim_date", "fact_activity", "fact_refresh"]:
+for table in ["dim_capacity", "dim_workspace", "dim_item", "dim_user", "dim_date", "fact_activity", "fact_refresh", "fact_capacity_consumption"]:
     count = spark.read.format("delta").load(f"{GOLD_ABFS}/Tables/{table}").count()
     print(f"{table:20s}: {count} rows")
 
