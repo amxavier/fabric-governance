@@ -131,8 +131,17 @@ def main() -> None:
             print("No artifact changes detected — nothing to deploy.")
             return
 
-    # Exclude lakehouses (managed separately)
-    deployable = [p for p in items if get_item_type(p.name) and not p.name.endswith(".Lakehouse")]
+    # Exclude lakehouses (managed separately) and sm_governance_medallion
+    # (DirectLake models deployed via this REST API get a broken OneLake
+    # binding — see README — so it's rebuilt/maintained interactively in the
+    # portal; scripts/pull_item_definition.py syncs its current definition
+    # back into git for documentation, but deploy.py must never write to it)
+    deployable = [
+        p for p in items
+        if get_item_type(p.name)
+        and not p.name.endswith(".Lakehouse")
+        and p.name != f"{SEMANTIC_MODEL_NAME}.SemanticModel"
+    ]
     if not deployable:
         print("No deployable artifacts in changeset.")
         return

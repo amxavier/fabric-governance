@@ -1,0 +1,63 @@
+# Manual, one-off utility: pulls sm_governance_medallion's current definition
+# back from the DEV workspace into git. That semantic model is maintained
+# interactively in the portal (DirectLake models deployed via REST API have
+# a broken OneLake binding — see README), so cd_deploy.yml no longer touches
+# its content; this is the reverse sync, keeping git a readable snapshot of
+# whatever's actually live instead of letting the two drift apart silently.
+name: Pull Semantic Model Definition
+
+on:
+  workflow_dispatch:
+    inputs:
+      workspace_id:
+        description: "Workspace ID to pull from"
+        required: true
+        default: "dc072922-4ffb-4424-868c-28087b02ecba"
+      item_display_name:
+        description: "Semantic model display name"
+        required: true
+        default: "sm_governance_medallion"
+      target_folder:
+        description: "Repo-relative item folder to overwrite"
+        required: true
+        default: "semantic models/sm_governance_medallion.SemanticModel"
+
+jobs:
+  pull:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Pull item definition
+        env:
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        run: |
+          python scripts/pull_item_definition.py \
+            "${{ github.event.inputs.workspace_id }}" \
+            "${{ github.event.inputs.item_display_name }}" \
+            "${{ github.event.inputs.target_folder }}"
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add "${{ github.event.inputs.target_folder }}"
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Pull ${{ github.event.inputs.item_display_name }} definition from workspace ${{ github.event.inputs.workspace_id }}"
+            git push
+          fi
