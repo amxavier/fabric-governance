@@ -70,6 +70,16 @@
       {
         "type": "TridentNotebook",
         "typeProperties": {
+          "notebookId": "da0e03cd-0be6-4024-adc5-46526092c46a",
+          "workspaceId": "00000000-0000-0000-0000-000000000000"
+        },
+        "policy": { "timeout": "0.12:00:00", "retry": 0, "retryIntervalInSeconds": 30, "secureInput": false, "secureOutput": false },
+        "name": "update_bronze_capacity_cu_detail",
+        "dependsOn": []
+      },
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
           "notebookId": "9b74debc-f670-4f3b-a2e2-b23e1f9f3c76",
           "workspaceId": "00000000-0000-0000-0000-000000000000"
         },
