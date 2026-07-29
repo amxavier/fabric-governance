@@ -1,0 +1,149 @@
+table fact_capacity_consumption
+	lineageTag: d914b9cf-1554-47a0-bb30-33369f46c1e5
+	sourceLineageTag: [dbo].[fact_capacity_consumption]
+
+	column item_id
+		dataType: string
+		lineageTag: 7e72ed18-3945-4476-99bf-4dd115812ae6
+		sourceLineageTag: item_id
+		summarizeBy: none
+		sourceColumn: item_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column workspace_id
+		dataType: string
+		lineageTag: 892154f8-7ba6-4ccf-9b63-a12edab481b4
+		sourceLineageTag: workspace_id
+		summarizeBy: none
+		sourceColumn: workspace_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column date_id
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: f350bf1f-b261-4a9c-a323-ee87d02e57e4
+		sourceLineageTag: date_id
+		summarizeBy: none
+		sourceColumn: date_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column artifact_kind
+		dataType: string
+		lineageTag: d9a57952-8f68-4ff6-b546-7eb093f5bb92
+		sourceLineageTag: artifact_kind
+		summarizeBy: none
+		sourceColumn: artifact_kind
+
+		annotation SummarizationSetBy = Automatic
+
+	column billing_type
+		dataType: string
+		lineageTag: dad63504-63ef-4129-a614-dad28136c8c5
+		sourceLineageTag: billing_type
+		summarizeBy: none
+		sourceColumn: billing_type
+
+		annotation SummarizationSetBy = Automatic
+
+	column sum_cu
+		dataType: double
+		lineageTag: 514f51c6-97c1-44ac-af5c-2ae6df32bc46
+		sourceLineageTag: sum_cu
+		summarizeBy: none
+		sourceColumn: sum_cu
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column sum_duration_s
+		dataType: double
+		lineageTag: 1ddeb4d5-c03e-4e44-abe5-67bf9a6bbd5e
+		sourceLineageTag: sum_duration_s
+		summarizeBy: none
+		sourceColumn: sum_duration_s
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column delta_cu
+		dataType: double
+		lineageTag: f63c9389-720d-4b5e-b07a-d13466a31d47
+		sourceLineageTag: delta_cu
+		summarizeBy: none
+		sourceColumn: delta_cu
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column count_operations
+		dataType: int64
+		formatString: 0
+		lineageTag: ce263a59-247c-4b06-b452-9413a32a6aef
+		sourceLineageTag: count_operations
+		summarizeBy: none
+		sourceColumn: count_operations
+
+		annotation SummarizationSetBy = Automatic
+
+	column count_successful_operations
+		dataType: int64
+		formatString: 0
+		lineageTag: 55c04a2f-bfbe-4a78-92d9-d053b452829e
+		sourceLineageTag: count_successful_operations
+		summarizeBy: none
+		sourceColumn: count_successful_operations
+
+		annotation SummarizationSetBy = Automatic
+
+	column count_failure_operations
+		dataType: int64
+		formatString: 0
+		lineageTag: b503e89a-7f58-49eb-811b-f3cb448a25f7
+		sourceLineageTag: count_failure_operations
+		summarizeBy: none
+		sourceColumn: count_failure_operations
+
+		annotation SummarizationSetBy = Automatic
+
+	column count_cancelled_operations
+		dataType: int64
+		formatString: 0
+		lineageTag: 2786554f-2751-421c-b9af-b0d444c0e84e
+		sourceLineageTag: count_cancelled_operations
+		summarizeBy: none
+		sourceColumn: count_cancelled_operations
+
+		annotation SummarizationSetBy = Automatic
+
+	column count_rejected_operations
+		dataType: int64
+		formatString: 0
+		lineageTag: 2dc2ad28-6b8b-4899-886a-f8acc2ea0eae
+		sourceLineageTag: count_rejected_operations
+		summarizeBy: none
+		sourceColumn: count_rejected_operations
+
+		annotation SummarizationSetBy = Automatic
+
+	column count_users
+		dataType: int64
+		formatString: 0
+		lineageTag: 8fc02314-50ea-4d0e-ac12-687aada1d762
+		sourceLineageTag: count_users
+		summarizeBy: none
+		sourceColumn: count_users
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_capacity_consumption = entity
+		mode: directLake
+		source
+			entityName: fact_capacity_consumption
+			expressionSource: 'DirectLake - lh_governance_gold_dev'
+

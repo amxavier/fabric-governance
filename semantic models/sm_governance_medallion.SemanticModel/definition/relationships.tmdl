@@ -1,0 +1,56 @@
+relationship 612d8756-49f4-4f9a-ada8-b0bde6c2bec7
+	fromColumn: fact_activity.item_id
+	toColumn: dim_item.item_id
+
+relationship ee775ab1-dc68-4649-9584-8c5280ba8919
+	isActive: false
+	fromColumn: fact_activity.workspace_id
+	toColumn: dim_workspace.workspace_id
+
+relationship 74bbd8d2-862d-4dcf-8d80-bd51dbde7dc8
+	fromColumn: fact_activity.user_id
+	toColumn: dim_user.user_key
+
+relationship 9f092f7a-cbb6-488e-b994-d6017b6f7a1b
+	fromColumn: fact_activity.date_id
+	toColumn: dim_date.date_id
+
+relationship 4b2eacf5-21ab-478a-b0ec-1c79d76933b4
+	fromColumn: fact_refresh.item_id
+	toColumn: dim_item.item_id
+
+relationship 68feec79-8cef-4064-b330-ddd18e771a66
+	fromColumn: fact_refresh.date_id
+	toColumn: dim_date.date_id
+
+relationship f139020e-a066-4498-86e3-6487ade3d546
+	fromColumn: dim_item.workspace_id
+	toColumn: dim_workspace.workspace_id
+
+relationship 8ad098cb-5a56-4384-8379-17bdb04eff2b
+	fromColumn: dim_workspace.capacity_id
+	toColumn: dim_capacity.capacity_id
+
+relationship 19afd428-c538-0839-5cca-43a4480b3c1b
+	fromColumn: dim_item.item_id
+	toColumn: fact_capacity_consumption.item_id
+
+relationship 6d72c984-d437-fca0-b904-18d436fa26d4
+	isActive: false
+	fromColumn: fact_capacity_consumption.workspace_id
+	toColumn: dim_workspace.workspace_id
+
+relationship 70337404-4c01-847a-cf13-fc37d8b7dcf0
+	isActive: false
+	fromColumn: fact_capacity_consumption.date_id
+	toColumn: dim_date.date_id
+
+relationship 44186ef8-dd6b-36bd-1ee2-cd99c44e3226
+	fromColumn: dim_date.date_id
+	toColumn: fact_capacity_utilization.date_id
+
+relationship 8db46da2-1ea1-70b1-e2bd-8ba6116b5425
+	isActive: false
+	fromColumn: fact_capacity_utilization.sku
+	toColumn: dim_capacity.sku
+

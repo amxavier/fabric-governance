@@ -1,0 +1,105 @@
+table fact_refresh
+	lineageTag: d400f66b-44d2-41d5-817b-761e23aaa57d
+	sourceLineageTag: [dbo].[fact_refresh]
+
+	column refresh_id
+		dataType: string
+		lineageTag: 165a291b-7ec7-4af6-bb71-a938e71d1225
+		sourceLineageTag: refresh_id
+		summarizeBy: none
+		sourceColumn: refresh_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column item_id
+		dataType: string
+		lineageTag: f9d0af83-a136-4a9d-9934-dde08155b5bf
+		sourceLineageTag: item_id
+		summarizeBy: none
+		sourceColumn: item_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column date_id
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 30ccf460-abcc-49f1-aa1c-b19ffed423f8
+		sourceLineageTag: date_id
+		summarizeBy: none
+		sourceColumn: date_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column start_time
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 003f609e-d78c-4fe2-a653-4e41b2b02ee9
+		sourceLineageTag: start_time
+		summarizeBy: none
+		sourceColumn: start_time
+
+		annotation SummarizationSetBy = Automatic
+
+	column end_time
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 65397f8a-0a9e-4ac0-8c40-f4023b01a969
+		sourceLineageTag: end_time
+		summarizeBy: none
+		sourceColumn: end_time
+
+		annotation SummarizationSetBy = Automatic
+
+	column duration_seconds
+		dataType: int64
+		formatString: 0
+		lineageTag: f2867d55-eb8f-4d8c-9c32-a0a73d7211e1
+		sourceLineageTag: duration_seconds
+		summarizeBy: sum
+		sourceColumn: duration_seconds
+
+		annotation SummarizationSetBy = Automatic
+
+	column refresh_type
+		dataType: string
+		lineageTag: bfed6dff-057c-4344-a699-5f85b94a6764
+		sourceLineageTag: refresh_type
+		summarizeBy: none
+		sourceColumn: refresh_type
+
+		annotation SummarizationSetBy = Automatic
+
+	column status
+		dataType: string
+		lineageTag: 50b6cddc-e60f-4910-a2bb-7a2b7e13e587
+		sourceLineageTag: status
+		summarizeBy: none
+		sourceColumn: status
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_failure
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: ad2ac887-4007-4c62-b98c-c05d13bd6703
+		sourceLineageTag: is_failure
+		summarizeBy: none
+		sourceColumn: is_failure
+
+		annotation SummarizationSetBy = Automatic
+
+	column error_json
+		dataType: string
+		lineageTag: e3e493c6-68a2-40f1-9cef-8087047e679f
+		sourceLineageTag: error_json
+		summarizeBy: none
+		sourceColumn: error_json
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_refresh = entity
+		mode: directLake
+		source
+			entityName: fact_refresh
+			expressionSource: 'DirectLake - lh_governance_gold_dev'
+
