@@ -28,8 +28,8 @@
 # ### nb_gold_governance_model
 #
 # **Layer:** Gold — Governance Star Schema
-# **Source:** `lh_governance_silver` → `silver_capacities`, `silver_workspaces`, `silver_items`, `silver_activity_events`, `silver_refresh_history`, `silver_capacity_metrics`, `silver_capacity_cu_detail`
-# **Destination:** `lh_governance_gold` → `dim_capacity`, `dim_workspace`, `dim_item`, `dim_user`, `dim_date`, `fact_activity`, `fact_refresh`, `fact_capacity_consumption`, `fact_capacity_utilization`
+# **Source:** `lh_governance_silver` → `silver_capacities`, `silver_workspaces`, `silver_items`, `silver_activity_events`, `silver_refresh_history`, `silver_capacity_metrics`, `silver_capacity_cu_detail`, `silver_gateways`, `silver_dataset_datasources`
+# **Destination:** `lh_governance_gold` → `dim_capacity`, `dim_workspace`, `dim_item`, `dim_user`, `dim_date`, `dim_gateway`, `fact_activity`, `fact_refresh`, `fact_capacity_consumption`, `fact_capacity_utilization`, `bridge_item_datasource`
 # **Depends on:** all five Silver notebooks
 # **Schedule:** Daily (last step in the pipeline)
 #
@@ -395,11 +395,71 @@ print(f"fact_capacity_utilization: {fact_capacity_utilization.count()} rows")
 
 # MARKDOWN ********************
 
+# ### dim_gateway
+
+# CELL ********************
+
+dim_gateway = (
+    spark.read.format("delta").load(f"{SILVER_ABFS}/Tables/silver_gateways")
+    .filter("is_current = true")
+    .select("gateway_id", "display_name", "type", "gateway_status")
+)
+
+(dim_gateway.write.format("delta").mode("overwrite")
+    .option("overwriteSchema", "true").save(f"{GOLD_ABFS}/Tables/dim_gateway"))
+print(f"dim_gateway: {dim_gateway.count()} rows")
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
+# ### bridge_item_datasource
+#
+# Grain: one row per item x datasource — a bridge/lineage table, not a
+# fact (no measure of its own). Connects `dim_item` to `dim_gateway` via
+# `gateway_id`, which is null for cloud-native connections (Direct Lake,
+# extension connectors) — see `nb_bronze_gateways` for why that's expected
+# rather than missing data.
+
+# CELL ********************
+
+bridge_item_datasource = (
+    spark.read.format("delta").load(f"{SILVER_ABFS}/Tables/silver_dataset_datasources")
+    .filter("is_current = true")
+    .select(
+        F.col("dataset_id").alias("item_id"),
+        "datasource_id",
+        "datasource_type",
+        "gateway_id",
+        "connection_details_json",
+    )
+)
+
+(bridge_item_datasource.write.format("delta").mode("overwrite")
+    .option("overwriteSchema", "true").save(f"{GOLD_ABFS}/Tables/bridge_item_datasource"))
+print(f"bridge_item_datasource: {bridge_item_datasource.count()} rows")
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
 # ### Validation
 
 # CELL ********************
 
-for table in ["dim_capacity", "dim_workspace", "dim_item", "dim_user", "dim_date", "fact_activity", "fact_refresh", "fact_capacity_consumption", "fact_capacity_utilization"]:
+for table in ["dim_capacity", "dim_workspace", "dim_item", "dim_user", "dim_date", "dim_gateway", "fact_activity", "fact_refresh", "fact_capacity_consumption", "fact_capacity_utilization", "bridge_item_datasource"]:
     count = spark.read.format("delta").load(f"{GOLD_ABFS}/Tables/{table}").count()
     print(f"{table:20s}: {count} rows")
 
