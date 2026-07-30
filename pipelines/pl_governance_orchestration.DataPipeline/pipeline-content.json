@@ -55,7 +55,7 @@
         "name": "update_bronze_refresh_history",
         "dependsOn": [
           { "activity": "update_bronze_items", "dependencyConditions": ["Succeeded"] },
-          { "activity": "update_bronze_capacity_cu_detail", "dependencyConditions": ["Succeeded"] }
+          { "activity": "update_bronze_gateways", "dependencyConditions": ["Succeeded"] }
         ]
       },
       {
@@ -80,6 +80,18 @@
         "name": "update_bronze_capacity_cu_detail",
         "dependsOn": [
           { "activity": "update_bronze_capacity_metrics", "dependencyConditions": ["Succeeded"] }
+        ]
+      },
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "c8802951-9ce6-434a-8ba5-bdd6204a68bf",
+          "workspaceId": "00000000-0000-0000-0000-000000000000"
+        },
+        "policy": { "timeout": "0.12:00:00", "retry": 0, "retryIntervalInSeconds": 30, "secureInput": false, "secureOutput": false },
+        "name": "update_bronze_gateways",
+        "dependsOn": [
+          { "activity": "update_bronze_capacity_cu_detail", "dependencyConditions": ["Succeeded"] }
         ]
       },
       {
