@@ -84,6 +84,7 @@ print(f"[Bronze] Write path              : {BRONZE_PATH}")
 import requests
 import json as _json
 from datetime import datetime, timezone
+from delta.tables import DeltaTable
 
 def _get_delegated_token(scope: str) -> str:
     auth_row = spark.read.format("delta").load(AUTH_TABLE_PATH).collect()[0]
