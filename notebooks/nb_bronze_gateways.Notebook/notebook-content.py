@@ -132,11 +132,70 @@ print(_json.dumps(value[:3] if isinstance(value, list) else value, indent=2, def
 
 # MARKDOWN ********************
 
+# ### Confirmed (2026-07-30): zero gateways in this tenant
+#
+# `/admin/gateways` returned an empty `value` list — expected, since this
+# entire project runs on native Fabric items (Lakehouse, Direct Lake,
+# Notebooks) with no on-premises source requiring a gateway. The base
+# gateway list also does **not** include datasource/connection details —
+# that's a separate resource.
+#
+# The more useful axis for this project turns out not to be "loop over
+# gateways" (there are none) but **`GET /admin/datasets/{datasetId}/datasources`**
+# — per semantic model, still a tenant-admin endpoint (same permission
+# model as everything else in this notebook), and it doesn't require the
+# separate "gateway admin" role that `/gateways/{id}/datasources` would.
+# This is testable right now against real semantic model ids from
+# `raw_items`, gateway or no gateway — a cloud connection still shows up
+# here, just with a null/empty gateway reference. That mapping (which
+# datasource/gateway a given semantic model depends on) is the piece that
+# actually lets a future correlation like "this refresh failed — was its
+# gateway down?" work, once/if a gateway ever exists in this tenant.
+
+# CELL ********************
+
+if not DeltaTable.isDeltaTable(spark, f"{_lh_bronze['properties']['abfsPath']}/Tables/raw_items"):
+    raise RuntimeError("raw_items table not found — run nb_bronze_items before this cell.")
+
+semantic_model_ids = [
+    row["item_id"] for row in
+    spark.read.format("delta").load(f"{_lh_bronze['properties']['abfsPath']}/Tables/raw_items")
+        .filter("is_current = true and item_type = 'SemanticModel'")
+        .select("item_id")
+        .collect()
+]
+print(f"Semantic models to check: {len(semantic_model_ids)}")
+
+sample_results = []
+for dataset_id in semantic_model_ids[:5]:
+    resp = requests.get(
+        f"https://api.powerbi.com/v1.0/myorg/admin/datasets/{dataset_id}/datasources",
+        headers=HEADERS, timeout=30,
+    )
+    sample_results.append({
+        "dataset_id": dataset_id,
+        "status_code": resp.status_code,
+        "body": resp.json() if resp.ok else resp.text,
+    })
+
+print(_json.dumps(sample_results, indent=2, default=str))
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
 # ### Next step
 #
-# Share the printed output: the real field names (does `gatewayAnnotation`
-# come back as a nested object or a JSON-encoded string? is there a
-# `status`/`type` field directly, or does status need a separate
-# `/admin/gateways/{id}` or `/datasources` call per gateway?), and how many
-# gateways exist in this tenant. The SCD2 merge (same pattern as
-# `nb_bronze_capacities`/`nb_bronze_workspaces`) gets written right after.
+# Share the printed output for the 5 datasets sampled: the real field names
+# for each datasource entry (datasourceId, gatewayId, datasourceType,
+# connectionDetails — server/database or similar?), and whether models with
+# no gateway dependency return an empty list vs. an entry with a null
+# gatewayId. That decides the grain for `raw_dataset_datasources` (likely
+# one row per dataset × datasource, SCD2 like the other dimension-style
+# Bronze tables — a model's data source can change over time).
