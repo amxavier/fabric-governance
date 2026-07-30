@@ -41,12 +41,17 @@
 #
 # **This tenant currently has zero gateways** (confirmed 2026-07-30 — every
 # workload here is native Fabric: Direct Lake, Lakehouse, Notebooks; nothing
-# needs an on-premises source). `raw_dataset_datasources` still returns real
-# rows for the handful of models that use an actual connection (e.g. the
-# Capacity Metrics app's own semantic model) — Direct Lake models correctly
-# come back empty, since Direct Lake reads OneLake directly and never
-# registers a datasource/gateway at all. Both tables are built and kept live
-# regardless, so this is a complete, working reference for an environment
+# needs an on-premises source). `raw_dataset_datasources` still returns real,
+# useful rows for every model type present here — including Direct Lake:
+# contrary to the original assumption when this notebook was written, a
+# Direct Lake model *does* register as a datasource
+# (`datasourceType: AzureDataLakeStorage`), just with `gatewayId: null` and
+# the OneLake path itself (workspace/lakehouse GUIDs) in
+# `connectionDetails` — real lineage data, not just a gateway-correlation
+# join key. Confirmed against 20 real semantic models tenant-wide,
+# including this project's own and the sibling crypto project's dev/qa/prd
+# models. Both tables are built and kept live regardless of gateway
+# presence, so this is a complete, working reference for an environment
 # that does have gateways and Import/DirectQuery-mode models depending on
 # them, not just a stub.
 #
