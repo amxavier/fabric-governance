@@ -28,8 +28,8 @@
 # ### nb_gold_governance_model
 #
 # **Layer:** Gold — Governance Star Schema
-# **Source:** `lh_governance_silver` → `silver_capacities`, `silver_workspaces`, `silver_items`, `silver_activity_events`, `silver_refresh_history`, `silver_capacity_metrics`, `silver_capacity_cu_detail`, `silver_gateways`, `silver_dataset_datasources`
-# **Destination:** `lh_governance_gold` → `dim_capacity`, `dim_workspace`, `dim_item`, `dim_user`, `dim_date`, `dim_gateway`, `fact_activity`, `fact_refresh`, `fact_capacity_consumption`, `fact_capacity_utilization`, `bridge_item_datasource`
+# **Source:** `lh_governance_silver` → `silver_capacities`, `silver_workspaces`, `silver_items`, `silver_activity_events`, `silver_refresh_history`, `silver_capacity_metrics`, `silver_capacity_cu_detail`, `silver_gateways`, `silver_dataset_datasources`, `silver_item_job_history`
+# **Destination:** `lh_governance_gold` → `dim_capacity`, `dim_workspace`, `dim_item`, `dim_user`, `dim_date`, `dim_gateway`, `fact_activity`, `fact_refresh`, `fact_capacity_consumption`, `fact_capacity_utilization`, `fact_item_job_history`, `bridge_item_datasource`
 # **Depends on:** all five Silver notebooks
 # **Schedule:** Daily (last step in the pipeline)
 #
@@ -194,8 +194,12 @@ cu_detail_dates = (
     spark.read.format("delta").load(f"{SILVER_ABFS}/Tables/silver_capacity_cu_detail")
     .select(F.col("date_id").alias("d"))
 )
+job_history_dates = (
+    spark.read.format("delta").load(f"{SILVER_ABFS}/Tables/silver_item_job_history")
+    .select(F.to_date("start_time").alias("d"))
+)
 observed = (
-    activity_dates.union(refresh_dates).union(capacity_metrics_dates).union(cu_detail_dates)
+    activity_dates.union(refresh_dates).union(capacity_metrics_dates).union(cu_detail_dates).union(job_history_dates)
     .filter("d is not null")
 )
 bounds = observed.agg(F.min("d").alias("min_d"), F.max("d").alias("max_d")).collect()[0]
@@ -419,6 +423,48 @@ print(f"dim_gateway: {dim_gateway.count()} rows")
 
 # MARKDOWN ********************
 
+# ### fact_item_job_history
+#
+# Grain: one row per Notebook/DataPipeline job instance — the same
+# "who/what broke and how long did it take" shape `fact_refresh` has for
+# semantic models, extended to notebooks and pipelines (including this
+# project's own orchestration pipeline).
+
+# CELL ********************
+
+fact_item_job_history = (
+    spark.read.format("delta").load(f"{SILVER_ABFS}/Tables/silver_item_job_history")
+    .select(
+        "job_id",
+        "item_id",
+        "workspace_id",
+        F.to_date("start_time").alias("date_id"),
+        "start_time",
+        "end_time",
+        "duration_seconds",
+        "job_type",
+        "invoke_type",
+        "status",
+        "is_failure",
+        "failure_error_code",
+        "failure_message",
+    )
+)
+
+(fact_item_job_history.write.format("delta").mode("overwrite")
+    .option("overwriteSchema", "true").save(f"{GOLD_ABFS}/Tables/fact_item_job_history"))
+print(f"fact_item_job_history: {fact_item_job_history.count()} rows")
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
 # ### bridge_item_datasource
 #
 # Grain: one row per item x datasource — a bridge/lineage table, not a
@@ -459,7 +505,7 @@ print(f"bridge_item_datasource: {bridge_item_datasource.count()} rows")
 
 # CELL ********************
 
-for table in ["dim_capacity", "dim_workspace", "dim_item", "dim_user", "dim_date", "dim_gateway", "fact_activity", "fact_refresh", "fact_capacity_consumption", "fact_capacity_utilization", "bridge_item_datasource"]:
+for table in ["dim_capacity", "dim_workspace", "dim_item", "dim_user", "dim_date", "dim_gateway", "fact_activity", "fact_refresh", "fact_capacity_consumption", "fact_capacity_utilization", "fact_item_job_history", "bridge_item_datasource"]:
     count = spark.read.format("delta").load(f"{GOLD_ABFS}/Tables/{table}").count()
     print(f"{table:20s}: {count} rows")
 
