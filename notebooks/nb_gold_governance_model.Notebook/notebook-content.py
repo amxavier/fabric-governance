@@ -28,8 +28,8 @@
 # ### nb_gold_governance_model
 #
 # **Layer:** Gold — Governance Star Schema
-# **Source:** `lh_governance_silver` → `silver_capacities`, `silver_workspaces`, `silver_items`, `silver_activity_events`, `silver_refresh_history`, `silver_capacity_metrics`, `silver_capacity_cu_detail`, `silver_gateways`, `silver_dataset_datasources`, `silver_item_job_history`
-# **Destination:** `lh_governance_gold` → `dim_capacity`, `dim_workspace`, `dim_item`, `dim_user`, `dim_date`, `dim_gateway`, `fact_activity`, `fact_refresh`, `fact_capacity_consumption`, `fact_capacity_utilization`, `fact_item_job_history`, `bridge_item_datasource`
+# **Source:** `lh_governance_silver` → `silver_capacities`, `silver_workspaces`, `silver_items`, `silver_activity_events`, `silver_refresh_history`, `silver_capacity_metrics`, `silver_capacity_cu_detail`, `silver_gateways`, `silver_dataset_datasources`, `silver_item_job_history`, `silver_workspace_role_assignments`, `silver_item_users`
+# **Destination:** `lh_governance_gold` → `dim_capacity`, `dim_workspace`, `dim_item`, `dim_user`, `dim_date`, `dim_gateway`, `fact_activity`, `fact_refresh`, `fact_capacity_consumption`, `fact_capacity_utilization`, `fact_item_job_history`, `bridge_item_datasource`, `bridge_workspace_access`, `bridge_item_access`
 # **Depends on:** all five Silver notebooks
 # **Schedule:** Daily (last step in the pipeline)
 #
@@ -501,11 +501,85 @@ print(f"bridge_item_datasource: {bridge_item_datasource.count()} rows")
 
 # MARKDOWN ********************
 
+# ### bridge_workspace_access
+#
+# Grain: one row per workspace x principal — the LGPD/security-audit angle:
+# who (user or security group) has what role on each workspace, which
+# covers every Fabric-native item in this project (Lakehouse, Notebook,
+# DataPipeline — none of these support individual per-item sharing, access
+# is workspace-scoped).
+
+# CELL ********************
+
+bridge_workspace_access = (
+    spark.read.format("delta").load(f"{SILVER_ABFS}/Tables/silver_workspace_role_assignments")
+    .filter("is_current = true")
+    .select(
+        "workspace_id",
+        "principal_id",
+        "principal_display_name",
+        "principal_type",
+        "user_principal_name",
+        "group_type",
+        "role",
+    )
+)
+
+(bridge_workspace_access.write.format("delta").mode("overwrite")
+    .option("overwriteSchema", "true").save(f"{GOLD_ABFS}/Tables/bridge_workspace_access"))
+print(f"bridge_workspace_access: {bridge_workspace_access.count()} rows")
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
+# ### bridge_item_access
+#
+# Grain: one row per item x principal — individual sharing on classic
+# Power BI artifact types (SemanticModel today; Reports/Dataflows are a
+# documented future extension, see `nb_bronze_permissions`), on top of
+# whatever `bridge_workspace_access` already grants via workspace role.
+
+# CELL ********************
+
+bridge_item_access = (
+    spark.read.format("delta").load(f"{SILVER_ABFS}/Tables/silver_item_users")
+    .filter("is_current = true")
+    .select(
+        "item_id",
+        "principal_identifier",
+        "principal_display_name",
+        "principal_type",
+        "email_address",
+        "access_right",
+    )
+)
+
+(bridge_item_access.write.format("delta").mode("overwrite")
+    .option("overwriteSchema", "true").save(f"{GOLD_ABFS}/Tables/bridge_item_access"))
+print(f"bridge_item_access: {bridge_item_access.count()} rows")
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
 # ### Validation
 
 # CELL ********************
 
-for table in ["dim_capacity", "dim_workspace", "dim_item", "dim_user", "dim_date", "dim_gateway", "fact_activity", "fact_refresh", "fact_capacity_consumption", "fact_capacity_utilization", "fact_item_job_history", "bridge_item_datasource"]:
+for table in ["dim_capacity", "dim_workspace", "dim_item", "dim_user", "dim_date", "dim_gateway", "fact_activity", "fact_refresh", "fact_capacity_consumption", "fact_capacity_utilization", "fact_item_job_history", "bridge_item_datasource", "bridge_workspace_access", "bridge_item_access"]:
     count = spark.read.format("delta").load(f"{GOLD_ABFS}/Tables/{table}").count()
     print(f"{table:20s}: {count} rows")
 

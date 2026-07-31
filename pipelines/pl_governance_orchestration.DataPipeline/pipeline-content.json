@@ -146,6 +146,19 @@
       {
         "type": "TridentNotebook",
         "typeProperties": {
+          "notebookId": "b9ddf66a-08f4-45fa-b56a-d0ecb210f668",
+          "workspaceId": "00000000-0000-0000-0000-000000000000"
+        },
+        "policy": { "timeout": "0.12:00:00", "retry": 0, "retryIntervalInSeconds": 30, "secureInput": false, "secureOutput": false },
+        "name": "update_silver_workspace_role_assignments",
+        "dependsOn": [
+          { "activity": "update_silver_workspaces", "dependencyConditions": ["Succeeded"] },
+          { "activity": "update_bronze_permissions", "dependencyConditions": ["Succeeded"] }
+        ]
+      },
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
           "notebookId": "0384dd4f-d798-4e53-8618-0a9e1bf3130a",
           "workspaceId": "00000000-0000-0000-0000-000000000000"
         },
@@ -167,6 +180,19 @@
         "dependsOn": [
           { "activity": "update_silver_workspaces", "dependencyConditions": ["Succeeded"] },
           { "activity": "update_bronze_items", "dependencyConditions": ["Succeeded"] }
+        ]
+      },
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "7991a4cc-ea2d-4dd8-a55e-8085215b0a24",
+          "workspaceId": "00000000-0000-0000-0000-000000000000"
+        },
+        "policy": { "timeout": "0.12:00:00", "retry": 0, "retryIntervalInSeconds": 30, "secureInput": false, "secureOutput": false },
+        "name": "update_silver_item_users",
+        "dependsOn": [
+          { "activity": "update_silver_items", "dependencyConditions": ["Succeeded"] },
+          { "activity": "update_bronze_permissions", "dependencyConditions": ["Succeeded"] }
         ]
       },
       {
@@ -260,7 +286,9 @@
           { "activity": "update_silver_capacity_cu_detail", "dependencyConditions": ["Succeeded"] },
           { "activity": "update_silver_item_job_history", "dependencyConditions": ["Succeeded"] },
           { "activity": "update_silver_gateways", "dependencyConditions": ["Succeeded"] },
-          { "activity": "update_silver_dataset_datasources", "dependencyConditions": ["Succeeded"] }
+          { "activity": "update_silver_dataset_datasources", "dependencyConditions": ["Succeeded"] },
+          { "activity": "update_silver_workspace_role_assignments", "dependencyConditions": ["Succeeded"] },
+          { "activity": "update_silver_item_users", "dependencyConditions": ["Succeeded"] }
         ]
       }
     ]

@@ -15,6 +15,7 @@ SCD2_DIMENSION_NOTEBOOKS = [
     "nb_bronze_workspaces",
     "nb_bronze_items",
     "nb_bronze_gateways",
+    "nb_bronze_permissions",
 ]
 
 APPEND_ONLY_FACT_NOTEBOOKS = [
