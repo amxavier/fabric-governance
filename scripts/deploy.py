@@ -142,6 +142,17 @@ def main() -> None:
         and not p.name.endswith(".Lakehouse")
         and p.name != f"{SEMANTIC_MODEL_NAME}.SemanticModel"
     ]
+
+    # get_changed_items() reads `git diff --name-only`, which also lists files
+    # from folders deleted in this changeset — but there's no local folder left
+    # to read a definition from, and deploy.py has no delete-item flow. Skip
+    # these; if the item still exists live in the workspace, remove it there.
+    removed = [p for p in deployable if not p.exists()]
+    for p in removed:
+        print(f"Skipping {p.name} — folder removed from git; not deployable. "
+              f"Delete the item from the workspace manually if it still exists there.\n")
+    deployable = [p for p in deployable if p.exists()]
+
     if not deployable:
         print("No deployable artifacts in changeset.")
         return
