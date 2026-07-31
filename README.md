@@ -162,6 +162,8 @@ This project deliberately reuses existing infrastructure rather than provisionin
 
 2. **Bootstrap delegated authentication for the four `/admin/*`-calling notebooks** (`nb_bronze_workspaces`, `nb_bronze_items`, `nb_bronze_activity_events`, `nb_bronze_refresh_history`) — see [Delegated Authentication](#delegated-authentication-for-admin) below for why this is needed and the one-time setup (interactive device-code sign-in), which populates a small Delta table (`_auth_delegated`) in `lh_governance_bronze` that these notebooks read from on every run.
 
+3. **Configure the pipeline's `refresh_semantic_model` activity** (a native `PBISemanticModelRefresh` step, the last activity in `pl_governance_orchestration` — refreshes `sm_governance_medallion` so Direct Lake picks up each run's new Gold data without anyone having to click Refresh manually). This activity's `typeProperties.groupId`/`datasetId` and `externalReferences.connection` are environment-specific and reference a Connection resource `deploy.py` has no automation for — after deploying to a new environment, open the pipeline in the portal, re-point this activity at that environment's own `sm_governance_medallion` (creating a new Connection if prompted), then use `scripts/pull_item_definition.py` (or the `Pull Semantic Model Definition` workflow, with `format` set to the sentinel `NONE`) to sync the corrected IDs back into `pipeline-content.json`.
+
 ### Required GitHub Secrets
 
 Same Service Principal as the sibling repo — these are the same *values*, just configured as secrets in this repository too (GitHub secrets don't cross repositories even when the underlying identity is shared):
