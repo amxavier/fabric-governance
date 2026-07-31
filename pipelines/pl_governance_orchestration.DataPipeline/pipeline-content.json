@@ -134,6 +134,19 @@
       {
         "type": "TridentNotebook",
         "typeProperties": {
+          "notebookId": "0384dd4f-d798-4e53-8618-0a9e1bf3130a",
+          "workspaceId": "00000000-0000-0000-0000-000000000000"
+        },
+        "policy": { "timeout": "0.12:00:00", "retry": 0, "retryIntervalInSeconds": 30, "secureInput": false, "secureOutput": false },
+        "name": "update_silver_item_job_history",
+        "dependsOn": [
+          { "activity": "update_silver_workspaces", "dependencyConditions": ["Succeeded"] },
+          { "activity": "update_bronze_item_job_history", "dependencyConditions": ["Succeeded"] }
+        ]
+      },
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
           "notebookId": "8579513c-51ac-4078-b425-79b3b76f9c03",
           "workspaceId": "00000000-0000-0000-0000-000000000000"
         },
@@ -233,6 +246,7 @@
           { "activity": "update_silver_refresh_history", "dependencyConditions": ["Succeeded"] },
           { "activity": "update_silver_capacity_metrics", "dependencyConditions": ["Succeeded"] },
           { "activity": "update_silver_capacity_cu_detail", "dependencyConditions": ["Succeeded"] },
+          { "activity": "update_silver_item_job_history", "dependencyConditions": ["Succeeded"] },
           { "activity": "update_silver_gateways", "dependencyConditions": ["Succeeded"] },
           { "activity": "update_silver_dataset_datasources", "dependencyConditions": ["Succeeded"] }
         ]

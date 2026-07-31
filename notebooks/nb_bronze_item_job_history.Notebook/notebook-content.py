@@ -141,13 +141,183 @@ print(_json.dumps(sample_results, indent=2, default=str))
 
 # MARKDOWN ********************
 
-# ### Next step
+# ### Confirmed (2026-07-31): simple SP auth works, real schema captured
 #
-# Share the printed output: did the simple auth work (200) or reject the
-# SP (401/403, meaning this needs the delegated-token workaround too)?
-# What are the real field names for a job instance (status, start/end
-# time, duration, failure reason/error message, invoke type — scheduled vs
-# manual)? Is pagination involved (a `continuationToken` like the Admin
-# API endpoints, or `continuationUri` like Activity Events)? The append-
-# only write (same idempotency pattern as `nb_bronze_refresh_history`,
-# deduplicated by job instance id) gets added right after.
+# `notebookutils.credentials.getToken("pbi")` worked fine (200 OK) — this
+# endpoint doesn't reject app-only auth the way `/admin/*` and
+# `executeQueries` do elsewhere in this project. No pagination marker
+# appeared in any sampled response (`{"value": [...]}` only) at the volumes
+# this tenant has; not implemented here since there's nothing to verify it
+# against — if a heavily-used item ever returns a huge history, revisit.
+#
+# Real fields: `id`, `itemId`, `jobType` (`PipelineRunNotebook`,
+# `RunNotebookInteractive`, ...), `invokeType` (`Manual`, presumably also
+# `Scheduled`), `status` (`Completed`, `Failed`, ...), `failureReason`
+# (`null`, or an object with `errorCode`/`message`/`isRetriable`),
+# `rootActivityId`, `startTimeUtc`, `endTimeUtc`. One of the three sample
+# items (`nb_gold_crypto_model`, in the sibling crypto project) has real,
+# detailed failures — useful, genuine test data for the correlation this
+# table exists to support.
+
+# CELL ********************
+
+job_items = [
+    row.asDict() for row in
+    spark.read.format("delta").load(ITEMS_PATH)
+        .filter("is_current = true and item_type in ('Notebook', 'DataPipeline')")
+        .select("item_id", "item_name", "item_type", "workspace_id")
+        .collect()
+]
+print(f"Notebook/DataPipeline items to check: {len(job_items)}")
+
+job_rows = []
+failed_lookups = []
+for item in job_items:
+    resp = requests.get(
+        f"https://api.fabric.microsoft.com/v1/workspaces/{item['workspace_id']}/items/{item['item_id']}/jobs/instances",
+        headers=HEADERS, timeout=30,
+    )
+    if not resp.ok:
+        # Same reasoning as nb_bronze_refresh_history: an item the SP
+        # can't reach (a workspace it isn't a member of, or a deleted
+        # item still lingering in raw_items until its next SCD2 pass)
+        # shouldn't fail the whole run — skip and keep going.
+        failed_lookups.append(item["item_id"])
+        continue
+    for job in resp.json().get("value", []):
+        failure = job.get("failureReason") or {}
+        job_rows.append({
+            "job_id": job.get("id"),
+            "item_id": item["item_id"],
+            "item_name": item["item_name"],
+            "item_type": item["item_type"],
+            "workspace_id": item["workspace_id"],
+            "job_type": job.get("jobType"),
+            "invoke_type": job.get("invokeType"),
+            "status": job.get("status"),
+            "failure_error_code": failure.get("errorCode"),
+            "failure_message": failure.get("message"),
+            "failure_is_retriable": failure.get("isRetriable"),
+            "root_activity_id": job.get("rootActivityId"),
+            "start_time": job.get("startTimeUtc"),
+            "end_time": job.get("endTimeUtc"),
+        })
+
+print(f"Job instances fetched: {len(job_rows)}")
+print(f"Items with no job history available: {len(failed_lookups)}")
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
+# ### Build DataFrame
+
+# CELL ********************
+
+from pyspark.sql import functions as F
+from pyspark.sql.types import StructType, StructField, StringType, BooleanType, DateType
+
+ROW_SCHEMA = StructType([
+    StructField("job_id", StringType()),
+    StructField("item_id", StringType()),
+    StructField("item_name", StringType()),
+    StructField("item_type", StringType()),
+    StructField("workspace_id", StringType()),
+    StructField("job_type", StringType()),
+    StructField("invoke_type", StringType()),
+    StructField("status", StringType()),
+    StructField("failure_error_code", StringType()),
+    StructField("failure_message", StringType()),
+    StructField("failure_is_retriable", BooleanType()),
+    StructField("root_activity_id", StringType()),
+    StructField("start_time", StringType()),
+    StructField("end_time", StringType()),
+])
+
+if job_rows:
+    df = spark.createDataFrame(job_rows, schema=ROW_SCHEMA)
+else:
+    df = spark.createDataFrame([], schema=ROW_SCHEMA)
+
+df = (
+    df.withColumn("start_time", F.to_timestamp("start_time"))
+      .withColumn("end_time", F.to_timestamp("end_time"))
+      .withColumn("duration_seconds", F.col("end_time").cast("long") - F.col("start_time").cast("long"))
+      .withColumn("is_failure", F.col("status") == "Failed")
+      .withColumn("ingestion_ts", F.lit(INGESTION_TS.isoformat()).cast("timestamp"))
+      .withColumn("ingestion_date", F.lit(INGESTION_DATE).cast(DateType()))
+)
+
+print("Schema:")
+df.printSchema()
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
+# ### Append-Only Write (deduplicated by job_id)
+
+# CELL ********************
+
+if DeltaTable.isDeltaTable(spark, BRONZE_PATH):
+    existing_ids = (
+        spark.read.format("delta").load(BRONZE_PATH)
+        .select("job_id").distinct()
+    )
+    df_new = df.join(existing_ids, on="job_id", how="left_anti")
+else:
+    df_new = df
+
+new_count = df_new.count()
+print(f"New job instances to write: {new_count}")
+
+if new_count > 0:
+    (df_new.write.format("delta").mode("append")
+        .option("mergeSchema", "true").save(BRONZE_PATH))
+    print(f"{new_count} records written to {BRONZE_PATH}")
+elif not DeltaTable.isDeltaTable(spark, BRONZE_PATH):
+    (df_new.write.format("delta").mode("overwrite")
+        .option("mergeSchema", "true").save(BRONZE_PATH))
+    print(f"No job history yet — initialized empty table at {BRONZE_PATH}")
+else:
+    print("No new job instances. Nothing written.")
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
+# ### Validation
+
+# CELL ********************
+
+(spark.read.format("delta").load(BRONZE_PATH)
+    .groupBy("item_name", "item_type", "status")
+    .agg(F.count("*").alias("runs"), F.avg("duration_seconds").alias("avg_duration_s"))
+    .orderBy(F.desc("runs"))
+    .show(30, truncate=False))
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
