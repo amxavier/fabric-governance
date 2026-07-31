@@ -292,6 +292,18 @@
           { "activity": "update_silver_workspace_role_assignments", "dependencyConditions": ["Succeeded"] },
           { "activity": "update_silver_item_users", "dependencyConditions": ["Succeeded"] }
         ]
+      },
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "6f5be288-545f-45b3-a7a6-cfcca7632b5a",
+          "workspaceId": "00000000-0000-0000-0000-000000000000"
+        },
+        "policy": { "timeout": "0.12:00:00", "retry": 0, "retryIntervalInSeconds": 30, "secureInput": false, "secureOutput": false },
+        "name": "refresh_semantic_model",
+        "dependsOn": [
+          { "activity": "update_gold_governance_model", "dependencyConditions": ["Succeeded"] }
+        ]
       }
     ]
   }
