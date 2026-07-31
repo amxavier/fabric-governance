@@ -39,7 +39,11 @@ def main() -> None:
         sys.exit(1)
 
     workspace_id, display_name, target_folder = sys.argv[1], sys.argv[2], sys.argv[3]
-    definition_format = sys.argv[4] if len(sys.argv) == 5 and sys.argv[4] else None
+    raw_format = sys.argv[4] if len(sys.argv) == 5 else ""
+    # GitHub's workflow_dispatch treats an explicitly empty input as "use
+    # the YAML default" rather than "blank" — so the workflow passes the
+    # literal sentinel "NONE" to mean no format, instead of an empty string.
+    definition_format = None if raw_format.strip().upper() in ("", "NONE") else raw_format
 
     client = FabricClient(
         tenant_id=os.environ["AZURE_TENANT_ID"],
