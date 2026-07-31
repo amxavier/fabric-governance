@@ -181,12 +181,250 @@ print(_json.dumps(user_results, indent=2, default=str))
 
 # MARKDOWN ********************
 
-# ### Next step
+# ### Confirmed (2026-07-31)
 #
-# Share both printed outputs: (A) did `roleAssignments` work with simple
-# auth, and what are the real field names (principal id/type/displayName,
-# role)? (B) did `/admin/datasets/{id}/users` need delegated auth or did
-# simple auth also work here, and what fields come back (accessRight,
-# principal type, email/displayName)? The SCD2 merges for both
-# `raw_workspace_role_assignments` and `raw_item_users` get written right
-# after, once both are confirmed.
+# **(A) Workspace role assignments** — simple SP auth worked. Real shape:
+# `{"id": ..., "principal": {"id", "displayName", "type": "User"|"Group",
+# "userDetails": {"userPrincipalName"} | "groupDetails": {"groupType"}},
+# "role": "Admin"|...}`. One workspace (the special auto-provisioned "Admin
+# monitoring" workspace) returned `400 WorkspaceTypeNotSupported` — a real,
+# expected edge case for that workspace type, not a bug; skipped like any
+# other per-item lookup failure elsewhere in this project.
+#
+# **(B) Per-item users** — needed the delegated token, consistent with
+# every other Power BI-domain `/admin/*` endpoint in this project. Real
+# shape: `{"datasetUserAccessRight", "emailAddress" (absent for some
+# groups), "displayName", "identifier", "graphId", "principalType":
+# "User"|"Group", "userType"}`. Built here for `SemanticModel` items only
+# (Reports/Dataflows have the same-shaped `/admin/{type}/{id}/users`
+# endpoints per Microsoft's docs, but untested against real data in this
+# tenant — extending to them later should follow this exact pattern, not
+# guess at the response shape first).
+
+# CELL ********************
+
+from pyspark.sql import functions as F
+from pyspark.sql.types import DateType
+
+INGESTION_TS = datetime.now(timezone.utc)
+INGESTION_DATE = INGESTION_TS.date().isoformat()
+
+ROLES_PATH = f"{_lh_bronze['properties']['abfsPath']}/Tables/raw_workspace_role_assignments"
+USERS_PATH = f"{_lh_bronze['properties']['abfsPath']}/Tables/raw_item_users"
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
+# ### raw_workspace_role_assignments — Fetch, Build, and SCD2 Merge
+
+# CELL ********************
+
+all_workspaces = [
+    row.asDict() for row in
+    spark.read.format("delta").load(WORKSPACES_PATH)
+        .filter("is_current = true")
+        .select("workspace_id", "workspace_name")
+        .collect()
+]
+print(f"Workspaces to check: {len(all_workspaces)}")
+
+role_rows = []
+skipped_workspaces = []
+for ws in all_workspaces:
+    resp = requests.get(
+        f"https://api.fabric.microsoft.com/v1/workspaces/{ws['workspace_id']}/roleAssignments",
+        headers=SIMPLE_HEADERS, timeout=30,
+    )
+    if not resp.ok:
+        # WorkspaceTypeNotSupported (special auto-provisioned workspaces
+        # like "Admin monitoring") and similar — skip and keep going,
+        # same reasoning as every other per-item loop in this project.
+        skipped_workspaces.append((ws["workspace_id"], resp.status_code))
+        continue
+    for ra in resp.json().get("value", []):
+        principal = ra.get("principal", {})
+        role_rows.append({
+            "workspace_id": ws["workspace_id"],
+            "principal_id": principal.get("id"),
+            "principal_display_name": principal.get("displayName"),
+            "principal_type": principal.get("type"),
+            "user_principal_name": (principal.get("userDetails") or {}).get("userPrincipalName"),
+            "group_type": (principal.get("groupDetails") or {}).get("groupType"),
+            "role": ra.get("role"),
+        })
+
+print(f"Role assignments fetched: {len(role_rows)}")
+print(f"Workspaces skipped (unsupported type or no access): {len(skipped_workspaces)}")
+
+df_roles = spark.createDataFrame(role_rows) if role_rows else spark.createDataFrame([], "workspace_id string, principal_id string, principal_display_name string, principal_type string, user_principal_name string, group_type string, role string")
+df_roles_scd = (
+    df_roles
+    .withColumn("ingestion_date", F.lit(INGESTION_DATE).cast(DateType()))
+    .withColumn("valid_from", F.col("ingestion_date"))
+    .withColumn("valid_to", F.lit(None).cast(DateType()))
+    .withColumn("is_current", F.lit(True))
+)
+
+if not DeltaTable.isDeltaTable(spark, ROLES_PATH):
+    (df_roles_scd.write.format("delta").mode("overwrite")
+        .option("mergeSchema", "true").save(ROLES_PATH))
+    print(f"{df_roles_scd.count()} records written to {ROLES_PATH} (initial load)")
+else:
+    dt = DeltaTable.forPath(spark, ROLES_PATH)
+    current = spark.read.format("delta").load(ROLES_PATH).filter("is_current = true")
+
+    changed = (
+        df_roles_scd.alias("new")
+        .join(current.alias("cur"), on=["workspace_id", "principal_id"], how="left")
+        .where(
+            "cur.workspace_id IS NULL OR "
+            "NOT (new.principal_display_name <=> cur.principal_display_name) OR "
+            "NOT (new.role <=> cur.role)"
+        )
+        .select("new.*")
+    )
+    print(f"Role assignments changed since last snapshot: {changed.count()}")
+
+    if changed.count() > 0:
+        dt.alias("target").merge(
+            changed.alias("source"),
+            "target.workspace_id = source.workspace_id AND target.principal_id = source.principal_id AND target.is_current = true"
+        ).whenMatchedUpdate(set={
+            "valid_to": "source.valid_from",
+            "is_current": "false",
+        }).execute()
+
+        (changed.write.format("delta").mode("append")
+            .option("mergeSchema", "true").save(ROLES_PATH))
+        print(f"{changed.count()} new versions written to {ROLES_PATH}")
+    else:
+        print("No role assignment changes detected. Nothing written.")
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
+# ### raw_item_users — Fetch, Build, and SCD2 Merge
+
+# CELL ********************
+
+all_datasets = [
+    row.asDict() for row in
+    spark.read.format("delta").load(ITEMS_PATH)
+        .filter("is_current = true and item_type = 'SemanticModel'")
+        .select("item_id", "item_name")
+        .collect()
+]
+print(f"Semantic models to check: {len(all_datasets)}")
+
+user_rows = []
+skipped_datasets = []
+for ds in all_datasets:
+    resp = requests.get(
+        f"https://api.powerbi.com/v1.0/myorg/admin/datasets/{ds['item_id']}/users",
+        headers=DELEGATED_HEADERS, timeout=30,
+    )
+    if not resp.ok:
+        skipped_datasets.append((ds["item_id"], resp.status_code))
+        continue
+    for u in resp.json().get("value", []):
+        user_rows.append({
+            "item_id": ds["item_id"],
+            "principal_identifier": u.get("identifier"),
+            "principal_display_name": u.get("displayName"),
+            "principal_type": u.get("principalType"),
+            "email_address": u.get("emailAddress"),
+            "graph_id": u.get("graphId"),
+            "access_right": u.get("datasetUserAccessRight"),
+            "user_type": u.get("userType"),
+        })
+
+print(f"Item user rows fetched: {len(user_rows)}")
+print(f"Datasets skipped (no access/lookup unavailable): {len(skipped_datasets)}")
+
+USER_SCHEMA = "item_id string, principal_identifier string, principal_display_name string, principal_type string, email_address string, graph_id string, access_right string, user_type string"
+df_users = spark.createDataFrame(user_rows) if user_rows else spark.createDataFrame([], USER_SCHEMA)
+df_users_scd = (
+    df_users
+    .withColumn("ingestion_date", F.lit(INGESTION_DATE).cast(DateType()))
+    .withColumn("valid_from", F.col("ingestion_date"))
+    .withColumn("valid_to", F.lit(None).cast(DateType()))
+    .withColumn("is_current", F.lit(True))
+)
+
+if not DeltaTable.isDeltaTable(spark, USERS_PATH):
+    (df_users_scd.write.format("delta").mode("overwrite")
+        .option("mergeSchema", "true").save(USERS_PATH))
+    print(f"{df_users_scd.count()} records written to {USERS_PATH} (initial load)")
+else:
+    dt = DeltaTable.forPath(spark, USERS_PATH)
+    current = spark.read.format("delta").load(USERS_PATH).filter("is_current = true")
+
+    changed = (
+        df_users_scd.alias("new")
+        .join(current.alias("cur"), on=["item_id", "principal_identifier"], how="left")
+        .where(
+            "cur.item_id IS NULL OR "
+            "NOT (new.access_right <=> cur.access_right)"
+        )
+        .select("new.*")
+    )
+    print(f"Item/user pairs changed since last snapshot: {changed.count()}")
+
+    if changed.count() > 0:
+        dt.alias("target").merge(
+            changed.alias("source"),
+            "target.item_id = source.item_id AND target.principal_identifier = source.principal_identifier AND target.is_current = true"
+        ).whenMatchedUpdate(set={
+            "valid_to": "source.valid_from",
+            "is_current": "false",
+        }).execute()
+
+        (changed.write.format("delta").mode("append")
+            .option("mergeSchema", "true").save(USERS_PATH))
+        print(f"{changed.count()} new versions written to {USERS_PATH}")
+    else:
+        print("No item/user changes detected. Nothing written.")
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
+# ### Validation
+
+# CELL ********************
+
+print("--- raw_workspace_role_assignments ---")
+spark.read.format("delta").load(ROLES_PATH).filter("is_current = true") \
+    .select("workspace_id", "principal_display_name", "principal_type", "role").show(50, truncate=False)
+
+print("--- raw_item_users ---")
+spark.read.format("delta").load(USERS_PATH).filter("is_current = true") \
+    .select("item_id", "principal_display_name", "principal_type", "access_right").show(50, truncate=False)
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
