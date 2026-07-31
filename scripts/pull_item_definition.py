@@ -10,7 +10,14 @@ snapshot instead of drifting invisibly out of sync with what's actually
 running.
 
 Usage:
-    python scripts/pull_item_definition.py <workspace_id> <item_display_name> <target_folder>
+    python scripts/pull_item_definition.py <workspace_id> <item_display_name> <target_folder> [format]
+
+<format> is optional and item-type-specific — pass "TMDL" for
+SemanticModel items (required there, or Fabric returns only the minimal
+.platform/definition.pbism stub). Leave it empty for item types that
+don't have a TMDL representation (e.g. DataPipeline) — passing an
+unsupported format returns 400 Bad Request instead of falling back to
+the default, so this must be omitted, not guessed, per item type.
 
 Requires AZURE_TENANT_ID / AZURE_CLIENT_ID / AZURE_CLIENT_SECRET in the
 environment (same Service Principal credentials deploy.py uses).
@@ -27,11 +34,12 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
 def main() -> None:
-    if len(sys.argv) != 4:
-        print("Usage: python scripts/pull_item_definition.py <workspace_id> <item_display_name> <target_folder>")
+    if len(sys.argv) not in (4, 5):
+        print("Usage: python scripts/pull_item_definition.py <workspace_id> <item_display_name> <target_folder> [format]")
         sys.exit(1)
 
     workspace_id, display_name, target_folder = sys.argv[1], sys.argv[2], sys.argv[3]
+    definition_format = sys.argv[4] if len(sys.argv) == 5 and sys.argv[4] else None
 
     client = FabricClient(
         tenant_id=os.environ["AZURE_TENANT_ID"],
@@ -45,7 +53,7 @@ def main() -> None:
         sys.exit(1)
     item_id = items[display_name]
 
-    parts = client.get_item_definition(workspace_id, item_id, format="TMDL")
+    parts = client.get_item_definition(workspace_id, item_id, format=definition_format)
     print(f"Pulled {len(parts)} parts for {display_name} ({item_id})")
 
     item_path = REPO_ROOT / target_folder
