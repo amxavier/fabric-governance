@@ -84,6 +84,10 @@ table _measure
 
 		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
+	measure 'Avg CU % of Base (Capacity)' = DIVIDE(AVERAGE(fact_capacity_utilization[avg_cu]), AVERAGE(fact_capacity_utilization[base_capacity_units])) * 100
+		formatString: 0.0"%"
+		lineageTag: 9a458048-dca9-f64c-ccf9-143570ca8062
+
 	measure 'Total Items' = COUNTROWS(dim_item)
 		formatString: 0
 		lineageTag: a0672ded-1cf2-4def-89ce-e9529b8a7d31
