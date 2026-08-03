@@ -10,29 +10,10 @@
     "tabOrder": 7000
   },
   "visual": {
-    "visualType": "donutChart",
+    "visualType": "cardVisual",
     "query": {
       "queryState": {
-        "Category": {
-          "projections": [
-            {
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "dim_item"
-                    }
-                  },
-                  "Property": "item_type"
-                }
-              },
-              "queryRef": "dim_item.item_type",
-              "nativeQueryRef": "item_type",
-              "active": true
-            }
-          ]
-        },
-        "Y": {
+        "Data": {
           "projections": [
             {
               "field": {
@@ -42,32 +23,14 @@
                       "Entity": "_measure"
                     }
                   },
-                  "Property": "Total Refreshes"
+                  "Property": "Days Since Last Successful Refresh"
                 }
               },
-              "queryRef": "_measure.Total Refreshes",
-              "nativeQueryRef": "Total Refreshes"
+              "queryRef": "_measure.Days Since Last Successful Refresh",
+              "nativeQueryRef": "Days Since Last Successful Refresh"
             }
           ]
         }
-      },
-      "sortDefinition": {
-        "sort": [
-          {
-            "field": {
-              "Measure": {
-                "Expression": {
-                  "SourceRef": {
-                    "Entity": "_measure"
-                  }
-                },
-                "Property": "Total Refreshes"
-              }
-            },
-            "direction": "Descending"
-          }
-        ],
-        "isDefaultSort": true
       }
     },
     "drillFilterOtherVisuals": true
