@@ -84,6 +84,37 @@ table _measure
 
 		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
+	measure 'Total Items' = COUNTROWS(dim_item)
+		formatString: 0
+		lineageTag: a0672ded-1cf2-4def-89ce-e9529b8a7d31
+
+	measure 'Compute Items' = CALCULATE(COUNTROWS(dim_item), dim_item[item_type] IN {"Notebook", "DataPipeline"})
+		formatString: 0
+		lineageTag: 531b27ea-402c-4e16-92d3-32ced4fccc33
+
+	measure 'Data Items' = CALCULATE(COUNTROWS(dim_item), dim_item[item_type] IN {"Lakehouse", "SQLEndpoint", "Warehouse", "SQLDatabase"})
+		formatString: 0
+		lineageTag: 811b5ac6-348f-4d35-bb66-7e0ae7203c42
+
+	measure 'Presentation Items' = CALCULATE(COUNTROWS(dim_item), dim_item[item_type] IN {"Report", "SemanticModel", "App"})
+		formatString: 0
+		lineageTag: 5a753c4e-fb79-4b5e-8cc7-e19b97fe521b
+
+	measure 'Interactive Share % (Latest Day)' = ```
+
+			VAR LatestDate = MAX(fact_capacity_utilization[date_id])
+			VAR Inter = CALCULATE(SUM(fact_capacity_utilization[avg_interactive]), fact_capacity_utilization[date_id] = LatestDate)
+			VAR Back = CALCULATE(SUM(fact_capacity_utilization[avg_background]), fact_capacity_utilization[date_id] = LatestDate)
+			RETURN DIVIDE(Inter, Inter + Back) * 100
+
+			```
+		formatString: 0.0"%"
+		lineageTag: 1b536318-fbd6-4445-a7fa-7349175f57ec
+
+	measure 'Background Share % (Latest Day)' = 100 - [Interactive Share % (Latest Day)]
+		formatString: 0.0"%"
+		lineageTag: cb03ec18-ec11-46da-9704-abe454b1e986
+
 	column Column
 		formatString: 0
 		lineageTag: 5214aca8-d595-406e-9334-b4a427bdd0f7
