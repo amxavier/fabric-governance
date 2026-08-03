@@ -25,10 +25,9 @@
 # ### nb_bronze_refresh_history
 #
 # **Layer:** Bronze — Raw Ingestion, append-only
-# **Source:** Power BI Admin REST API — `GET /v1.0/myorg/admin/datasets/{id}/refreshhistory`
+# **Source:** Power BI Admin REST API — `GET /v1.0/myorg/admin/capacities/refreshables`
 # **Destination:** `lh_governance_bronze` → Delta Table `raw_refresh_history`
-# **Depends on:** `nb_bronze_items` (needs the current list of SemanticModel ids)
-# **Schedule:** Daily, after nb_bronze_items
+# **Schedule:** Daily
 #
 # This is the direct complement to nb_bronze_activity_events: the Activity Log
 # only records a "RefreshDataset" activity with a UserId when a refresh was
@@ -37,7 +36,33 @@
 # status and (on failure) an error message. Joining the two in Gold is what
 # lets us answer "did this fail because of something someone changed?".
 #
-# Append-only: a refresh run, once finished, does not change — no SCD needed.
+# **Corrected endpoint (2026-08-03):** this notebook originally called
+# `GET /admin/datasets/{id}/refreshhistory` per dataset — that endpoint does
+# not exist in the Power BI REST API (confirmed: every dataset returned 404
+# "No HTTP resource was found that matches the request URI", which is what
+# sent us looking). The real, documented endpoint is
+# `Admin - Get Refreshables` (`GET /admin/capacities/refreshables`), a single
+# **tenant-wide** call — no per-dataset loop, and no dependency on raw_items
+# needed to know which datasets to check.
+#
+# It has different semantics than the old (invented) design assumed: instead
+# of a full list of past refresh runs per dataset, each refreshable exposes
+# rolling-window aggregates (`refreshCount`/`refreshFailures`/`averageDuration`
+# over "up to the last 7 days or 60 refreshes, whichever is less" — same
+# rolling-window caveat as MetricsByItem, see nb_bronze_capacity_metrics) plus
+# a `lastRefresh` sub-object with the single most recent completed/failed run.
+#
+# To reconstruct a genuine append-only event history from a value that's only
+# ever "the latest one" at each daily snapshot, this notebook keeps the exact
+# same dedup trick the old design already had: append-only, deduplicated by
+# `refresh_id` (here, `lastRefresh.requestId`) against everything already in
+# Bronze. The first day a given refresh is seen as "last", it gets written;
+# once written, seeing it again as still-the-latest on a later day is a no-op.
+# **Caveat:** if a dataset refreshes more than once between two daily pipeline
+# runs, only the last of those runs is ever observed — under-counting is
+# possible for datasets refreshed more than once a day. Fine for this
+# project's daily cadence and mostly-scheduled-once-daily refresh patterns;
+# worth knowing if reused against a tenant with frequent on-demand refreshes.
 
 
 # MARKDOWN ********************
@@ -50,17 +75,17 @@ import requests
 import json as _json
 from datetime import datetime, timezone
 from pyspark.sql import functions as F
-from pyspark.sql.types import DateType, StructType, StructField, StringType
+from pyspark.sql.types import DateType, StructType, StructField, StringType, LongType, DoubleType
 from delta.tables import DeltaTable
 
 DESTINATION_TABLE = "raw_refresh_history"
 INGESTION_TS = datetime.now(timezone.utc)
 INGESTION_DATE = INGESTION_TS.date().isoformat()
-REFRESH_HISTORY_TOP = 30  # per dataset, per run — enough to cover a daily schedule with margin
+REFRESHABLES_TOP = 5000  # tenant-wide, single call — comfortably above this tenant's dataset count;
+                          # a much larger tenant would need $skip-based pagination (not implemented here)
 
 _lh_bronze = notebookutils.lakehouse.get("lh_governance_bronze")
 BRONZE_PATH = f"{_lh_bronze['properties']['abfsPath']}/Tables/{DESTINATION_TABLE}"
-ITEMS_PATH = f"{_lh_bronze['properties']['abfsPath']}/Tables/raw_items"
 AUTH_TABLE_PATH = f"{_lh_bronze['properties']['abfsPath']}/Tables/_auth_delegated"
 
 print(f"[Bronze] lh_governance_bronze id : {_lh_bronze['id']}")
@@ -121,7 +146,7 @@ def _get_delegated_token(scope: str) -> str:
 
     return token_data["access_token"]
 
-# refreshhistory lives on api.powerbi.com — Power BI's resource, not Fabric's.
+# refreshables lives on api.powerbi.com — Power BI's resource, not Fabric's.
 TOKEN = _get_delegated_token("https://analysis.windows.net/powerbi/api/.default")
 HEADERS = {"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"}
 
@@ -135,66 +160,16 @@ HEADERS = {"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json
 
 # MARKDOWN ********************
 
-# ### Load Current Semantic Model IDs from raw_items
+# ### Fetch Refreshables (tenant-wide, single call)
 
 # CELL ********************
 
-if not DeltaTable.isDeltaTable(spark, ITEMS_PATH):
-    raise RuntimeError(
-        "raw_items table not found — run nb_bronze_items before this notebook."
-    )
+REFRESHABLES_URL = f"https://api.powerbi.com/v1.0/myorg/admin/capacities/refreshables?$top={REFRESHABLES_TOP}"
+response = requests.get(REFRESHABLES_URL, headers=HEADERS, timeout=60)
+response.raise_for_status()
+refreshables = response.json().get("value", [])
 
-semantic_model_ids = [
-    row["item_id"] for row in
-    spark.read.format("delta").load(ITEMS_PATH)
-        .filter("is_current = true and item_type = 'SemanticModel'")
-        .select("item_id")
-        .collect()
-]
-
-print(f"Semantic models to check: {len(semantic_model_ids)}")
-
-
-# METADATA ********************
-
-# META {
-# META   "language": "python",
-# META   "language_group": "synapse_pyspark"
-# META }
-
-# MARKDOWN ********************
-
-# ### Fetch Refresh History per Semantic Model
-
-# CELL ********************
-
-rows = []
-failed_lookups = []
-for dataset_id in semantic_model_ids:
-    url = (
-        f"https://api.powerbi.com/v1.0/myorg/admin/datasets/{dataset_id}/refreshhistory"
-        f"?$top={REFRESH_HISTORY_TOP}"
-    )
-    resp = requests.get(url, headers=HEADERS, timeout=30)
-    if not resp.ok:
-        # Some datasets are not refreshable (e.g. push datasets, DirectLake-only
-        # models with no scheduled refresh) — the API returns an error for those.
-        # We skip and keep going rather than fail the whole notebook run.
-        failed_lookups.append(dataset_id)
-        continue
-    for r in resp.json().get("value", []):
-        rows.append({
-            "dataset_id": dataset_id,
-            "refresh_id": r.get("requestId"),
-            "refresh_type": r.get("refreshType"),
-            "start_time": r.get("startTime"),
-            "end_time": r.get("endTime"),
-            "status": r.get("status"),
-            "error_json": _json.dumps(r.get("serviceExceptionJson")) if r.get("serviceExceptionJson") else None,
-        })
-
-print(f"Refresh runs fetched: {len(rows)}")
-print(f"Datasets with no refresh history available: {len(failed_lookups)}")
+print(f"Refreshables fetched: {len(refreshables)}")
 
 
 # METADATA ********************
@@ -207,14 +182,71 @@ print(f"Datasets with no refresh history available: {len(failed_lookups)}")
 # MARKDOWN ********************
 
 # ### Build DataFrame
+#
+# Only refreshables that have actually completed at least one refresh (i.e.
+# have a `lastRefresh`) produce a row — a dataset with a schedule but no
+# refresh yet has nothing to record. `refresh_count_7d`/`refresh_failures_7d`/
+# `avg_duration_seconds_7d` are the rolling-window aggregates, kept as extra
+# context columns alongside the individual `lastRefresh` event; downstream
+# Silver/Gold/semantic model only ever consumed the per-event columns, so
+# nothing further down the medallion needs to change.
+#
+# `name` from the API is deliberately NOT carried through as a `dataset_name`
+# column here — nb_silver_refresh_history already resolves that by joining
+# dataset_id against silver_items, and a same-named column from both sides
+# would collide in that join.
 
 # CELL ********************
 
+def _f(v):
+    return float(v) if v is not None else None
+
+def _i(v):
+    return int(v) if v is not None else None
+
+rows = []
+skipped_no_last_refresh = 0
+for r in refreshables:
+    last = r.get("lastRefresh")
+    if not last:
+        skipped_no_last_refresh += 1
+        continue
+    rows.append({
+        "dataset_id": r.get("id"),
+        "refresh_id": last.get("requestId"),
+        "refresh_type": last.get("refreshType"),
+        "start_time": last.get("startTime"),
+        "end_time": last.get("endTime"),
+        "status": last.get("status"),
+        "error_json": _json.dumps(last.get("serviceExceptionJson")) if last.get("serviceExceptionJson") else None,
+        "refresh_count_7d": _i(r.get("refreshCount")),
+        "refresh_failures_7d": _i(r.get("refreshFailures")),
+        "avg_duration_seconds_7d": _f(r.get("averageDuration")),
+    })
+
+print(f"Refresh events fetched: {len(rows)}")
+print(f"Refreshables skipped (no lastRefresh yet): {skipped_no_last_refresh}")
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
+# ### Typed DataFrame
+#
 # Explicit schema regardless of whether `rows` is empty — refresh_type/
 # end_time/error_json are None for many runs (in-progress or non-scheduled
 # refreshes), and Spark's type inference throws CANNOT_DETERMINE_TYPE if a
 # column is null across every row in a run, same lesson as
 # nb_bronze_activity_events.
+
+# CELL ********************
+
 schema = StructType([
     StructField("dataset_id", StringType()),
     StructField("refresh_id", StringType()),
@@ -223,6 +255,9 @@ schema = StructType([
     StructField("end_time", StringType()),
     StructField("status", StringType()),
     StructField("error_json", StringType()),
+    StructField("refresh_count_7d", LongType()),
+    StructField("refresh_failures_7d", LongType()),
+    StructField("avg_duration_seconds_7d", DoubleType()),
 ])
 df = spark.createDataFrame(rows, schema=schema)
 
@@ -250,11 +285,12 @@ df.printSchema()
 
 # CELL ********************
 
-# Unlike nb_bronze_activity_events (one pull per calendar day), refresh history
-# can return the same refresh_id again on a later run before it appears as
-# "old enough" to disappear from the API's own retention window — so we
-# deduplicate by refresh_id against what's already in Bronze, instead of a
-# per-day skip check.
+# refresh_id (lastRefresh.requestId) is a genuine unique ID per real refresh
+# execution. Deduplicating against what's already in Bronze is what turns a
+# value that's only ever "the latest as of today" into a real accumulated
+# history over time: the first day a given refresh is seen as "last", it gets
+# written; every later day it's still the latest (nothing new happened since),
+# it's a no-op.
 if DeltaTable.isDeltaTable(spark, BRONZE_PATH):
     existing_ids = (
         spark.read.format("delta").load(BRONZE_PATH)

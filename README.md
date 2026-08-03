@@ -6,7 +6,7 @@
 
 Tenant-wide governance for **Microsoft Fabric**, built as a Medallion Architecture pipeline: who published or refreshed what, when, and whether it failed — so an incident like "this report stopped refreshing" can be diagnosed from data instead of digging through the Fabric portal by hand.
 
-Data sources: Fabric Admin REST API (`/admin/workspaces`, `/admin/items`), Fabric Core REST API (`/capacities` — there's no admin-scoped equivalent), and the Power BI Admin REST API (`/admin/activityevents`, `/admin/datasets/{id}/refreshhistory`).
+Data sources: Fabric Admin REST API (`/admin/workspaces`, `/admin/items`), Fabric Core REST API (`/capacities` — there's no admin-scoped equivalent), and the Power BI Admin REST API (`/admin/activityevents`, `/admin/capacities/refreshables`).
 
 Sibling project: [microsoft-fabric-medallion-lakehouse](https://github.com/amxavier/microsoft-fabric-medallion-lakehouse) — this repo reuses its CI/CD and notebook conventions, but is architecturally independent (tenant-wide Admin API scope vs. per-workspace scope).
 
@@ -19,7 +19,7 @@ flowchart LR
     ADM["Fabric Admin API\n/admin/workspaces, /admin/items"]
     CAP["Fabric Core API\n/capacities"]
     AE["Power BI Admin API\n/admin/activityevents"]
-    RH["Power BI Admin API\n/admin/datasets/{id}/refreshhistory"]
+    RH["Power BI Admin API\n/admin/capacities/refreshables"]
 
     B["Bronze\nraw_capacities · raw_workspaces · raw_items (SCD2)\nraw_activity_events · raw_refresh_history (append-only)"]
     S["Silver\nsilver_* — cleaned, typed, enriched"]
@@ -189,7 +189,7 @@ Same Service Principal as the sibling repo — these are the same *values*, just
 
 ## Delegated Authentication for `/admin/*`
 
-Every `/admin/*` endpoint this project depends on — Fabric's `/v1/admin/workspaces` and `/v1/admin/items`, and Power BI's `/admin/activityevents` and `/admin/datasets/{id}/refreshhistory` — **rejected the Service Principal outright**, no matter how it authenticated:
+Every `/admin/*` endpoint this project depends on — Fabric's `/v1/admin/workspaces` and `/v1/admin/items`, and Power BI's `/admin/activityevents` and `/admin/capacities/refreshables` — **rejected the Service Principal outright**, no matter how it authenticated:
 
 - `notebookutils.credentials.getToken("pbi")` inside a pipeline-triggered notebook run → 403
 - A raw `client_credentials` OAuth call using the same SP's secret → 401 "Authorization Context Requested but not available"
