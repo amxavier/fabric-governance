@@ -1,0 +1,38 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.11.0/schema.json",
+  "name": "d4faff9595bb4532a1c1",
+  "position": {
+    "x": 10,
+    "y": 10,
+    "z": 0,
+    "height": 100,
+    "width": 200,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "cardVisual",
+    "query": {
+      "queryState": {
+        "Data": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_measure"
+                    }
+                  },
+                  "Property": "Total Refreshes"
+                }
+              },
+              "queryRef": "_measure.Total Refreshes",
+              "nativeQueryRef": "Total Refreshes"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

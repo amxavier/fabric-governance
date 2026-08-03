@@ -1,0 +1,38 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.11.0/schema.json",
+  "name": "6411f304f2b691b90943",
+  "position": {
+    "x": 320,
+    "y": 10,
+    "z": 1000,
+    "height": 110,
+    "width": 290,
+    "tabOrder": 1000
+  },
+  "visual": {
+    "visualType": "cardVisual",
+    "query": {
+      "queryState": {
+        "Data": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_measure"
+                    }
+                  },
+                  "Property": "Avg Daily CU (Capacity)"
+                }
+              },
+              "queryRef": "_measure.Avg Daily CU (Capacity)",
+              "nativeQueryRef": "Avg Daily CU (Capacity)"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

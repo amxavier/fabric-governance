@@ -1,0 +1,38 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.11.0/schema.json",
+  "name": "15a0c70c06c3088a27b6",
+  "position": {
+    "x": 630,
+    "y": 10,
+    "z": 2000,
+    "height": 110,
+    "width": 290,
+    "tabOrder": 2000
+  },
+  "visual": {
+    "visualType": "cardVisual",
+    "query": {
+      "queryState": {
+        "Data": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_measure"
+                    }
+                  },
+                  "Property": "Interactive Share % (Latest Day)"
+                }
+              },
+              "queryRef": "_measure.Interactive Share % (Latest Day)",
+              "nativeQueryRef": "Interactive Share % (Latest Day)"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

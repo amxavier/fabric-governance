@@ -48,15 +48,31 @@ def test_definition_pbir_references_correct_semantic_model():
     assert "sm_governance_medallion.SemanticModel" in path, f"Unexpected SM reference in byPath: {path}"
 
 
-def test_report_json_exists():
-    assert (_report_path() / "report.json").exists(), "report.json missing"
+def _visual_files() -> list[Path]:
+    return list((_report_path() / "definition" / "pages").glob("*/visuals/*/visual.json"))
 
 
-def test_report_json_is_valid_and_references_measures():
-    report_json = json.loads((_report_path() / "report.json").read_text(encoding="utf-8"))
-    sections = report_json["sections"]
-    assert len(sections) >= 1, "Report must have at least one page"
-    visual_containers = sections[0]["visualContainers"]
-    all_configs = " ".join(v["config"] for v in visual_containers)
-    for measure in ["Total Refreshes", "Failed Refreshes", "Refresh Success Rate %"]:
-        assert measure in all_configs, f"Report page does not reference measure: {measure}"
+def test_report_definition_json_exists():
+    # PBIR (full) format: report.json lives under definition/, one page.json
+    # per page under definition/pages/, one visual.json per visual under
+    # definition/pages/{page}/visuals/{visual}/ — not the old flat report.json
+    # with escaped-string visualContainers.
+    assert (_report_path() / "definition" / "report.json").exists(), "definition/report.json missing"
+
+
+def test_report_has_at_least_one_page():
+    pages = list((_report_path() / "definition" / "pages").glob("*/page.json"))
+    assert len(pages) >= 1, "Report must have at least one page"
+
+
+def test_report_references_expected_measures():
+    visual_files = _visual_files()
+    assert visual_files, "No visual.json files found under definition/pages"
+    all_text = " ".join(f.read_text(encoding="utf-8") for f in visual_files)
+    for measure in [
+        "Total Refreshes", "Failed Refreshes", "Refresh Success Rate %",
+        "Total Items", "Compute Items", "Data Items", "Presentation Items",
+        "Total CU (Capacity, Real)", "Avg Daily CU (Capacity)", "Total CU (Item Trend)",
+        "Interactive Share % (Latest Day)", "Background Share % (Latest Day)",
+    ]:
+        assert measure in all_text, f"No visual references measure: {measure}"

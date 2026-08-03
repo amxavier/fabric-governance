@@ -1,0 +1,140 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.11.0/schema.json",
+  "name": "e7fbd029d4ae4760b852",
+  "position": {
+    "x": 10,
+    "y": 510,
+    "z": 8000,
+    "height": 200,
+    "width": 1260,
+    "tabOrder": 8000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_item"
+                    }
+                  },
+                  "Property": "item_name"
+                }
+              },
+              "queryRef": "dim_item.item_name",
+              "nativeQueryRef": "item_name"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_item"
+                    }
+                  },
+                  "Property": "item_type"
+                }
+              },
+              "queryRef": "dim_item.item_type",
+              "nativeQueryRef": "item_type"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_workspace"
+                    }
+                  },
+                  "Property": "workspace_name"
+                }
+              },
+              "queryRef": "dim_workspace.workspace_name",
+              "nativeQueryRef": "workspace_name"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_measure"
+                    }
+                  },
+                  "Property": "Total Refreshes"
+                }
+              },
+              "queryRef": "_measure.Total Refreshes",
+              "nativeQueryRef": "Total Refreshes"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_measure"
+                    }
+                  },
+                  "Property": "Failed Refreshes"
+                }
+              },
+              "queryRef": "_measure.Failed Refreshes",
+              "nativeQueryRef": "Failed Refreshes"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_measure"
+                    }
+                  },
+                  "Property": "Refresh Success Rate %"
+                }
+              },
+              "queryRef": "_measure.Refresh Success Rate %",
+              "nativeQueryRef": "Refresh Success Rate %"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_measure"
+                    }
+                  },
+                  "Property": "Avg Refresh Duration (s)"
+                }
+              },
+              "queryRef": "_measure.Avg Refresh Duration (s)",
+              "nativeQueryRef": "Avg Refresh Duration (s)"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "_measure"
+                  }
+                },
+                "Property": "Failed Refreshes"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": true
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

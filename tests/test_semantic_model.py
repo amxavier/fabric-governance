@@ -16,6 +16,12 @@ EXPECTED_MEASURES = [
     "Total CU (Capacity, Real)",
     "Total CU (Item, by Date)",
     "Avg Daily CU (Capacity)",
+    "Total Items",
+    "Compute Items",
+    "Data Items",
+    "Presentation Items",
+    "Interactive Share % (Latest Day)",
+    "Background Share % (Latest Day)",
 ]
 
 # Table/measure home is "_measure" (not "measure") — renamed when the model
