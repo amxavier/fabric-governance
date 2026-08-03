@@ -22,6 +22,7 @@ EXPECTED_MEASURES = [
     "Presentation Items",
     "Interactive Share % (Latest Day)",
     "Background Share % (Latest Day)",
+    "Avg CU % of Base (Capacity)",
 ]
 
 # Table/measure home is "_measure" (not "measure") — renamed when the model

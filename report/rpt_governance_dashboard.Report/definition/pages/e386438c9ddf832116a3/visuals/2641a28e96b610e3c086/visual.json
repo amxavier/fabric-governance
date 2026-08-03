@@ -1,13 +1,13 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.11.0/schema.json",
-  "name": "e749a503346c05ba2659",
+  "name": "2641a28e96b610e3c086",
   "position": {
-    "x": 778,
+    "x": 1034,
     "y": 10,
-    "z": 3000,
+    "z": 4000,
     "height": 110,
-    "width": 246,
-    "tabOrder": 3000
+    "width": 236,
+    "tabOrder": 4000
   },
   "visual": {
     "visualType": "cardVisual",
@@ -23,11 +23,11 @@
                       "Entity": "_measure"
                     }
                   },
-                  "Property": "Background Share % (Latest Day)"
+                  "Property": "Avg CU % of Base (Capacity)"
                 }
               },
-              "queryRef": "_measure.Background Share % (Latest Day)",
-              "nativeQueryRef": "Background Share % (Latest Day)"
+              "queryRef": "_measure.Avg CU % of Base (Capacity)",
+              "nativeQueryRef": "Avg CU % of Base (Capacity)"
             }
           ]
         }
