@@ -210,19 +210,21 @@ print(f"Datasets with no refresh history available: {len(failed_lookups)}")
 
 # CELL ********************
 
-if rows:
-    df = spark.createDataFrame(rows)
-else:
-    schema = StructType([
-        StructField("dataset_id", StringType()),
-        StructField("refresh_id", StringType()),
-        StructField("refresh_type", StringType()),
-        StructField("start_time", StringType()),
-        StructField("end_time", StringType()),
-        StructField("status", StringType()),
-        StructField("error_json", StringType()),
-    ])
-    df = spark.createDataFrame([], schema)
+# Explicit schema regardless of whether `rows` is empty — refresh_type/
+# end_time/error_json are None for many runs (in-progress or non-scheduled
+# refreshes), and Spark's type inference throws CANNOT_DETERMINE_TYPE if a
+# column is null across every row in a run, same lesson as
+# nb_bronze_activity_events.
+schema = StructType([
+    StructField("dataset_id", StringType()),
+    StructField("refresh_id", StringType()),
+    StructField("refresh_type", StringType()),
+    StructField("start_time", StringType()),
+    StructField("end_time", StringType()),
+    StructField("status", StringType()),
+    StructField("error_json", StringType()),
+])
+df = spark.createDataFrame(rows, schema=schema)
 
 df = (
     df.withColumn("start_time", F.to_timestamp("start_time"))

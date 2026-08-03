@@ -45,7 +45,7 @@
 import requests
 from datetime import datetime, timezone
 from pyspark.sql import functions as F
-from pyspark.sql.types import DateType
+from pyspark.sql.types import DateType, StructType, StructField, StringType
 from delta.tables import DeltaTable
 
 DESTINATION_TABLE = "raw_items"
@@ -173,7 +173,19 @@ rows = [
     for i in data
 ]
 
-df = spark.createDataFrame(rows)
+# Explicit schema — description is null for most Fabric items, and Spark's
+# type inference throws CANNOT_DETERMINE_TYPE when a column is null in every
+# row of a fetch, same lesson as nb_bronze_activity_events/nb_bronze_capacities.
+ITEM_SCHEMA = StructType([
+    StructField("item_id", StringType()),
+    StructField("workspace_id", StringType()),
+    StructField("item_name", StringType()),
+    StructField("item_type", StringType()),
+    StructField("state", StringType()),
+    StructField("description", StringType()),
+])
+
+df = spark.createDataFrame(rows, schema=ITEM_SCHEMA)
 df = (
     df.withColumn("ingestion_ts", F.lit(INGESTION_TS.isoformat()).cast("timestamp"))
       .withColumn("ingestion_date", F.lit(INGESTION_DATE).cast(DateType()))

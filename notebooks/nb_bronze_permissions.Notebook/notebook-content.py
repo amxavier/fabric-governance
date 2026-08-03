@@ -263,7 +263,13 @@ for ws in all_workspaces:
 print(f"Role assignments fetched: {len(role_rows)}")
 print(f"Workspaces skipped (unsupported type or no access): {len(skipped_workspaces)}")
 
-df_roles = spark.createDataFrame(role_rows) if role_rows else spark.createDataFrame([], "workspace_id string, principal_id string, principal_display_name string, principal_type string, user_principal_name string, group_type string, role string")
+# Explicit schema regardless of whether role_rows is empty — user_principal_name
+# is null for every Group principal and group_type is null for every User
+# principal, so either column can be null across an entire fetch. Spark's type
+# inference throws CANNOT_DETERMINE_TYPE in that case, same lesson as the
+# other Bronze notebooks.
+ROLE_SCHEMA = "workspace_id string, principal_id string, principal_display_name string, principal_type string, user_principal_name string, group_type string, role string"
+df_roles = spark.createDataFrame(role_rows, schema=ROLE_SCHEMA)
 df_roles_scd = (
     df_roles
     .withColumn("ingestion_date", F.lit(INGESTION_DATE).cast(DateType()))
@@ -377,8 +383,11 @@ for ds in all_datasets:
 print(f"Item user rows fetched: {len(user_rows)}")
 print(f"Datasets skipped (no access/lookup unavailable): {len(skipped_datasets)}")
 
+# Explicit schema regardless of whether user_rows is empty — email_address/
+# graph_id are null for Guest or non-AD principals, so a column can be null
+# across an entire fetch. Same CANNOT_DETERMINE_TYPE lesson as df_roles above.
 USER_SCHEMA = "item_id string, principal_identifier string, principal_display_name string, principal_type string, email_address string, graph_id string, access_right string, user_type string"
-df_users = spark.createDataFrame(user_rows) if user_rows else spark.createDataFrame([], USER_SCHEMA)
+df_users = spark.createDataFrame(user_rows, schema=USER_SCHEMA)
 df_users_scd = (
     df_users
     .withColumn("ingestion_date", F.lit(INGESTION_DATE).cast(DateType()))
