@@ -23,6 +23,8 @@ EXPECTED_MEASURES = [
     "Interactive Share % (Latest Day)",
     "Background Share % (Latest Day)",
     "Avg CU % of Base (Capacity)",
+    "Failed Refreshes Color",
+    "Refresh Success Rate Color",
 ]
 
 # Table/measure home is "_measure" (not "measure") — renamed when the model

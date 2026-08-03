@@ -10,12 +10,15 @@ table _measure
 		lineageTag: ea72af87-8591-45f8-9300-8b2557ebdb70
 
 	measure 'Failed Refreshes' = ```
-			
+
 			CALCULATE(COUNTROWS(fact_refresh), fact_refresh[is_failure] = TRUE)
-			
+
 			```
 		formatString: 0
 		lineageTag: 692c2389-115a-4bd9-abd8-48e56ab20fdd
+
+	measure 'Failed Refreshes Color' = IF([Failed Refreshes] > 0, "#C76A5F", "#45B499")
+		lineageTag: 59f2c1f8-8134-40a7-8ee2-83aaa83d501c
 
 	measure 'Refresh Success Rate %' = ```
 			
@@ -27,6 +30,16 @@ table _measure
 			```
 		formatString: 0.0"%"
 		lineageTag: f0ed1d84-2b33-419e-8a87-8659a13af328
+
+	measure 'Refresh Success Rate Color' = ```
+
+			IF(
+			    [Refresh Success Rate %] >= 90, "#45B499",
+			    IF([Refresh Success Rate %] >= 70, "#DCB35A", "#C76A5F")
+			)
+
+			```
+		lineageTag: 24fcd74f-7779-416d-8918-c2065516fd44
 
 	measure 'Avg Refresh Duration (s)' = ```
 			

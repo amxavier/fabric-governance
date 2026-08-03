@@ -71,6 +71,7 @@ def test_report_references_expected_measures():
     all_text = " ".join(f.read_text(encoding="utf-8") for f in visual_files)
     for measure in [
         "Total Refreshes", "Failed Refreshes", "Refresh Success Rate %",
+        "Days Since Last Successful Refresh",
         "Total Items", "Compute Items", "Data Items", "Presentation Items",
         "Total CU (Capacity, Real)", "Avg Daily CU (Capacity)", "Total CU (Item Trend)",
         "Interactive Share % (Latest Day)", "Background Share % (Latest Day)",
