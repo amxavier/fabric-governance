@@ -307,6 +307,28 @@ else:
     else:
         print("No role assignment changes detected. Nothing written.")
 
+    # A (workspace_id, principal_id) pair present in `current` but absent from
+    # this run's fetch (role revoked, principal removed, or workspace deleted/
+    # recreated under a new id) is never touched by the `changed` merge above,
+    # since that only compares keys the new fetch still has. Without this,
+    # the old pair's row stays is_current = true forever — a revoked access
+    # grant would look like it's still active.
+    removed = current.join(
+        df_roles_scd.select("workspace_id", "principal_id"),
+        on=["workspace_id", "principal_id"], how="left_anti",
+    )
+    print(f"Role assignments removed since last snapshot: {removed.count()}")
+
+    if removed.count() > 0:
+        dt.alias("target").merge(
+            removed.withColumn("retired_on", F.lit(INGESTION_DATE).cast(DateType())).alias("source"),
+            "target.workspace_id = source.workspace_id AND target.principal_id = source.principal_id AND target.is_current = true"
+        ).whenMatchedUpdate(set={
+            "valid_to": "source.retired_on",
+            "is_current": "false",
+        }).execute()
+        print(f"{removed.count()} role assignment(s) retired (no longer present in source)")
+
 
 # METADATA ********************
 
@@ -398,6 +420,30 @@ else:
         print(f"{changed.count()} new versions written to {USERS_PATH}")
     else:
         print("No item/user changes detected. Nothing written.")
+
+    # An (item_id, principal_identifier) pair present in `current` but absent
+    # from this run's fetch (access revoked, principal removed, or item_id
+    # itself vanished from raw_items — deleted or recreated under a new id)
+    # is never touched by the `changed` merge above, since that only compares
+    # keys the new fetch still has. Without this, the old pair's row stays
+    # is_current = true forever — a revoked access grant would look like it's
+    # still active, exactly the kind of stale LGPD/access-review signal this
+    # table exists to avoid.
+    removed = current.join(
+        df_users_scd.select("item_id", "principal_identifier"),
+        on=["item_id", "principal_identifier"], how="left_anti",
+    )
+    print(f"Item/user pairs removed since last snapshot: {removed.count()}")
+
+    if removed.count() > 0:
+        dt.alias("target").merge(
+            removed.withColumn("retired_on", F.lit(INGESTION_DATE).cast(DateType())).alias("source"),
+            "target.item_id = source.item_id AND target.principal_identifier = source.principal_identifier AND target.is_current = true"
+        ).whenMatchedUpdate(set={
+            "valid_to": "source.retired_on",
+            "is_current": "false",
+        }).execute()
+        print(f"{removed.count()} item/user pair(s) retired (no longer present in source)")
 
 
 # METADATA ********************

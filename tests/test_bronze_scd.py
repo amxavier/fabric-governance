@@ -51,6 +51,22 @@ def test_scd2_dimension_notebooks_merge_on_is_current():
         )
 
 
+def test_scd2_dimension_notebooks_retire_vanished_keys():
+    """Comparing only keys the new fetch still has misses the case where a
+    business key disappears entirely (item deleted, or recreated under a new
+    id) — that key's row would stay is_current = true forever. Each SCD2
+    notebook must also retire keys present in `current` but absent from the
+    new fetch, via a left_anti join.
+    """
+    for name in SCD2_DIMENSION_NOTEBOOKS:
+        source = _notebook_source(name)
+        assert "left_anti" in source, (
+            f"{name} is expected to retire business keys that vanished from "
+            f"the source fetch (left_anti join against `current`), not just "
+            f"keys that changed"
+        )
+
+
 def test_append_only_fact_notebooks_have_no_scd_columns():
     for name in APPEND_ONLY_FACT_NOTEBOOKS:
         source = _notebook_source(name)

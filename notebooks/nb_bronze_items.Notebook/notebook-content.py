@@ -245,6 +245,26 @@ else:
     else:
         print("No item changes detected. Nothing written.")
 
+    # A business key present in `current` but absent from this run's fetch
+    # (item deleted, or recreated under a new item_id — e.g. a DirectLake
+    # semantic model rebuilt interactively in the portal) is never touched by
+    # the `changed` merge above, since that only compares keys the new fetch
+    # still has. Without this, the old item_id's row stays is_current = true
+    # forever, alongside the new item_id's row for what is really the same
+    # logical item.
+    removed = current.join(df_scd.select("item_id"), on="item_id", how="left_anti")
+    print(f"Items removed since last snapshot: {removed.count()}")
+
+    if removed.count() > 0:
+        dt.alias("target").merge(
+            removed.withColumn("retired_on", F.lit(INGESTION_DATE).cast(DateType())).alias("source"),
+            "target.item_id = source.item_id AND target.is_current = true"
+        ).whenMatchedUpdate(set={
+            "valid_to": "source.retired_on",
+            "is_current": "false",
+        }).execute()
+        print(f"{removed.count()} item(s) retired (no longer present in source)")
+
 
 # METADATA ********************
 

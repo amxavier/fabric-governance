@@ -235,6 +235,24 @@ else:
     else:
         print("No gateway changes detected. Nothing written.")
 
+    # A business key present in `current` but absent from this run's fetch
+    # (gateway deleted or recreated under a new gateway_id) is never touched
+    # by the `changed` merge above, since that only compares keys the new
+    # fetch still has. Without this, the old gateway_id's row stays
+    # is_current = true forever.
+    removed = current.join(df_gateways_scd.select("gateway_id"), on="gateway_id", how="left_anti")
+    print(f"Gateways removed since last snapshot: {removed.count()}")
+
+    if removed.count() > 0:
+        dt.alias("target").merge(
+            removed.withColumn("retired_on", F.lit(INGESTION_DATE).cast(DateType())).alias("source"),
+            "target.gateway_id = source.gateway_id AND target.is_current = true"
+        ).whenMatchedUpdate(set={
+            "valid_to": "source.retired_on",
+            "is_current": "false",
+        }).execute()
+        print(f"{removed.count()} gateway(s) retired (no longer present in source)")
+
 
 # METADATA ********************
 
@@ -370,6 +388,28 @@ else:
         print(f"{changed.count()} new versions written to {DATASOURCES_PATH}")
     else:
         print("No dataset/datasource changes detected. Nothing written.")
+
+    # A (dataset_id, datasource_id) pair present in `current` but absent from
+    # this run's fetch — because the datasource was swapped/removed, or
+    # because the dataset_id itself vanished from raw_items (deleted or
+    # recreated under a new id) — is never touched by the `changed` merge
+    # above, since that only compares keys the new fetch still has. Without
+    # this, the old pair's row stays is_current = true forever.
+    removed = current.join(
+        df_datasources_scd.select("dataset_id", "datasource_id"),
+        on=["dataset_id", "datasource_id"], how="left_anti",
+    )
+    print(f"Dataset/datasource pairs removed since last snapshot: {removed.count()}")
+
+    if removed.count() > 0:
+        dt.alias("target").merge(
+            removed.withColumn("retired_on", F.lit(INGESTION_DATE).cast(DateType())).alias("source"),
+            "target.dataset_id = source.dataset_id AND target.datasource_id = source.datasource_id AND target.is_current = true"
+        ).whenMatchedUpdate(set={
+            "valid_to": "source.retired_on",
+            "is_current": "false",
+        }).execute()
+        print(f"{removed.count()} dataset/datasource pair(s) retired (no longer present in source)")
 
 
 # METADATA ********************
