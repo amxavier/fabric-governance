@@ -349,39 +349,53 @@ else:
 
 # CELL ********************
 
-all_datasets = [
+# Per-type Admin API endpoint + access-right field name — confirmed against
+# Microsoft Learn (Admin - Datasets/Reports/Dataflows GetXUsersAsAdmin), same
+# per-item-type "users" shape, differing only in the URL segment and the
+# name of the access-right field in the response. Dataflow is included for
+# completeness (matches this project's item_type architecture) even though
+# this tenant currently has zero Dataflow items — confirmed empty, not
+# guessed, same as raw_gateways' zero on-prem gateways.
+ITEM_USERS_ENDPOINT = {
+    "SemanticModel": ("datasets", "datasetUserAccessRight"),
+    "Report": ("reports", "reportUserAccessRight"),
+    "Dataflow": ("dataflows", "dataflowUserAccessRight"),
+}
+
+all_shareable_items = [
     row.asDict() for row in
     spark.read.format("delta").load(ITEMS_PATH)
-        .filter("is_current = true and item_type = 'SemanticModel'")
-        .select("item_id", "item_name")
+        .filter("is_current = true and item_type IN ('SemanticModel', 'Report', 'Dataflow')")
+        .select("item_id", "item_name", "item_type")
         .collect()
 ]
-print(f"Semantic models to check: {len(all_datasets)}")
+print(f"Shareable items to check (SemanticModel/Report/Dataflow): {len(all_shareable_items)}")
 
 user_rows = []
 skipped_datasets = []
-for ds in all_datasets:
+for item in all_shareable_items:
+    url_segment, access_right_field = ITEM_USERS_ENDPOINT[item["item_type"]]
     resp = requests.get(
-        f"https://api.powerbi.com/v1.0/myorg/admin/datasets/{ds['item_id']}/users",
+        f"https://api.powerbi.com/v1.0/myorg/admin/{url_segment}/{item['item_id']}/users",
         headers=DELEGATED_HEADERS, timeout=30,
     )
     if not resp.ok:
-        skipped_datasets.append((ds["item_id"], resp.status_code))
+        skipped_datasets.append((item["item_id"], resp.status_code))
         continue
     for u in resp.json().get("value", []):
         user_rows.append({
-            "item_id": ds["item_id"],
+            "item_id": item["item_id"],
             "principal_identifier": u.get("identifier"),
             "principal_display_name": u.get("displayName"),
             "principal_type": u.get("principalType"),
             "email_address": u.get("emailAddress"),
             "graph_id": u.get("graphId"),
-            "access_right": u.get("datasetUserAccessRight"),
+            "access_right": u.get(access_right_field),
             "user_type": u.get("userType"),
         })
 
 print(f"Item user rows fetched: {len(user_rows)}")
-print(f"Datasets skipped (no access/lookup unavailable): {len(skipped_datasets)}")
+print(f"Items skipped (no access/lookup unavailable): {len(skipped_datasets)}")
 
 # Explicit schema regardless of whether user_rows is empty — email_address/
 # graph_id are null for Guest or non-AD principals, so a column can be null
