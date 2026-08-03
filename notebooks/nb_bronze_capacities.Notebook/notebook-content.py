@@ -45,7 +45,7 @@
 import requests
 from datetime import datetime, timezone
 from pyspark.sql import functions as F
-from pyspark.sql.types import DateType
+from pyspark.sql.types import DateType, StructType, StructField, StringType
 from delta.tables import DeltaTable
 
 DESTINATION_TABLE = "raw_capacities"
@@ -118,7 +118,19 @@ rows = [
     for c in data
 ]
 
-df = spark.createDataFrame(rows)
+# Explicit schema — region (and in principle any of these) can be None across
+# every capacity in a fetch (e.g. this tenant's Trial capacity), and Spark's
+# type inference throws CANNOT_DETERMINE_TYPE when a column is null in every
+# row, same lesson as nb_bronze_activity_events/nb_bronze_refresh_history.
+CAPACITY_SCHEMA = StructType([
+    StructField("capacity_id", StringType()),
+    StructField("display_name", StringType()),
+    StructField("sku", StringType()),
+    StructField("region", StringType()),
+    StructField("state", StringType()),
+])
+
+df = spark.createDataFrame(rows, schema=CAPACITY_SCHEMA)
 df = (
     df.withColumn("ingestion_ts", F.lit(INGESTION_TS.isoformat()).cast("timestamp"))
       .withColumn("ingestion_date", F.lit(INGESTION_DATE).cast(DateType()))

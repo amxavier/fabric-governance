@@ -184,44 +184,46 @@ print(f"Activity events fetched: {len(events)}")
 # CELL ********************
 
 import json as _json
+from pyspark.sql.types import StructType, StructField, StringType
 
-if events:
-    rows = [
-        {
-            "event_id": e.get("Id"),
-            "creation_time": e.get("CreationTime"),
-            "activity": e.get("Activity"),
-            "user_id": e.get("UserId"),
-            "workspace_id": e.get("WorkspaceId"),
-            "item_name": e.get("ItemName"),
-            "object_id": e.get("ObjectId") or e.get("DatasetId") or e.get("ReportId"),
-            "refresh_type": e.get("RefreshType"),
-            "result_status": e.get("ResultStatus") or e.get("Status"),
-            # Preserve the full payload — activity schemas vary a lot by Activity
-            # value, and this is the audit source of truth; better to keep
-            # everything than to silently drop fields we didn't anticipate.
-            "raw_json": _json.dumps(e),
-        }
-        for e in events
-    ]
-    df = spark.createDataFrame(rows)
-else:
-    # Empty day (e.g. tenant with no activity) — build an empty typed frame so
-    # the write step below doesn't fail on an empty Python list.
-    from pyspark.sql.types import StructType, StructField, StringType
-    schema = StructType([
-        StructField("event_id", StringType()),
-        StructField("creation_time", StringType()),
-        StructField("activity", StringType()),
-        StructField("user_id", StringType()),
-        StructField("workspace_id", StringType()),
-        StructField("item_name", StringType()),
-        StructField("object_id", StringType()),
-        StructField("refresh_type", StringType()),
-        StructField("result_status", StringType()),
-        StructField("raw_json", StringType()),
-    ])
-    df = spark.createDataFrame([], schema)
+# Explicit schema, used whether or not there are events this day — every
+# field here is optional per Activity type (e.g. object_id/refresh_type/
+# result_status are None for most non-refresh activities), and Spark's type
+# inference throws CANNOT_DETERMINE_TYPE if a column is null across every row
+# in a run. An empty Python list needs the same schema too, or the write step
+# below fails on a day with no activity at all.
+EVENT_SCHEMA = StructType([
+    StructField("event_id", StringType()),
+    StructField("creation_time", StringType()),
+    StructField("activity", StringType()),
+    StructField("user_id", StringType()),
+    StructField("workspace_id", StringType()),
+    StructField("item_name", StringType()),
+    StructField("object_id", StringType()),
+    StructField("refresh_type", StringType()),
+    StructField("result_status", StringType()),
+    StructField("raw_json", StringType()),
+])
+
+rows = [
+    {
+        "event_id": e.get("Id"),
+        "creation_time": e.get("CreationTime"),
+        "activity": e.get("Activity"),
+        "user_id": e.get("UserId"),
+        "workspace_id": e.get("WorkspaceId"),
+        "item_name": e.get("ItemName"),
+        "object_id": e.get("ObjectId") or e.get("DatasetId") or e.get("ReportId"),
+        "refresh_type": e.get("RefreshType"),
+        "result_status": e.get("ResultStatus") or e.get("Status"),
+        # Preserve the full payload — activity schemas vary a lot by Activity
+        # value, and this is the audit source of truth; better to keep
+        # everything than to silently drop fields we didn't anticipate.
+        "raw_json": _json.dumps(e),
+    }
+    for e in events
+]
+df = spark.createDataFrame(rows, schema=EVENT_SCHEMA)
 
 df = (
     df.withColumn("creation_time", F.to_timestamp("creation_time"))
