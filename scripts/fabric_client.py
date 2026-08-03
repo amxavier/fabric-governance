@@ -225,11 +225,3 @@ class FabricClient:
             # different shape from every other endpoint in this client.
             url = data.get("continuationUri")
         return events
-
-    def get_dataset_refresh_history(self, dataset_id: str, top: int | None = None) -> list[dict]:
-        url = f"{_POWERBI_BASE_URL}/admin/datasets/{dataset_id}/refreshhistory"
-        if top:
-            url += f"?$top={top}"
-        resp = requests.get(url, headers=self._headers(_POWERBI_SCOPE), timeout=30)
-        resp.raise_for_status()
-        return resp.json().get("value", [])
