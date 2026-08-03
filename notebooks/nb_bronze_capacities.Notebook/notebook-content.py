@@ -193,6 +193,24 @@ else:
     else:
         print("No capacity changes detected. Nothing written.")
 
+    # A business key present in `current` but absent from this run's fetch
+    # (capacity deleted or recreated under a new capacity_id) is never touched
+    # by the `changed` merge above, since that only compares keys the new
+    # fetch still has. Without this, the old capacity_id's row stays
+    # is_current = true forever.
+    removed = current.join(df_scd.select("capacity_id"), on="capacity_id", how="left_anti")
+    print(f"Capacities removed since last snapshot: {removed.count()}")
+
+    if removed.count() > 0:
+        dt.alias("target").merge(
+            removed.withColumn("retired_on", F.lit(INGESTION_DATE).cast(DateType())).alias("source"),
+            "target.capacity_id = source.capacity_id AND target.is_current = true"
+        ).whenMatchedUpdate(set={
+            "valid_to": "source.retired_on",
+            "is_current": "false",
+        }).execute()
+        print(f"{removed.count()} capacity(ies) retired (no longer present in source)")
+
 
 # METADATA ********************
 
