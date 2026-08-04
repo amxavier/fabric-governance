@@ -1,9 +1,12 @@
-# Manual, one-off utility: pulls sm_governance_medallion's current definition
-# back from the DEV workspace into git. That semantic model is maintained
-# interactively in the portal (DirectLake models deployed via REST API have
-# a broken OneLake binding — see README), so cd_deploy.yml no longer touches
-# its content; this is the reverse sync, keeping git a readable snapshot of
-# whatever's actually live instead of letting the two drift apart silently.
+# Manual, one-off utility: pulls an item's current definition back from the
+# DEV workspace into git. Originally built for sm_governance_medallion (that
+# semantic model is maintained interactively in the portal — DirectLake
+# models deployed via REST API have a broken OneLake binding, see README —
+# so cd_deploy.yml no longer touches its content); also used for items whose
+# activities were configured interactively in the portal (e.g. a native
+# "Semantic model refresh" pipeline activity, which needs a Connection
+# resource deploy.py can't create) to sync that configuration back into git
+# instead of letting a future deploy silently wipe it out.
 name: Pull Semantic Model Definition
 
 on:
@@ -14,13 +17,17 @@ on:
         required: true
         default: "dc072922-4ffb-4424-868c-28087b02ecba"
       item_display_name:
-        description: "Semantic model display name"
+        description: "Item display name"
         required: true
         default: "sm_governance_medallion"
       target_folder:
         description: "Repo-relative item folder to overwrite"
         required: true
         default: "semantic models/sm_governance_medallion.SemanticModel"
+      format:
+        description: "Definition format — TMDL for SemanticModel items, leave blank for others (e.g. DataPipeline)"
+        required: false
+        default: "TMDL"
 
 jobs:
   pull:
@@ -48,7 +55,8 @@ jobs:
           python scripts/pull_item_definition.py \
             "${{ github.event.inputs.workspace_id }}" \
             "${{ github.event.inputs.item_display_name }}" \
-            "${{ github.event.inputs.target_folder }}"
+            "${{ github.event.inputs.target_folder }}" \
+            "${{ github.event.inputs.format }}"
 
       - name: Commit and push if changed
         run: |
