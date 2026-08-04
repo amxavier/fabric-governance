@@ -23,11 +23,11 @@
                       "Entity": "_measure"
                     }
                   },
-                  "Property": "Monthly Capacity Cost (Reserved, USD)"
+                  "Property": "Monthly Cost (USD)"
                 }
               },
-              "queryRef": "_measure.Monthly Capacity Cost (Reserved, USD)",
-              "nativeQueryRef": "Monthly Capacity Cost (Reserved, USD)"
+              "queryRef": "_measure.Monthly Cost (USD)",
+              "nativeQueryRef": "Monthly Cost (USD)"
             }
           ]
         }

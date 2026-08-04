@@ -23,11 +23,11 @@
                       "Entity": "_measure"
                     }
                   },
-                  "Property": "Compute Items"
+                  "Property": "Compute"
                 }
               },
-              "queryRef": "_measure.Compute Items",
-              "nativeQueryRef": "Compute Items"
+              "queryRef": "_measure.Compute",
+              "nativeQueryRef": "Compute"
             }
           ]
         }

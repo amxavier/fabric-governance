@@ -2,9 +2,9 @@ table _measure
 	lineageTag: 27316928-2317-4dee-a1ba-3c288a5e8d80
 
 	measure 'Total Refreshes' = ```
-			
+
 			COUNTROWS(fact_refresh)
-			
+
 			```
 		formatString: 0
 		lineageTag: ea72af87-8591-45f8-9300-8b2557ebdb70
@@ -20,13 +20,13 @@ table _measure
 	measure 'Failed Refreshes Color' = IF([Failed Refreshes] > 0, "#C76A5F", "#45B499")
 		lineageTag: 59f2c1f8-8134-40a7-8ee2-83aaa83d501c
 
-	measure 'Refresh Success Rate %' = ```
-			
+	measure 'Success Rate %' = ```
+
 			DIVIDE(
 			    CALCULATE(COUNTROWS(fact_refresh), fact_refresh[is_failure] = FALSE),
 			    [Total Refreshes]
 			) * 100
-			
+
 			```
 		formatString: 0.0"%"
 		lineageTag: f0ed1d84-2b33-419e-8a87-8659a13af328
@@ -34,31 +34,31 @@ table _measure
 	measure 'Refresh Success Rate Color' = ```
 
 			IF(
-			    [Refresh Success Rate %] >= 90, "#45B499",
-			    IF([Refresh Success Rate %] >= 70, "#DCB35A", "#C76A5F")
+			    [Success Rate %] >= 90, "#45B499",
+			    IF([Success Rate %] >= 70, "#DCB35A", "#C76A5F")
 			)
 
 			```
 		lineageTag: 24fcd74f-7779-416d-8918-c2065516fd44
 
-	measure 'Avg Refresh Duration (s)' = ```
-			
+	measure 'Avg Duration (s)' = ```
+
 			AVERAGE(fact_refresh[duration_seconds])
-			
+
 			```
 		formatString: #,0.0
 		lineageTag: 0856e1d4-1f2c-4bcc-8924-b47d1c34643a
 
 	measure 'Distinct Publishers' = ```
-			
+
 			DISTINCTCOUNT(fact_activity[user_id])
-			
+
 			```
 		formatString: 0
 		lineageTag: ca0eaba2-78f5-4979-b62c-7f3164c84cf8
 
-	measure 'Days Since Last Successful Refresh' = ```
-			
+	measure 'Days Since Refresh' = ```
+
 			VAR LastSuccess =
 			    CALCULATE(
 			        MAX(fact_refresh[end_time]),
@@ -67,7 +67,7 @@ table _measure
 			    )
 			RETURN
 			    DATEDIFF(LastSuccess, NOW(), DAY)
-			
+
 			```
 		formatString: 0
 		lineageTag: e4d75a14-939e-464c-8378-8b913151df83
@@ -77,13 +77,13 @@ table _measure
 
 		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
-	measure 'Total CU (Capacity, Real)' = SUM(fact_capacity_utilization[sum_cu])
+	measure 'Total CU' = SUM(fact_capacity_utilization[sum_cu])
 		lineageTag: 901eb85d-a518-4b84-ba62-186629854260
 
 		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
 	measure 'Total CU (Item, by Date)' =
-			
+
 			CALCULATE(
 			    SUM(fact_capacity_consumption[sum_cu]),
 			    USERELATIONSHIP(fact_capacity_consumption[date_id], dim_date[date_id])
@@ -92,16 +92,16 @@ table _measure
 
 		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
-	measure 'Avg Daily CU (Capacity)' = AVERAGE(fact_capacity_utilization[sum_cu])
+	measure 'Avg Daily CU' = AVERAGE(fact_capacity_utilization[sum_cu])
 		lineageTag: fbc18550-3d01-48a3-a757-3f8a6bb2d036
 
 		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
-	measure 'Avg CU % of Base (Capacity)' = DIVIDE(AVERAGE(fact_capacity_utilization[avg_cu]), AVERAGE(fact_capacity_utilization[base_capacity_units])) * 100
+	measure 'CU % of Base' = DIVIDE(AVERAGE(fact_capacity_utilization[avg_cu]), AVERAGE(fact_capacity_utilization[base_capacity_units])) * 100
 		formatString: 0.0"%"
 		lineageTag: 9a458048-dca9-f64c-ccf9-143570ca8062
 
-	measure 'Total Tracked Items' = COUNTROWS(fact_item_lifecycle)
+	measure 'Tracked Items' = COUNTROWS(fact_item_lifecycle)
 		formatString: 0
 		lineageTag: 5a1bdcd1-bd5b-49cb-8db4-a0750e639b0c
 
@@ -113,7 +113,7 @@ table _measure
 		formatString: 0
 		lineageTag: 704ed4b5-4d06-4ff2-9254-bf57c966306d
 
-	measure 'Cleanup Candidate Items' = CALCULATE(COUNTROWS(fact_item_lifecycle), fact_item_lifecycle[lifecycle_status] = "Cleanup Candidate")
+	measure 'Cleanup Candidates' = CALCULATE(COUNTROWS(fact_item_lifecycle), fact_item_lifecycle[lifecycle_status] = "Cleanup Candidate")
 		formatString: 0
 		lineageTag: 4ba909ae-df91-43fe-bcfd-5715c40feb37
 
@@ -126,7 +126,7 @@ table _measure
 	/// Fabric capacity is billed as a flat rate for the provisioned SKU, not
 	/// per CU consumed. Update this constant if the SKU, region, or
 	/// commitment term changes.
-	measure 'Monthly Capacity Cost (Reserved, USD)' = 7776
+	measure 'Monthly Cost (USD)' = 7776
 		formatString: "$"#,0
 		lineageTag: 51b165ad-f1f7-4765-9d83-83ac1af4c6b8
 
@@ -134,7 +134,7 @@ table _measure
 	/// the fixed cost times the idle share of capacity (100% - avg
 	/// utilization). Not money actually saved by using less (you pay the
 	/// same flat rate either way) — a right-sizing signal, not a refund.
-	measure 'Est. Idle Capacity Cost (USD)' = [Monthly Capacity Cost (Reserved, USD)] * (100 - [Avg CU % of Base (Capacity)]) / 100
+	measure 'Idle Cost (USD)' = [Monthly Cost (USD)] * (100 - [CU % of Base]) / 100
 		formatString: "$"#,0
 		lineageTag: 2362556f-6f71-4137-b0ad-cd1cbf7695fe
 
@@ -142,19 +142,19 @@ table _measure
 		formatString: 0
 		lineageTag: a0672ded-1cf2-4def-89ce-e9529b8a7d31
 
-	measure 'Compute Items' = CALCULATE(COUNTROWS(dim_item), dim_item[item_type] IN {"Notebook", "DataPipeline"})
+	measure 'Compute' = CALCULATE(COUNTROWS(dim_item), dim_item[item_type] IN {"Notebook", "DataPipeline"})
 		formatString: 0
 		lineageTag: 531b27ea-402c-4e16-92d3-32ced4fccc33
 
-	measure 'Data Items' = CALCULATE(COUNTROWS(dim_item), dim_item[item_type] IN {"Lakehouse", "SQLEndpoint", "Warehouse", "SQLDatabase"})
+	measure 'Data' = CALCULATE(COUNTROWS(dim_item), dim_item[item_type] IN {"Lakehouse", "SQLEndpoint", "Warehouse", "SQLDatabase"})
 		formatString: 0
 		lineageTag: 811b5ac6-348f-4d35-bb66-7e0ae7203c42
 
-	measure 'Presentation Items' = CALCULATE(COUNTROWS(dim_item), dim_item[item_type] IN {"Report", "SemanticModel", "App"})
+	measure 'Presentation' = CALCULATE(COUNTROWS(dim_item), dim_item[item_type] IN {"Report", "SemanticModel", "App"})
 		formatString: 0
 		lineageTag: 5a753c4e-fb79-4b5e-8cc7-e19b97fe521b
 
-	measure 'Interactive Share % (Latest Day)' = ```
+	measure 'Interactive %' = ```
 
 			VAR LatestDate = MAX(fact_capacity_utilization[date_id])
 			VAR Inter = CALCULATE(SUM(fact_capacity_utilization[avg_interactive]), fact_capacity_utilization[date_id] = LatestDate)
@@ -165,7 +165,7 @@ table _measure
 		formatString: 0.0"%"
 		lineageTag: 1b536318-fbd6-4445-a7fa-7349175f57ec
 
-	measure 'Background Share % (Latest Day)' = 100 - [Interactive Share % (Latest Day)]
+	measure 'Background %' = 100 - [Interactive %]
 		formatString: 0.0"%"
 		lineageTag: cb03ec18-ec11-46da-9704-abe454b1e986
 
@@ -183,4 +183,3 @@ table _measure
 		source = Row("Column", BLANK())
 
 	annotation PBI_Id = 8f6c1f0b6dfb4e6c9f9c1a2b3c4d5e6f
-

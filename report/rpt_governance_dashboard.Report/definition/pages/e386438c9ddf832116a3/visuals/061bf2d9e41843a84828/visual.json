@@ -23,11 +23,11 @@
                       "Entity": "_measure"
                     }
                   },
-                  "Property": "Est. Idle Capacity Cost (USD)"
+                  "Property": "Idle Cost (USD)"
                 }
               },
-              "queryRef": "_measure.Est. Idle Capacity Cost (USD)",
-              "nativeQueryRef": "Est. Idle Capacity Cost (USD)"
+              "queryRef": "_measure.Idle Cost (USD)",
+              "nativeQueryRef": "Idle Cost (USD)"
             }
           ]
         }

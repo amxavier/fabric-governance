@@ -23,11 +23,11 @@
                       "Entity": "_measure"
                     }
                   },
-                  "Property": "Cleanup Candidate Items"
+                  "Property": "Cleanup Candidates"
                 }
               },
-              "queryRef": "_measure.Cleanup Candidate Items",
-              "nativeQueryRef": "Cleanup Candidate Items"
+              "queryRef": "_measure.Cleanup Candidates",
+              "nativeQueryRef": "Cleanup Candidates"
             }
           ]
         }

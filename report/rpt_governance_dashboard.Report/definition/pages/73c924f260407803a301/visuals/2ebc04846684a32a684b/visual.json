@@ -23,11 +23,11 @@
                       "Entity": "_measure"
                     }
                   },
-                  "Property": "Data Items"
+                  "Property": "Data"
                 }
               },
-              "queryRef": "_measure.Data Items",
-              "nativeQueryRef": "Data Items"
+              "queryRef": "_measure.Data",
+              "nativeQueryRef": "Data"
             }
           ]
         }

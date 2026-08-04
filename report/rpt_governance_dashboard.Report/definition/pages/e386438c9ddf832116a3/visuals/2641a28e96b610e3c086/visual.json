@@ -23,11 +23,11 @@
                       "Entity": "_measure"
                     }
                   },
-                  "Property": "Avg CU % of Base (Capacity)"
+                  "Property": "CU % of Base"
                 }
               },
-              "queryRef": "_measure.Avg CU % of Base (Capacity)",
-              "nativeQueryRef": "Avg CU % of Base (Capacity)"
+              "queryRef": "_measure.CU % of Base",
+              "nativeQueryRef": "CU % of Base"
             }
           ]
         }

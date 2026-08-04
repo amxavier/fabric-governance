@@ -23,11 +23,11 @@
                       "Entity": "_measure"
                     }
                   },
-                  "Property": "Interactive Share % (Latest Day)"
+                  "Property": "Interactive %"
                 }
               },
-              "queryRef": "_measure.Interactive Share % (Latest Day)",
-              "nativeQueryRef": "Interactive Share % (Latest Day)"
+              "queryRef": "_measure.Interactive %",
+              "nativeQueryRef": "Interactive %"
             }
           ]
         }

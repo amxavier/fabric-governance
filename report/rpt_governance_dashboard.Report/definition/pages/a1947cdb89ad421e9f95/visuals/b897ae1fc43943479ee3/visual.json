@@ -23,11 +23,11 @@
                       "Entity": "_measure"
                     }
                   },
-                  "Property": "Refresh Success Rate %"
+                  "Property": "Success Rate %"
                 }
               },
-              "queryRef": "_measure.Refresh Success Rate %",
-              "nativeQueryRef": "Refresh Success Rate %"
+              "queryRef": "_measure.Success Rate %",
+              "nativeQueryRef": "Success Rate %"
             }
           ]
         }

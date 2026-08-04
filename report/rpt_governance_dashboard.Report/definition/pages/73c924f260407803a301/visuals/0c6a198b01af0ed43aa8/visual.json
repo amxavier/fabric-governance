@@ -23,11 +23,11 @@
                       "Entity": "_measure"
                     }
                   },
-                  "Property": "Presentation Items"
+                  "Property": "Presentation"
                 }
               },
-              "queryRef": "_measure.Presentation Items",
-              "nativeQueryRef": "Presentation Items"
+              "queryRef": "_measure.Presentation",
+              "nativeQueryRef": "Presentation"
             }
           ]
         }
