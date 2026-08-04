@@ -2,63 +2,50 @@ table _measure
 	lineageTag: 27316928-2317-4dee-a1ba-3c288a5e8d80
 
 	measure 'Total Refreshes' = ```
-
+			
 			COUNTROWS(fact_refresh)
-
+			
 			```
 		formatString: 0
 		lineageTag: ea72af87-8591-45f8-9300-8b2557ebdb70
 
 	measure 'Failed Refreshes' = ```
-
+			
 			CALCULATE(COUNTROWS(fact_refresh), fact_refresh[is_failure] = TRUE)
-
+			
 			```
 		formatString: 0
 		lineageTag: 692c2389-115a-4bd9-abd8-48e56ab20fdd
 
-	measure 'Failed Refreshes Color' = IF([Failed Refreshes] > 0, "#C76A5F", "#45B499")
-		lineageTag: 59f2c1f8-8134-40a7-8ee2-83aaa83d501c
-
 	measure 'Success Rate %' = ```
-
+			
 			DIVIDE(
 			    CALCULATE(COUNTROWS(fact_refresh), fact_refresh[is_failure] = FALSE),
 			    [Total Refreshes]
 			) * 100
-
+			
 			```
 		formatString: 0.0"%"
 		lineageTag: f0ed1d84-2b33-419e-8a87-8659a13af328
 
-	measure 'Refresh Success Rate Color' = ```
-
-			IF(
-			    [Success Rate %] >= 90, "#45B499",
-			    IF([Success Rate %] >= 70, "#DCB35A", "#C76A5F")
-			)
-
-			```
-		lineageTag: 24fcd74f-7779-416d-8918-c2065516fd44
-
 	measure 'Avg Duration (s)' = ```
-
+			
 			AVERAGE(fact_refresh[duration_seconds])
-
+			
 			```
 		formatString: #,0.0
 		lineageTag: 0856e1d4-1f2c-4bcc-8924-b47d1c34643a
 
 	measure 'Distinct Publishers' = ```
-
+			
 			DISTINCTCOUNT(fact_activity[user_id])
-
+			
 			```
 		formatString: 0
 		lineageTag: ca0eaba2-78f5-4979-b62c-7f3164c84cf8
 
 	measure 'Days Since Refresh' = ```
-
+			
 			VAR LastSuccess =
 			    CALCULATE(
 			        MAX(fact_refresh[end_time]),
@@ -67,7 +54,7 @@ table _measure
 			    )
 			RETURN
 			    DATEDIFF(LastSuccess, NOW(), DAY)
-
+			
 			```
 		formatString: 0
 		lineageTag: e4d75a14-939e-464c-8378-8b913151df83
@@ -83,7 +70,7 @@ table _measure
 		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
 	measure 'Total CU (Item, by Date)' =
-
+			
 			CALCULATE(
 			    SUM(fact_capacity_consumption[sum_cu]),
 			    USERELATIONSHIP(fact_capacity_consumption[date_id], dim_date[date_id])
@@ -97,77 +84,81 @@ table _measure
 
 		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
-	measure 'CU % of Base' = DIVIDE(AVERAGE(fact_capacity_utilization[avg_cu]), AVERAGE(fact_capacity_utilization[base_capacity_units])) * 100
-		formatString: 0.0"%"
-		lineageTag: 9a458048-dca9-f64c-ccf9-143570ca8062
-
-	measure 'Tracked Items' = COUNTROWS(fact_item_lifecycle)
-		formatString: 0
-		lineageTag: 5a1bdcd1-bd5b-49cb-8db4-a0750e639b0c
-
-	measure 'Active Items' = CALCULATE(COUNTROWS(fact_item_lifecycle), fact_item_lifecycle[lifecycle_status] = "Active")
-		formatString: 0
-		lineageTag: 7460a9a6-3b93-43d8-9d81-47f50f96dcae
-
-	measure 'Inactive Items' = CALCULATE(COUNTROWS(fact_item_lifecycle), fact_item_lifecycle[lifecycle_status] = "Inactive")
-		formatString: 0
-		lineageTag: 704ed4b5-4d06-4ff2-9254-bf57c966306d
-
-	measure 'Cleanup Candidates' = CALCULATE(COUNTROWS(fact_item_lifecycle), fact_item_lifecycle[lifecycle_status] = "Cleanup Candidate")
-		formatString: 0
-		lineageTag: 4ba909ae-df91-43fe-bcfd-5715c40feb37
-
-	measure 'No Signal Items' = CALCULATE(COUNTROWS(fact_item_lifecycle), fact_item_lifecycle[lifecycle_status] = "No Activity Recorded")
-		formatString: 0
-		lineageTag: 808e3faf-95e3-41b4-a120-5e8741b55b12
-
-	/// Hardcoded — F64, Brazil South, 1-year reserved, pulled from the Azure
-	/// Pricing Calculator on 2026-08-04. Not derived from consumption data:
-	/// Fabric capacity is billed as a flat rate for the provisioned SKU, not
-	/// per CU consumed. Update this constant if the SKU, region, or
-	/// commitment term changes.
-	measure 'Monthly Cost (USD)' = 7776
-		formatString: "$"#,0
-		lineageTag: 51b165ad-f1f7-4765-9d83-83ac1af4c6b8
-
-	/// What the flat monthly fee "would have bought" if billed by usage —
-	/// the fixed cost times the idle share of capacity (100% - avg
-	/// utilization). Not money actually saved by using less (you pay the
-	/// same flat rate either way) — a right-sizing signal, not a refund.
-	measure 'Idle Cost (USD)' = [Monthly Cost (USD)] * (100 - [CU % of Base]) / 100
-		formatString: "$"#,0
-		lineageTag: 2362556f-6f71-4137-b0ad-cd1cbf7695fe
-
 	measure 'Total Items' = COUNTROWS(dim_item)
 		formatString: 0
-		lineageTag: a0672ded-1cf2-4def-89ce-e9529b8a7d31
+		lineageTag: 77d54761-ccee-4c90-8533-f44112dbc6ef
 
-	measure 'Compute' = CALCULATE(COUNTROWS(dim_item), dim_item[item_type] IN {"Notebook", "DataPipeline"})
+	measure Compute = CALCULATE(COUNTROWS(dim_item), dim_item[item_type] IN {"Notebook", "DataPipeline"})
 		formatString: 0
-		lineageTag: 531b27ea-402c-4e16-92d3-32ced4fccc33
+		lineageTag: 15c99b52-53d1-4300-9ae8-a0eb2a31fc84
 
-	measure 'Data' = CALCULATE(COUNTROWS(dim_item), dim_item[item_type] IN {"Lakehouse", "SQLEndpoint", "Warehouse", "SQLDatabase"})
+	measure Data = CALCULATE(COUNTROWS(dim_item), dim_item[item_type] IN {"Lakehouse", "SQLEndpoint", "Warehouse", "SQLDatabase"})
 		formatString: 0
-		lineageTag: 811b5ac6-348f-4d35-bb66-7e0ae7203c42
+		lineageTag: 92f38eed-313f-4ec2-9a78-e8499a398104
 
-	measure 'Presentation' = CALCULATE(COUNTROWS(dim_item), dim_item[item_type] IN {"Report", "SemanticModel", "App"})
+	measure Presentation = CALCULATE(COUNTROWS(dim_item), dim_item[item_type] IN {"Report", "SemanticModel", "App"})
 		formatString: 0
-		lineageTag: 5a753c4e-fb79-4b5e-8cc7-e19b97fe521b
+		lineageTag: 8047be60-de2c-4b79-9559-9e3e0f0aa5eb
 
-	measure 'Interactive %' = ```
-
+	measure 'Interactive %' =
+			
 			VAR LatestDate = MAX(fact_capacity_utilization[date_id])
 			VAR Inter = CALCULATE(SUM(fact_capacity_utilization[avg_interactive]), fact_capacity_utilization[date_id] = LatestDate)
 			VAR Back = CALCULATE(SUM(fact_capacity_utilization[avg_background]), fact_capacity_utilization[date_id] = LatestDate)
 			RETURN DIVIDE(Inter, Inter + Back) * 100
+		lineageTag: dfba4f17-fca1-4abd-8568-27d4281652e7
 
-			```
-		formatString: 0.0"%"
-		lineageTag: 1b536318-fbd6-4445-a7fa-7349175f57ec
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
 	measure 'Background %' = 100 - [Interactive %]
-		formatString: 0.0"%"
-		lineageTag: cb03ec18-ec11-46da-9704-abe454b1e986
+		lineageTag: d10157bd-bb27-4b1d-8571-9a75cf598158
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'CU % of Base' = DIVIDE(AVERAGE(fact_capacity_utilization[avg_cu]), AVERAGE(fact_capacity_utilization[base_capacity_units])) * 100
+		lineageTag: 20d3ce5c-e46b-4683-b152-8f62535f4dc6
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Failed Refreshes Color' = IF([Failed Refreshes] > 0, "#C76A5F", "#45B499")
+		lineageTag: 458b4007-c7e5-40b5-9afd-dadf527ec113
+
+	measure 'Refresh Success Rate Color' =
+			
+			IF(
+			    [Success Rate %] >= 90, "#45B499",
+			    IF([Success Rate %] >= 70, "#DCB35A", "#C76A5F")
+			)
+		lineageTag: b95e3439-3514-459a-88a4-529ea2439c70
+
+	measure 'Tracked Items' = COUNTROWS(fact_item_lifecycle)
+		formatString: 0
+		lineageTag: 434cba1b-cb78-4c18-8d83-f6d1c72da354
+
+	measure 'Active Items' = CALCULATE(COUNTROWS(fact_item_lifecycle), fact_item_lifecycle[lifecycle_status] = "Active")
+		formatString: 0
+		lineageTag: 9577f26a-2373-4649-95bd-dda1dceb2b37
+
+	measure 'Inactive Items' = CALCULATE(COUNTROWS(fact_item_lifecycle), fact_item_lifecycle[lifecycle_status] = "Inactive")
+		formatString: 0
+		lineageTag: 0ca5bee6-a533-444e-8799-4c05f7f6ef7b
+
+	measure 'Cleanup Candidates' = CALCULATE(COUNTROWS(fact_item_lifecycle), fact_item_lifecycle[lifecycle_status] = "Cleanup Candidate")
+		formatString: 0
+		lineageTag: f9fb558b-bbde-416f-9fe5-7b6f36d77615
+
+	measure 'No Signal Items' = CALCULATE(COUNTROWS(fact_item_lifecycle), fact_item_lifecycle[lifecycle_status] = "No Activity Recorded")
+		formatString: 0
+		lineageTag: f2c8b0ab-675a-43a0-8a33-66cdd68d27bd
+
+	measure 'Monthly Cost (USD)' = 7776
+		formatString: 0
+		lineageTag: af638d84-856a-47e2-bfe3-5f8b84691c79
+
+	measure 'Idle Cost (USD)' = [Monthly Cost (USD)] * (100 - [CU % of Base]) / 100
+		lineageTag: 33af6aab-4f6d-4eb9-833a-817869cf96e8
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
 	column Column
 		formatString: 0
@@ -183,3 +174,4 @@ table _measure
 		source = Row("Column", BLANK())
 
 	annotation PBI_Id = 8f6c1f0b6dfb4e6c9f9c1a2b3c4d5e6f
+

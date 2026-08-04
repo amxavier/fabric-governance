@@ -1,10 +1,10 @@
 table fact_item_lifecycle
-	lineageTag: 2d425528-b783-4bb0-a1da-71d20c4a365c
+	lineageTag: 07e7bb6e-31c1-40ba-86ce-dbc018f07417
 	sourceLineageTag: [dbo].[fact_item_lifecycle]
 
 	column item_id
 		dataType: string
-		lineageTag: d01b8007-d2dd-4210-bbd2-876201e638ef
+		lineageTag: ffdfd513-b25d-4545-8528-0ab46a9d98c8
 		sourceLineageTag: item_id
 		summarizeBy: none
 		sourceColumn: item_id
@@ -14,7 +14,7 @@ table fact_item_lifecycle
 	column last_refresh_date
 		dataType: dateTime
 		formatString: General Date
-		lineageTag: 4c2abbe3-beaa-40a1-b3da-1c245932b2dc
+		lineageTag: 24b549c5-7080-45ee-bb60-6e88407772dd
 		sourceLineageTag: last_refresh_date
 		summarizeBy: none
 		sourceColumn: last_refresh_date
@@ -24,7 +24,7 @@ table fact_item_lifecycle
 	column last_job_date
 		dataType: dateTime
 		formatString: General Date
-		lineageTag: cff7eb5a-3903-4e5b-87d7-222a7b633b15
+		lineageTag: 8c08bc7a-cc4f-4fa3-ba66-daa49534a317
 		sourceLineageTag: last_job_date
 		summarizeBy: none
 		sourceColumn: last_job_date
@@ -34,7 +34,7 @@ table fact_item_lifecycle
 	column last_activity_date
 		dataType: dateTime
 		formatString: General Date
-		lineageTag: 83714c78-c601-4bfa-be59-37f628372315
+		lineageTag: 039be5bd-d6a8-4bae-a81c-697c6269301b
 		sourceLineageTag: last_activity_date
 		summarizeBy: none
 		sourceColumn: last_activity_date
@@ -44,7 +44,7 @@ table fact_item_lifecycle
 	column last_seen_date
 		dataType: dateTime
 		formatString: General Date
-		lineageTag: 23791a1f-4d1e-4de5-a75b-a4b843d4829a
+		lineageTag: 9f563583-2499-4576-9ab9-6f143d41aae2
 		sourceLineageTag: last_seen_date
 		summarizeBy: none
 		sourceColumn: last_seen_date
@@ -54,16 +54,16 @@ table fact_item_lifecycle
 	column days_since_last_seen
 		dataType: int64
 		formatString: 0
-		lineageTag: 3e61dc28-f187-41a3-b15c-dc443e9f0fd7
+		lineageTag: f81ecaa7-cdfc-4bfa-a59b-a82fa64b0216
 		sourceLineageTag: days_since_last_seen
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: days_since_last_seen
 
 		annotation SummarizationSetBy = Automatic
 
 	column lifecycle_status
 		dataType: string
-		lineageTag: f28070bf-3bd8-49cc-8a93-9f5f3f1a6135
+		lineageTag: 4fd5f81b-16a5-4918-b982-c3e0166ed9e9
 		sourceLineageTag: lifecycle_status
 		summarizeBy: none
 		sourceColumn: lifecycle_status
