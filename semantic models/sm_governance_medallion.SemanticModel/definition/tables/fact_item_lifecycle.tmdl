@@ -1,0 +1,78 @@
+table fact_item_lifecycle
+	lineageTag: 2d425528-b783-4bb0-a1da-71d20c4a365c
+	sourceLineageTag: [dbo].[fact_item_lifecycle]
+
+	column item_id
+		dataType: string
+		lineageTag: d01b8007-d2dd-4210-bbd2-876201e638ef
+		sourceLineageTag: item_id
+		summarizeBy: none
+		sourceColumn: item_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column last_refresh_date
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 4c2abbe3-beaa-40a1-b3da-1c245932b2dc
+		sourceLineageTag: last_refresh_date
+		summarizeBy: none
+		sourceColumn: last_refresh_date
+
+		annotation SummarizationSetBy = Automatic
+
+	column last_job_date
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: cff7eb5a-3903-4e5b-87d7-222a7b633b15
+		sourceLineageTag: last_job_date
+		summarizeBy: none
+		sourceColumn: last_job_date
+
+		annotation SummarizationSetBy = Automatic
+
+	column last_activity_date
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 83714c78-c601-4bfa-be59-37f628372315
+		sourceLineageTag: last_activity_date
+		summarizeBy: none
+		sourceColumn: last_activity_date
+
+		annotation SummarizationSetBy = Automatic
+
+	column last_seen_date
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 23791a1f-4d1e-4de5-a75b-a4b843d4829a
+		sourceLineageTag: last_seen_date
+		summarizeBy: none
+		sourceColumn: last_seen_date
+
+		annotation SummarizationSetBy = Automatic
+
+	column days_since_last_seen
+		dataType: int64
+		formatString: 0
+		lineageTag: 3e61dc28-f187-41a3-b15c-dc443e9f0fd7
+		sourceLineageTag: days_since_last_seen
+		summarizeBy: none
+		sourceColumn: days_since_last_seen
+
+		annotation SummarizationSetBy = Automatic
+
+	column lifecycle_status
+		dataType: string
+		lineageTag: f28070bf-3bd8-49cc-8a93-9f5f3f1a6135
+		sourceLineageTag: lifecycle_status
+		summarizeBy: none
+		sourceColumn: lifecycle_status
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_item_lifecycle = entity
+		mode: directLake
+		source
+			entityName: fact_item_lifecycle
+			expressionSource: 'DirectLake - lh_governance_gold_dev'
+

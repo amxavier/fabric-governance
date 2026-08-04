@@ -22,4 +22,5 @@ ref table dim_item
 ref table _measure
 ref table fact_capacity_utilization
 ref table fact_capacity_consumption
+ref table fact_item_lifecycle
 
