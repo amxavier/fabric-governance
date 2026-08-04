@@ -76,6 +76,7 @@ def test_report_references_expected_measures():
         "Total CU (Capacity, Real)", "Avg Daily CU (Capacity)", "Total CU (Item Trend)",
         "Interactive Share % (Latest Day)", "Background Share % (Latest Day)",
         "Avg CU % of Base (Capacity)",
+        "Monthly Capacity Cost (Reserved, USD)", "Est. Idle Capacity Cost (USD)",
         "Total Tracked Items", "Active Items", "Inactive Items",
         "Cleanup Candidate Items", "No Signal Items",
     ]:

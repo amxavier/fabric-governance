@@ -1,13 +1,13 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.11.0/schema.json",
-  "name": "efd9cb9e7ac490a2f69b",
+  "name": "8964a1717bcaab1b9109",
   "position": {
-    "x": 10,
+    "x": 910,
     "y": 10,
-    "z": 0,
+    "z": 5000,
     "height": 122,
     "width": 170,
-    "tabOrder": 0
+    "tabOrder": 5000
   },
   "visual": {
     "visualType": "cardVisual",
@@ -23,30 +23,15 @@
                       "Entity": "_measure"
                     }
                   },
-                  "Property": "Total CU (Capacity, Real)"
+                  "Property": "Monthly Capacity Cost (Reserved, USD)"
                 }
               },
-              "queryRef": "_measure.Total CU (Capacity, Real)",
-              "nativeQueryRef": "Total CU (Capacity, Real)"
+              "queryRef": "_measure.Monthly Capacity Cost (Reserved, USD)",
+              "nativeQueryRef": "Monthly Capacity Cost (Reserved, USD)"
             }
           ]
         }
       }
-    },
-    "visualContainerObjects": {
-      "title": [
-        {
-          "properties": {
-            "fontSize": {
-              "expr": {
-                "Literal": {
-                  "Value": "10D"
-                }
-              }
-            }
-          }
-        }
-      ]
     },
     "drillFilterOtherVisuals": true
   }

@@ -1,13 +1,13 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.11.0/schema.json",
-  "name": "efd9cb9e7ac490a2f69b",
+  "name": "061bf2d9e41843a84828",
   "position": {
-    "x": 10,
+    "x": 1090,
     "y": 10,
-    "z": 0,
+    "z": 6000,
     "height": 122,
     "width": 170,
-    "tabOrder": 0
+    "tabOrder": 6000
   },
   "visual": {
     "visualType": "cardVisual",
@@ -23,27 +23,34 @@
                       "Entity": "_measure"
                     }
                   },
-                  "Property": "Total CU (Capacity, Real)"
+                  "Property": "Est. Idle Capacity Cost (USD)"
                 }
               },
-              "queryRef": "_measure.Total CU (Capacity, Real)",
-              "nativeQueryRef": "Total CU (Capacity, Real)"
+              "queryRef": "_measure.Est. Idle Capacity Cost (USD)",
+              "nativeQueryRef": "Est. Idle Capacity Cost (USD)"
             }
           ]
         }
       }
     },
-    "visualContainerObjects": {
-      "title": [
+    "objects": {
+      "value": [
         {
           "properties": {
-            "fontSize": {
-              "expr": {
-                "Literal": {
-                  "Value": "10D"
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#DCB35A'"
+                    }
+                  }
                 }
               }
             }
+          },
+          "selector": {
+            "id": "default"
           }
         }
       ]
