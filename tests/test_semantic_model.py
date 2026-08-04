@@ -55,12 +55,12 @@ EXPECTED_RELATIONSHIPS = [
     ("fact_refresh.date_id", "dim_date.date_id"),
     ("dim_item.workspace_id", "dim_workspace.workspace_id"),
     ("dim_workspace.capacity_id", "dim_capacity.capacity_id"),
-    ("dim_item.item_id", "fact_capacity_consumption.item_id"),
+    ("fact_capacity_consumption.item_id", "dim_item.item_id"),
     ("fact_capacity_consumption.workspace_id", "dim_workspace.workspace_id"),
     ("fact_capacity_consumption.date_id", "dim_date.date_id"),
-    ("dim_date.date_id", "fact_capacity_utilization.date_id"),
+    ("fact_capacity_utilization.date_id", "dim_date.date_id"),
     ("fact_capacity_utilization.sku", "dim_capacity.sku"),
-    ("dim_item.item_id", "fact_item_lifecycle.item_id"),
+    ("fact_item_lifecycle.item_id", "dim_item.item_id"),
 ]
 
 # Real DEV workspace (reused from the sibling microsoft-fabric-medallion-lakehouse
@@ -96,9 +96,15 @@ def test_all_tables_present():
 
 
 def test_all_measures_defined():
+    # TMDL only quotes an identifier when it needs to (spaces, %, parens,
+    # etc.) — a single-word name like "Compute" is written unquoted
+    # (`measure Compute =`), not `measure 'Compute' =`, so both forms are
+    # legal and must be accepted.
     content = (DEFINITION_PATH / "tables" / "_measure.tmdl").read_text(encoding="utf-8")
     for measure in EXPECTED_MEASURES:
-        assert f"measure '{measure}'" in content, f"Missing DAX measure: {measure}"
+        quoted = f"measure '{measure}'" in content
+        unquoted = f"measure {measure} " in content or f"measure {measure}=" in content
+        assert quoted or unquoted, f"Missing DAX measure: {measure}"
 
 
 def test_all_relationships_defined():
