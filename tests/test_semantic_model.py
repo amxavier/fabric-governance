@@ -25,6 +25,11 @@ EXPECTED_MEASURES = [
     "Avg CU % of Base (Capacity)",
     "Failed Refreshes Color",
     "Refresh Success Rate Color",
+    "Total Tracked Items",
+    "Active Items",
+    "Inactive Items",
+    "Cleanup Candidate Items",
+    "No Signal Items",
 ]
 
 # Table/measure home is "_measure" (not "measure") — renamed when the model
@@ -35,6 +40,7 @@ EXPECTED_TABLES = [
     "dim_capacity", "dim_workspace", "dim_item", "dim_user", "dim_date",
     "fact_activity", "fact_refresh",
     "fact_capacity_consumption", "fact_capacity_utilization",
+    "fact_item_lifecycle",
     "_measure",
 ]
 
@@ -52,6 +58,7 @@ EXPECTED_RELATIONSHIPS = [
     ("fact_capacity_consumption.date_id", "dim_date.date_id"),
     ("dim_date.date_id", "fact_capacity_utilization.date_id"),
     ("fact_capacity_utilization.sku", "dim_capacity.sku"),
+    ("dim_item.item_id", "fact_item_lifecycle.item_id"),
 ]
 
 # Real DEV workspace (reused from the sibling microsoft-fabric-medallion-lakehouse

@@ -1,0 +1,112 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.11.0/schema.json",
+  "name": "0fdcfc1ab1f8fd29d48a",
+  "position": {
+    "x": 10,
+    "y": 362,
+    "z": 5000,
+    "height": 348,
+    "width": 1260,
+    "tabOrder": 5000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_item"
+                    }
+                  },
+                  "Property": "item_name"
+                }
+              },
+              "queryRef": "dim_item.item_name",
+              "nativeQueryRef": "item_name"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_item"
+                    }
+                  },
+                  "Property": "item_type"
+                }
+              },
+              "queryRef": "dim_item.item_type",
+              "nativeQueryRef": "item_type"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_item_lifecycle"
+                    }
+                  },
+                  "Property": "last_seen_date"
+                }
+              },
+              "queryRef": "fact_item_lifecycle.last_seen_date",
+              "nativeQueryRef": "last_seen_date"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_item_lifecycle"
+                    }
+                  },
+                  "Property": "days_since_last_seen"
+                }
+              },
+              "queryRef": "fact_item_lifecycle.days_since_last_seen",
+              "nativeQueryRef": "days_since_last_seen"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_item_lifecycle"
+                    }
+                  },
+                  "Property": "lifecycle_status"
+                }
+              },
+              "queryRef": "fact_item_lifecycle.lifecycle_status",
+              "nativeQueryRef": "lifecycle_status"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "fact_item_lifecycle"
+                  }
+                },
+                "Property": "days_since_last_seen"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": true
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

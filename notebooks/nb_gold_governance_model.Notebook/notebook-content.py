@@ -29,7 +29,7 @@
 #
 # **Layer:** Gold — Governance Star Schema
 # **Source:** `lh_governance_silver` → `silver_capacities`, `silver_workspaces`, `silver_items`, `silver_activity_events`, `silver_refresh_history`, `silver_capacity_metrics`, `silver_capacity_cu_detail`, `silver_gateways`, `silver_dataset_datasources`, `silver_item_job_history`, `silver_workspace_role_assignments`, `silver_item_users`
-# **Destination:** `lh_governance_gold` → `dim_capacity`, `dim_workspace`, `dim_item`, `dim_user`, `dim_date`, `dim_gateway`, `fact_activity`, `fact_refresh`, `fact_capacity_consumption`, `fact_capacity_utilization`, `fact_item_job_history`, `bridge_item_datasource`, `bridge_workspace_access`, `bridge_item_access`
+# **Destination:** `lh_governance_gold` → `dim_capacity`, `dim_workspace`, `dim_item`, `dim_user`, `dim_date`, `dim_gateway`, `fact_activity`, `fact_refresh`, `fact_capacity_consumption`, `fact_capacity_utilization`, `fact_item_job_history`, `fact_item_lifecycle`, `bridge_item_datasource`, `bridge_workspace_access`, `bridge_item_access`
 # **Depends on:** all five Silver notebooks
 # **Schedule:** Daily (last step in the pipeline)
 #
@@ -465,6 +465,84 @@ print(f"fact_item_job_history: {fact_item_job_history.count()} rows")
 
 # MARKDOWN ********************
 
+# ### fact_item_lifecycle
+#
+# Grain: one row per current item (dim_item). Unifies "last seen" across
+# the three signals this project tracks — fact_refresh (SemanticModel
+# refreshes), fact_item_job_history (Notebook/DataPipeline runs), and
+# fact_activity (any item, any user action) — taking whichever is most
+# recent, and classifies each item for environment cleanup: Active (<=45
+# days since last seen), Inactive (46-60), Cleanup Candidate (>60).
+#
+# Item types with none of these three signals today (Lakehouse, Warehouse,
+# SQLEndpoint, App — no refresh/job/activity concept captured by this
+# project) get "No Activity Recorded" instead of a false Active/Inactive
+# call — absence of a tracked signal isn't the same as confirmed inactivity.
+#
+# Recomputed fresh (overwrite) every run, same as the dimension tables it
+# reads from — this is "as of today's pipeline run," not a history to
+# preserve, so no SCD2 here.
+
+# CELL ********************
+
+_last_refresh = (
+    spark.read.format("delta").load(f"{GOLD_ABFS}/Tables/fact_refresh")
+    .groupBy("item_id")
+    .agg(F.max("end_time").alias("last_refresh_date"))
+)
+
+_last_job = (
+    spark.read.format("delta").load(f"{GOLD_ABFS}/Tables/fact_item_job_history")
+    .groupBy("item_id")
+    .agg(F.max("end_time").alias("last_job_date"))
+)
+
+_last_activity = (
+    spark.read.format("delta").load(f"{GOLD_ABFS}/Tables/fact_activity")
+    .groupBy("item_id")
+    .agg(F.max("creation_time").alias("last_activity_date"))
+)
+
+fact_item_lifecycle = (
+    dim_item.select("item_id")
+    .join(_last_refresh, on="item_id", how="left")
+    .join(_last_job, on="item_id", how="left")
+    .join(_last_activity, on="item_id", how="left")
+    .withColumn(
+        "last_seen_date",
+        F.greatest("last_refresh_date", "last_job_date", "last_activity_date"),
+    )
+    .withColumn(
+        "days_since_last_seen",
+        F.when(
+            F.col("last_seen_date").isNotNull(),
+            F.datediff(F.current_date(), F.col("last_seen_date")),
+        ),
+    )
+    .withColumn(
+        "lifecycle_status",
+        F.when(F.col("last_seen_date").isNull(), F.lit("No Activity Recorded"))
+         .when(F.col("days_since_last_seen") <= 45, F.lit("Active"))
+         .when(F.col("days_since_last_seen") <= 60, F.lit("Inactive"))
+         .otherwise(F.lit("Cleanup Candidate")),
+    )
+)
+
+(fact_item_lifecycle.write.format("delta").mode("overwrite")
+    .option("overwriteSchema", "true").save(f"{GOLD_ABFS}/Tables/fact_item_lifecycle"))
+print(f"fact_item_lifecycle: {fact_item_lifecycle.count()} rows")
+fact_item_lifecycle.groupBy("lifecycle_status").count().show()
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
 # ### bridge_item_datasource
 #
 # Grain: one row per item x datasource — a bridge/lineage table, not a
@@ -579,7 +657,7 @@ print(f"bridge_item_access: {bridge_item_access.count()} rows")
 
 # CELL ********************
 
-for table in ["dim_capacity", "dim_workspace", "dim_item", "dim_user", "dim_date", "dim_gateway", "fact_activity", "fact_refresh", "fact_capacity_consumption", "fact_capacity_utilization", "fact_item_job_history", "bridge_item_datasource", "bridge_workspace_access", "bridge_item_access"]:
+for table in ["dim_capacity", "dim_workspace", "dim_item", "dim_user", "dim_date", "dim_gateway", "fact_activity", "fact_refresh", "fact_capacity_consumption", "fact_capacity_utilization", "fact_item_job_history", "fact_item_lifecycle", "bridge_item_datasource", "bridge_workspace_access", "bridge_item_access"]:
     count = spark.read.format("delta").load(f"{GOLD_ABFS}/Tables/{table}").count()
     print(f"{table:20s}: {count} rows")
 

@@ -54,3 +54,7 @@ relationship 8db46da2-1ea1-70b1-e2bd-8ba6116b5425
 	fromColumn: fact_capacity_utilization.sku
 	toColumn: dim_capacity.sku
 
+relationship b04b884b-fff5-4aab-9ef8-22358ca3ddff
+	fromColumn: dim_item.item_id
+	toColumn: fact_item_lifecycle.item_id
+

@@ -76,5 +76,7 @@ def test_report_references_expected_measures():
         "Total CU (Capacity, Real)", "Avg Daily CU (Capacity)", "Total CU (Item Trend)",
         "Interactive Share % (Latest Day)", "Background Share % (Latest Day)",
         "Avg CU % of Base (Capacity)",
+        "Total Tracked Items", "Active Items", "Inactive Items",
+        "Cleanup Candidate Items", "No Signal Items",
     ]:
         assert measure in all_text, f"No visual references measure: {measure}"

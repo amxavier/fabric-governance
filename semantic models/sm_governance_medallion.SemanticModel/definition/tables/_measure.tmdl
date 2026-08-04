@@ -101,6 +101,26 @@ table _measure
 		formatString: 0.0"%"
 		lineageTag: 9a458048-dca9-f64c-ccf9-143570ca8062
 
+	measure 'Total Tracked Items' = COUNTROWS(fact_item_lifecycle)
+		formatString: 0
+		lineageTag: 5a1bdcd1-bd5b-49cb-8db4-a0750e639b0c
+
+	measure 'Active Items' = CALCULATE(COUNTROWS(fact_item_lifecycle), fact_item_lifecycle[lifecycle_status] = "Active")
+		formatString: 0
+		lineageTag: 7460a9a6-3b93-43d8-9d81-47f50f96dcae
+
+	measure 'Inactive Items' = CALCULATE(COUNTROWS(fact_item_lifecycle), fact_item_lifecycle[lifecycle_status] = "Inactive")
+		formatString: 0
+		lineageTag: 704ed4b5-4d06-4ff2-9254-bf57c966306d
+
+	measure 'Cleanup Candidate Items' = CALCULATE(COUNTROWS(fact_item_lifecycle), fact_item_lifecycle[lifecycle_status] = "Cleanup Candidate")
+		formatString: 0
+		lineageTag: 4ba909ae-df91-43fe-bcfd-5715c40feb37
+
+	measure 'No Signal Items' = CALCULATE(COUNTROWS(fact_item_lifecycle), fact_item_lifecycle[lifecycle_status] = "No Activity Recorded")
+		formatString: 0
+		lineageTag: 808e3faf-95e3-41b4-a120-5e8741b55b12
+
 	measure 'Total Items' = COUNTROWS(dim_item)
 		formatString: 0
 		lineageTag: a0672ded-1cf2-4def-89ce-e9529b8a7d31
