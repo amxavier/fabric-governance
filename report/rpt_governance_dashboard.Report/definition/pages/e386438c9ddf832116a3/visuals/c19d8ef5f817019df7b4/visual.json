@@ -3,7 +3,7 @@
   "name": "c19d8ef5f817019df7b4",
   "position": {
     "x": 10,
-    "y": 440,
+    "y": 420,
     "z": 6000,
     "height": 270,
     "width": 1260,
@@ -69,6 +69,28 @@
         ],
         "isDefaultSort": true
       }
+    },
+    "objects": {
+      "labels": [
+        {
+          "properties": {
+            "labelDisplayUnits": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
+                }
+              }
+            },
+            "labelPrecision": {
+              "expr": {
+                "Literal": {
+                  "Value": "0L"
+                }
+              }
+            }
+          }
+        }
+      ]
     },
     "drillFilterOtherVisuals": true
   }
