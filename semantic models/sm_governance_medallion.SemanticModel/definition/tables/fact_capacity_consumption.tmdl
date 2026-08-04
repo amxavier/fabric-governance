@@ -52,7 +52,7 @@ table fact_capacity_consumption
 		dataType: double
 		lineageTag: 514f51c6-97c1-44ac-af5c-2ae6df32bc46
 		sourceLineageTag: sum_cu
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: sum_cu
 
 		annotation SummarizationSetBy = Automatic
@@ -63,7 +63,7 @@ table fact_capacity_consumption
 		dataType: double
 		lineageTag: 1ddeb4d5-c03e-4e44-abe5-67bf9a6bbd5e
 		sourceLineageTag: sum_duration_s
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: sum_duration_s
 
 		annotation SummarizationSetBy = Automatic
@@ -74,7 +74,7 @@ table fact_capacity_consumption
 		dataType: double
 		lineageTag: f63c9389-720d-4b5e-b07a-d13466a31d47
 		sourceLineageTag: delta_cu
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: delta_cu
 
 		annotation SummarizationSetBy = Automatic
@@ -86,7 +86,7 @@ table fact_capacity_consumption
 		formatString: 0
 		lineageTag: ce263a59-247c-4b06-b452-9413a32a6aef
 		sourceLineageTag: count_operations
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: count_operations
 
 		annotation SummarizationSetBy = Automatic
@@ -96,7 +96,7 @@ table fact_capacity_consumption
 		formatString: 0
 		lineageTag: 55c04a2f-bfbe-4a78-92d9-d053b452829e
 		sourceLineageTag: count_successful_operations
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: count_successful_operations
 
 		annotation SummarizationSetBy = Automatic
@@ -106,7 +106,7 @@ table fact_capacity_consumption
 		formatString: 0
 		lineageTag: b503e89a-7f58-49eb-811b-f3cb448a25f7
 		sourceLineageTag: count_failure_operations
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: count_failure_operations
 
 		annotation SummarizationSetBy = Automatic
@@ -116,7 +116,7 @@ table fact_capacity_consumption
 		formatString: 0
 		lineageTag: 2786554f-2751-421c-b9af-b0d444c0e84e
 		sourceLineageTag: count_cancelled_operations
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: count_cancelled_operations
 
 		annotation SummarizationSetBy = Automatic
@@ -126,7 +126,7 @@ table fact_capacity_consumption
 		formatString: 0
 		lineageTag: 2dc2ad28-6b8b-4899-886a-f8acc2ea0eae
 		sourceLineageTag: count_rejected_operations
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: count_rejected_operations
 
 		annotation SummarizationSetBy = Automatic
@@ -136,7 +136,7 @@ table fact_capacity_consumption
 		formatString: 0
 		lineageTag: 8fc02314-50ea-4d0e-ac12-687aada1d762
 		sourceLineageTag: count_users
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: count_users
 
 		annotation SummarizationSetBy = Automatic
