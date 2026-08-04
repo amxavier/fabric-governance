@@ -121,6 +121,23 @@ table _measure
 		formatString: 0
 		lineageTag: 808e3faf-95e3-41b4-a120-5e8741b55b12
 
+	/// Hardcoded — F64, Brazil South, 1-year reserved, pulled from the Azure
+	/// Pricing Calculator on 2026-08-04. Not derived from consumption data:
+	/// Fabric capacity is billed as a flat rate for the provisioned SKU, not
+	/// per CU consumed. Update this constant if the SKU, region, or
+	/// commitment term changes.
+	measure 'Monthly Capacity Cost (Reserved, USD)' = 7776
+		formatString: "$"#,0
+		lineageTag: 51b165ad-f1f7-4765-9d83-83ac1af4c6b8
+
+	/// What the flat monthly fee "would have bought" if billed by usage —
+	/// the fixed cost times the idle share of capacity (100% - avg
+	/// utilization). Not money actually saved by using less (you pay the
+	/// same flat rate either way) — a right-sizing signal, not a refund.
+	measure 'Est. Idle Capacity Cost (USD)' = [Monthly Capacity Cost (Reserved, USD)] * (100 - [Avg CU % of Base (Capacity)]) / 100
+		formatString: "$"#,0
+		lineageTag: 2362556f-6f71-4137-b0ad-cd1cbf7695fe
+
 	measure 'Total Items' = COUNTROWS(dim_item)
 		formatString: 0
 		lineageTag: a0672ded-1cf2-4def-89ce-e9529b8a7d31

@@ -25,6 +25,8 @@ EXPECTED_MEASURES = [
     "Avg CU % of Base (Capacity)",
     "Failed Refreshes Color",
     "Refresh Success Rate Color",
+    "Monthly Capacity Cost (Reserved, USD)",
+    "Est. Idle Capacity Cost (USD)",
     "Total Tracked Items",
     "Active Items",
     "Inactive Items",
