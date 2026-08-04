@@ -3,9 +3,9 @@
   "name": "e7fbd029d4ae4760b852",
   "position": {
     "x": 10,
-    "y": 540,
+    "y": 510,
     "z": 8000,
-    "height": 180,
+    "height": 200,
     "width": 1260,
     "tabOrder": 8000
   },
@@ -134,6 +134,43 @@
         ],
         "isDefaultSort": true
       }
+    },
+    "objects": {
+      "columnWidth": [
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "244.57230782151763D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_workspace.workspace_name"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "157.08867405586483D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_item.item_type"
+          }
+        }
+      ],
+      "columnHeaders": [
+        {
+          "properties": {}
+        }
+      ]
     },
     "drillFilterOtherVisuals": true
   }

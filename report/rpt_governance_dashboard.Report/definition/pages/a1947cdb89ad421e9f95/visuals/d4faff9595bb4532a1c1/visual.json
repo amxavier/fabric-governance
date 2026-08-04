@@ -5,7 +5,7 @@
     "x": 10,
     "y": 10,
     "z": 0,
-    "height": 130,
+    "height": 100,
     "width": 200,
     "tabOrder": 0
   },
@@ -32,6 +32,21 @@
           ]
         }
       }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            }
+          }
+        }
+      ]
     },
     "drillFilterOtherVisuals": true
   }
