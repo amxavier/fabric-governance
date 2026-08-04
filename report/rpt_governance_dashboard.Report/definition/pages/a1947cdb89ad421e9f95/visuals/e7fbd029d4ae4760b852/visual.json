@@ -93,11 +93,11 @@
                       "Entity": "_measure"
                     }
                   },
-                  "Property": "Refresh Success Rate %"
+                  "Property": "Success Rate %"
                 }
               },
-              "queryRef": "_measure.Refresh Success Rate %",
-              "nativeQueryRef": "Refresh Success Rate %"
+              "queryRef": "_measure.Success Rate %",
+              "nativeQueryRef": "Success Rate %"
             },
             {
               "field": {
@@ -107,11 +107,11 @@
                       "Entity": "_measure"
                     }
                   },
-                  "Property": "Avg Refresh Duration (s)"
+                  "Property": "Avg Duration (s)"
                 }
               },
-              "queryRef": "_measure.Avg Refresh Duration (s)",
-              "nativeQueryRef": "Avg Refresh Duration (s)"
+              "queryRef": "_measure.Avg Duration (s)",
+              "nativeQueryRef": "Avg Duration (s)"
             }
           ]
         }

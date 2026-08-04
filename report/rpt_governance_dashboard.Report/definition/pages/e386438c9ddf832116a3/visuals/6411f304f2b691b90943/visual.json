@@ -23,11 +23,11 @@
                       "Entity": "_measure"
                     }
                   },
-                  "Property": "Avg Daily CU (Capacity)"
+                  "Property": "Avg Daily CU"
                 }
               },
-              "queryRef": "_measure.Avg Daily CU (Capacity)",
-              "nativeQueryRef": "Avg Daily CU (Capacity)"
+              "queryRef": "_measure.Avg Daily CU",
+              "nativeQueryRef": "Avg Daily CU"
             }
           ]
         }

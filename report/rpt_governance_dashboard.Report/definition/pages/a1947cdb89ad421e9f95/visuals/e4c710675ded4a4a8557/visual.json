@@ -23,11 +23,11 @@
                       "Entity": "_measure"
                     }
                   },
-                  "Property": "Avg Refresh Duration (s)"
+                  "Property": "Avg Duration (s)"
                 }
               },
-              "queryRef": "_measure.Avg Refresh Duration (s)",
-              "nativeQueryRef": "Avg Refresh Duration (s)"
+              "queryRef": "_measure.Avg Duration (s)",
+              "nativeQueryRef": "Avg Duration (s)"
             }
           ]
         }

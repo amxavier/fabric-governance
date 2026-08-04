@@ -23,11 +23,11 @@
                       "Entity": "_measure"
                     }
                   },
-                  "Property": "Days Since Last Successful Refresh"
+                  "Property": "Days Since Refresh"
                 }
               },
-              "queryRef": "_measure.Days Since Last Successful Refresh",
-              "nativeQueryRef": "Days Since Last Successful Refresh"
+              "queryRef": "_measure.Days Since Refresh",
+              "nativeQueryRef": "Days Since Refresh"
             }
           ]
         }

@@ -42,11 +42,11 @@
                       "Entity": "_measure"
                     }
                   },
-                  "Property": "Total Tracked Items"
+                  "Property": "Tracked Items"
                 }
               },
-              "queryRef": "_measure.Total Tracked Items",
-              "nativeQueryRef": "Total Tracked Items"
+              "queryRef": "_measure.Tracked Items",
+              "nativeQueryRef": "Tracked Items"
             }
           ]
         }
@@ -61,7 +61,7 @@
                     "Entity": "_measure"
                   }
                 },
-                "Property": "Total Tracked Items"
+                "Property": "Tracked Items"
               }
             },
             "direction": "Descending"

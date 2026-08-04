@@ -23,11 +23,11 @@
                       "Entity": "_measure"
                     }
                   },
-                  "Property": "Background Share % (Latest Day)"
+                  "Property": "Background %"
                 }
               },
-              "queryRef": "_measure.Background Share % (Latest Day)",
-              "nativeQueryRef": "Background Share % (Latest Day)"
+              "queryRef": "_measure.Background %",
+              "nativeQueryRef": "Background %"
             }
           ]
         }

@@ -23,11 +23,11 @@
                       "Entity": "_measure"
                     }
                   },
-                  "Property": "Total CU (Capacity, Real)"
+                  "Property": "Total CU"
                 }
               },
-              "queryRef": "_measure.Total CU (Capacity, Real)",
-              "nativeQueryRef": "Total CU (Capacity, Real)"
+              "queryRef": "_measure.Total CU",
+              "nativeQueryRef": "Total CU"
             }
           ]
         }

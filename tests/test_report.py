@@ -70,14 +70,14 @@ def test_report_references_expected_measures():
     assert visual_files, "No visual.json files found under definition/pages"
     all_text = " ".join(f.read_text(encoding="utf-8") for f in visual_files)
     for measure in [
-        "Total Refreshes", "Failed Refreshes", "Refresh Success Rate %",
-        "Days Since Last Successful Refresh",
-        "Total Items", "Compute Items", "Data Items", "Presentation Items",
-        "Total CU (Capacity, Real)", "Avg Daily CU (Capacity)", "Total CU (Item Trend)",
-        "Interactive Share % (Latest Day)", "Background Share % (Latest Day)",
-        "Avg CU % of Base (Capacity)",
-        "Monthly Capacity Cost (Reserved, USD)", "Est. Idle Capacity Cost (USD)",
-        "Total Tracked Items", "Active Items", "Inactive Items",
-        "Cleanup Candidate Items", "No Signal Items",
+        "Total Refreshes", "Failed Refreshes", "Success Rate %",
+        "Days Since Refresh",
+        "Total Items", "Compute", "Data", "Presentation",
+        "Total CU", "Avg Daily CU", "Total CU (Item Trend)",
+        "Interactive %", "Background %",
+        "CU % of Base",
+        "Monthly Cost (USD)", "Idle Cost (USD)",
+        "Tracked Items", "Active Items", "Inactive Items",
+        "Cleanup Candidates", "No Signal Items",
     ]:
         assert measure in all_text, f"No visual references measure: {measure}"
