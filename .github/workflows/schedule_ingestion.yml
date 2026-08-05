@@ -1,13 +1,23 @@
 
-# Triggers the Fabric governance orchestration pipeline daily at 6am UTC in
-# DEV, QA and PRD. 6am gives the Activity Events notebook (which pulls the
-# previous full UTC day) a comfortable margin past midnight.
+# Cron (scheduled) runs trigger PRD only — that's the environment that
+# actually needs fresh data every single day. DEV and QA share the same
+# delegated user identity as PRD for the /admin/* Bronze notebooks, so
+# running all three daily forever competes for that identity's hourly
+# Fabric Admin API rate limit for no real benefit once a change has
+# already been validated there. DEV/QA ingestion is meant to be run
+# on demand (workflow_dispatch, `environments` input) while actively
+# testing a pipeline change — not on an eternal daily schedule.
 name: Schedule - Daily Governance Scan
 
 on:
   schedule:
     - cron: "0 6 * * *"
   workflow_dispatch: # allows manual trigger from GitHub UI
+    inputs:
+      environments:
+        description: "Comma-separated environments to trigger (dev,qa,prd) or 'all'"
+        required: false
+        default: "all"
 
 jobs:
   run-pipeline:
@@ -32,6 +42,7 @@ jobs:
           echo "token=$TOKEN" >> $GITHUB_OUTPUT
 
       - name: Trigger DEV orchestration pipeline
+        if: github.event_name == 'workflow_dispatch' && (github.event.inputs.environments == 'all' || contains(github.event.inputs.environments, 'dev'))
         run: |
           curl -sf -X POST \
             "https://api.fabric.microsoft.com/v1/workspaces/${{ secrets.FABRIC_WORKSPACE_ID_DEV }}/dataPipelines/${{ secrets.FABRIC_PIPELINE_ID_DEV }}/jobs/instances?jobType=Pipeline" \
@@ -41,6 +52,7 @@ jobs:
             -w "\nHTTP Status: %{http_code}\n"
 
       - name: Trigger QA orchestration pipeline
+        if: github.event_name == 'workflow_dispatch' && (github.event.inputs.environments == 'all' || contains(github.event.inputs.environments, 'qa'))
         run: |
           curl -sf -X POST \
             "https://api.fabric.microsoft.com/v1/workspaces/${{ secrets.FABRIC_WORKSPACE_ID_QA }}/dataPipelines/${{ secrets.FABRIC_PIPELINE_ID_QA }}/jobs/instances?jobType=Pipeline" \
@@ -50,6 +62,7 @@ jobs:
             -w "\nHTTP Status: %{http_code}\n"
 
       - name: Trigger PRD orchestration pipeline
+        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.environments == 'all' || contains(github.event.inputs.environments, 'prd')))
         run: |
           curl -sf -X POST \
             "https://api.fabric.microsoft.com/v1/workspaces/${{ secrets.FABRIC_WORKSPACE_ID_PRD }}/dataPipelines/${{ secrets.FABRIC_PIPELINE_ID_PRD }}/jobs/instances?jobType=Pipeline" \
