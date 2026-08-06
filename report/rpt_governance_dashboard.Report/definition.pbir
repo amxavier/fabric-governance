@@ -2,8 +2,8 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definitionProperties/2.0.0/schema.json",
   "version": "4.0",
   "datasetReference": {
-    "byConnection": {
-      "connectionString": "Data Source=powerbi://api.powerbi.com/v1.0/myorg/lakehouses_dev;initial catalog=sm_governance_medallion;integrated security=ClaimsToken;semanticmodelid=7044b4a1-1883-444c-a09b-6132df78a397"
+    "byPath": {
+      "path": "../../semantic models/sm_governance_medallion.SemanticModel"
     }
   }
 }
