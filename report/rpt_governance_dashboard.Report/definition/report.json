@@ -51,6 +51,17 @@
   "reportSource": "QuickCreate",
   "resourcePackages": [
     {
+      "name": "RegisteredResources",
+      "type": "RegisteredResources",
+      "items": [
+        {
+          "name": "Foundry7983991028115148.json",
+          "path": "Foundry7983991028115148.json",
+          "type": "Image"
+        }
+      ]
+    },
+    {
       "name": "SharedResources",
       "type": "SharedResources",
       "items": [
@@ -58,17 +69,6 @@
           "name": "CY26SU04",
           "path": "BaseThemes/CY26SU04.json",
           "type": "BaseTheme"
-        }
-      ]
-    },
-    {
-      "name": "RegisteredResources",
-      "type": "RegisteredResources",
-      "items": [
-        {
-          "name": "Foundry7983991028115148.json",
-          "path": "Foundry7983991028115148.json",
-          "type": "CustomTheme"
         }
       ]
     }
