@@ -1,10 +1,10 @@
 table fact_capacity_utilization
-	lineageTag: 25c11154-902f-402f-b07d-4c8fd0e1398f
+	lineageTag: 010fad0b-df54-46f8-b66e-42d0b3642a84
 	sourceLineageTag: [dbo].[fact_capacity_utilization]
 
 	column sku
 		dataType: string
-		lineageTag: 061586b7-6aec-4038-ad3d-c774c9fcc2c3
+		lineageTag: 6cee5ceb-02f7-402e-aa58-b1a1d82cb53a
 		sourceLineageTag: sku
 		summarizeBy: none
 		sourceColumn: sku
@@ -14,7 +14,7 @@ table fact_capacity_utilization
 	column date_id
 		dataType: dateTime
 		formatString: General Date
-		lineageTag: d04de908-3066-4de3-857f-09546475a31c
+		lineageTag: b34cf5fd-89a2-4fae-a9cd-e37fa6a1d687
 		sourceLineageTag: date_id
 		summarizeBy: none
 		sourceColumn: date_id
@@ -24,7 +24,7 @@ table fact_capacity_utilization
 	column buckets_captured
 		dataType: int64
 		formatString: 0
-		lineageTag: 46d8dfff-f67c-4dda-9475-0dfec2b92d50
+		lineageTag: f235bd9c-6f68-4757-9441-ff23bcb8061c
 		sourceLineageTag: buckets_captured
 		summarizeBy: sum
 		sourceColumn: buckets_captured
@@ -33,7 +33,7 @@ table fact_capacity_utilization
 
 	column sum_cu
 		dataType: double
-		lineageTag: 1f44b55f-00a6-4dd0-9d2e-45bdd72d9d91
+		lineageTag: 6b0cc7b8-4708-475b-998a-36a219ee9af8
 		sourceLineageTag: sum_cu
 		summarizeBy: sum
 		sourceColumn: sum_cu
@@ -44,7 +44,7 @@ table fact_capacity_utilization
 
 	column avg_cu
 		dataType: double
-		lineageTag: c6ecdf90-7039-4443-85a4-83bd9f6e2833
+		lineageTag: c4731c48-21a4-4e07-bd6f-f3e018fae902
 		sourceLineageTag: avg_cu
 		summarizeBy: sum
 		sourceColumn: avg_cu
@@ -55,7 +55,7 @@ table fact_capacity_utilization
 
 	column max_cu
 		dataType: double
-		lineageTag: 012f9e83-ac2f-42c5-bedb-36f356166a5c
+		lineageTag: 5df04b64-8233-4a1e-bc88-b06e506034a0
 		sourceLineageTag: max_cu
 		summarizeBy: sum
 		sourceColumn: max_cu
@@ -66,7 +66,7 @@ table fact_capacity_utilization
 
 	column avg_interactive
 		dataType: double
-		lineageTag: 025b3d95-60a9-4cc9-9d2d-6a35379a28cd
+		lineageTag: f3adb5e2-2cc6-4946-819d-39872d3ecdfa
 		sourceLineageTag: avg_interactive
 		summarizeBy: sum
 		sourceColumn: avg_interactive
@@ -77,7 +77,7 @@ table fact_capacity_utilization
 
 	column avg_background
 		dataType: double
-		lineageTag: b4d8cc77-5a52-4a21-b0cf-a47393220002
+		lineageTag: 0dad3935-16bd-4392-9aa2-73c9d9757262
 		sourceLineageTag: avg_background
 		summarizeBy: sum
 		sourceColumn: avg_background
@@ -88,7 +88,7 @@ table fact_capacity_utilization
 
 	column max_interactive_delay_pct
 		dataType: double
-		lineageTag: 4b9580f8-2afb-4216-8777-e97511e23f41
+		lineageTag: 2fd1b556-5403-4c89-a5c2-79d049db0da3
 		sourceLineageTag: max_interactive_delay_pct
 		summarizeBy: sum
 		sourceColumn: max_interactive_delay_pct
@@ -99,7 +99,7 @@ table fact_capacity_utilization
 
 	column max_interactive_rejection_pct
 		dataType: double
-		lineageTag: 88172e8d-3d20-46a7-857a-ca9bc1a8bcbf
+		lineageTag: 940eb5fa-e29f-46c2-b5a1-edf80739dfba
 		sourceLineageTag: max_interactive_rejection_pct
 		summarizeBy: sum
 		sourceColumn: max_interactive_rejection_pct
@@ -110,7 +110,7 @@ table fact_capacity_utilization
 
 	column max_background_rejection_pct
 		dataType: double
-		lineageTag: 20931377-3aad-478b-bcd0-ab4c7a6dd8eb
+		lineageTag: fe787f2e-8f63-49c7-bf86-ba5088ab5b7d
 		sourceLineageTag: max_background_rejection_pct
 		summarizeBy: sum
 		sourceColumn: max_background_rejection_pct
@@ -122,7 +122,7 @@ table fact_capacity_utilization
 	column base_capacity_units
 		dataType: int64
 		formatString: 0
-		lineageTag: d8927edb-a5b7-4f7b-8ec8-278126ceb77d
+		lineageTag: 62ecb22e-2f34-454c-8857-1796267b7c91
 		sourceLineageTag: base_capacity_units
 		summarizeBy: sum
 		sourceColumn: base_capacity_units
@@ -133,5 +133,5 @@ table fact_capacity_utilization
 		mode: directLake
 		source
 			entityName: fact_capacity_utilization
-			expressionSource: 'DirectLake - lh_governance_gold_dev'
+			expressionSource: 'DirectLake - lh_governance_gold'
 

@@ -1,11 +1,11 @@
 table dim_date
-	lineageTag: 496ca05a-fe66-46bd-b975-91e29347170e
+	lineageTag: 5920bacb-089f-4166-9bc3-bf234d9bd023
 	sourceLineageTag: [dbo].[dim_date]
 
 	column date_id
 		dataType: dateTime
 		formatString: General Date
-		lineageTag: bd17fcd5-0bb6-42b9-9928-9338a3f03645
+		lineageTag: 652d7801-58e7-479f-b4a7-a872e91f6b2a
 		sourceLineageTag: date_id
 		summarizeBy: none
 		sourceColumn: date_id
@@ -15,7 +15,7 @@ table dim_date
 	column year
 		dataType: int64
 		formatString: 0
-		lineageTag: df6c18d1-e31b-4016-b2ee-f34b16bf8a26
+		lineageTag: 0b8cabed-3467-4760-b2d6-9d1d470f4f37
 		sourceLineageTag: year
 		summarizeBy: sum
 		sourceColumn: year
@@ -25,7 +25,7 @@ table dim_date
 	column month
 		dataType: int64
 		formatString: 0
-		lineageTag: ee2899d0-6c2f-4594-a281-07af9e86fcf7
+		lineageTag: 81517e7d-4607-4d98-a148-2ff48decf429
 		sourceLineageTag: month
 		summarizeBy: sum
 		sourceColumn: month
@@ -34,7 +34,7 @@ table dim_date
 
 	column month_name
 		dataType: string
-		lineageTag: 36cb9685-6600-405d-a9bf-240aea900193
+		lineageTag: 27e22f11-36bd-438b-891d-5fe75b3efa48
 		sourceLineageTag: month_name
 		summarizeBy: none
 		sourceColumn: month_name
@@ -44,7 +44,7 @@ table dim_date
 	column day
 		dataType: int64
 		formatString: 0
-		lineageTag: 99f8669b-59dd-44b7-8544-6367df1b7e0c
+		lineageTag: 8ea1b1e6-18f8-4939-960a-ffd1048d27fe
 		sourceLineageTag: day
 		summarizeBy: sum
 		sourceColumn: day
@@ -53,7 +53,7 @@ table dim_date
 
 	column day_name
 		dataType: string
-		lineageTag: 40cdb280-5ab1-4fd6-a48a-d09e8cc3565a
+		lineageTag: 8135e9e2-83c5-42d1-b251-7140812f4b1f
 		sourceLineageTag: day_name
 		summarizeBy: none
 		sourceColumn: day_name
@@ -62,7 +62,7 @@ table dim_date
 
 	column year_month
 		dataType: string
-		lineageTag: 6205054a-cfab-4188-8a87-67b9066b10fd
+		lineageTag: 2d4d2176-c434-4b1d-a27b-ff16503158ee
 		sourceLineageTag: year_month
 		summarizeBy: none
 		sourceColumn: year_month
@@ -72,7 +72,7 @@ table dim_date
 	column is_weekend
 		dataType: boolean
 		formatString: """TRUE"";""TRUE"";""FALSE"""
-		lineageTag: ea3507f9-c652-4231-bc0f-317dd2166d3c
+		lineageTag: 2801e2d2-d9b2-43e5-b697-e9a27f5b46d3
 		sourceLineageTag: is_weekend
 		summarizeBy: none
 		sourceColumn: is_weekend
@@ -83,5 +83,5 @@ table dim_date
 		mode: directLake
 		source
 			entityName: dim_date
-			expressionSource: 'DirectLake - lh_governance_gold_dev'
+			expressionSource: 'DirectLake - lh_governance_gold'
 

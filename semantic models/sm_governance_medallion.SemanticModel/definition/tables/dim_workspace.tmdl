@@ -1,10 +1,10 @@
 table dim_workspace
-	lineageTag: 3b501ccb-68a8-4683-aa43-46ce8d982542
+	lineageTag: 5df31a49-127e-4dd0-b294-3b87ab50d542
 	sourceLineageTag: [dbo].[dim_workspace]
 
 	column workspace_id
 		dataType: string
-		lineageTag: 79d84ca5-7c46-49fc-89d7-159c8c16ed46
+		lineageTag: 2be1bd9f-4e0a-41e4-90a2-5f6f772da685
 		sourceLineageTag: workspace_id
 		summarizeBy: none
 		sourceColumn: workspace_id
@@ -13,7 +13,7 @@ table dim_workspace
 
 	column workspace_name
 		dataType: string
-		lineageTag: ecbbf798-183b-42f1-9bf4-2d64a350653d
+		lineageTag: 6ac057f9-a883-4a62-9eb9-2e36886f3237
 		sourceLineageTag: workspace_name
 		summarizeBy: none
 		sourceColumn: workspace_name
@@ -22,7 +22,7 @@ table dim_workspace
 
 	column workspace_type
 		dataType: string
-		lineageTag: 6077958d-0095-4b67-a182-e65076bdc393
+		lineageTag: b593afe2-7a6c-40dd-97ae-e36bf576a142
 		sourceLineageTag: workspace_type
 		summarizeBy: none
 		sourceColumn: workspace_type
@@ -31,7 +31,7 @@ table dim_workspace
 
 	column capacity_id
 		dataType: string
-		lineageTag: 3a27bcac-168b-4aa5-a175-e91463accf86
+		lineageTag: 938995c3-16cb-455a-968a-b87899b170d7
 		sourceLineageTag: capacity_id
 		summarizeBy: none
 		sourceColumn: capacity_id
@@ -40,7 +40,7 @@ table dim_workspace
 
 	column state
 		dataType: string
-		lineageTag: 32674bfa-8508-43d6-a9d2-c9a3b1b3cac3
+		lineageTag: d543ab2e-5279-418e-a883-70e9a7dc3b0f
 		sourceLineageTag: state
 		summarizeBy: none
 		sourceColumn: state
@@ -50,7 +50,7 @@ table dim_workspace
 	column is_trial_sku
 		dataType: boolean
 		formatString: """TRUE"";""TRUE"";""FALSE"""
-		lineageTag: cf6b48c3-30ed-4fdc-b36c-ecafad76aaf8
+		lineageTag: c623f5f1-24c7-4b02-91f8-e44ff4f30497
 		sourceLineageTag: is_trial_sku
 		summarizeBy: none
 		sourceColumn: is_trial_sku
@@ -61,5 +61,5 @@ table dim_workspace
 		mode: directLake
 		source
 			entityName: dim_workspace
-			expressionSource: 'DirectLake - lh_governance_gold_dev'
+			expressionSource: 'DirectLake - lh_governance_gold'
 
