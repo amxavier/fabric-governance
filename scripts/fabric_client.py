@@ -1,3 +1,4 @@
+import random
 import time
 import requests
 
@@ -8,6 +9,14 @@ _POWERBI_BASE_URL = "https://api.powerbi.com/v1.0/myorg"
 _POWERBI_SCOPE = "https://analysis.windows.net/powerbi/api/.default"
 _POLL_INTERVAL = 5
 _POLL_TIMEOUT = 300
+
+# Tenant-wide admin scans (list_workspaces_admin/list_items_admin especially)
+# and deploy.py's per-branch full deploy both fan out into dozens of calls
+# against the same rate-limited identity — schedule_ingestion.yml's own
+# comments call out the hourly Admin API limit. A single transient 429/503
+# used to kill the whole run with no retry anywhere in this client.
+_RETRYABLE_STATUS = {429, 500, 502, 503, 504}
+_MAX_RETRIES = 4
 
 
 class FabricClient:
@@ -26,10 +35,29 @@ class FabricClient:
         self._client_secret = client_secret
         self._tokens: dict[str, str] = {}
 
+    def _request(self, method: str, url: str, **kwargs) -> requests.Response:
+        # Retries transient failures with exponential backoff (honoring
+        # Retry-After when the server sends one, mainly on 429s). Does NOT
+        # retry 4xx auth/permission errors (401/403/404) or malformed
+        # requests — those never succeed on retry and should fail fast.
+        timeout = kwargs.pop("timeout", 30)
+        resp = None
+        for attempt in range(_MAX_RETRIES + 1):
+            resp = requests.request(method, url, timeout=timeout, **kwargs)
+            if resp.status_code not in _RETRYABLE_STATUS or attempt == _MAX_RETRIES:
+                return resp
+            retry_after = resp.headers.get("Retry-After")
+            delay = float(retry_after) if retry_after else (2 ** attempt) + random.uniform(0, 1)
+            print(f"  [retry] {method} {url} -> {resp.status_code}, "
+                  f"retrying in {delay:.1f}s (attempt {attempt + 1}/{_MAX_RETRIES})")
+            time.sleep(delay)
+        return resp
+
     def _get_token(self, scope: str) -> str:
         if scope in self._tokens:
             return self._tokens[scope]
-        resp = requests.post(
+        resp = self._request(
+            "POST",
             _TOKEN_URL.format(tenant=self._tenant_id),
             data={
                 "grant_type": "client_credentials",
@@ -53,7 +81,7 @@ class FabricClient:
     def _poll(self, operation_url: str) -> None:
         deadline = time.time() + _POLL_TIMEOUT
         while time.time() < deadline:
-            resp = requests.get(operation_url, headers=self._headers(_FABRIC_SCOPE), timeout=30)
+            resp = self._request("GET", operation_url, headers=self._headers(_FABRIC_SCOPE), timeout=30)
             resp.raise_for_status()
             data = resp.json()
             status = data.get("status")
@@ -68,7 +96,8 @@ class FabricClient:
     # ── Fabric REST API — workspace-scoped (used by deploy.py) ──────────────
 
     def get_workspace_name(self, workspace_id: str) -> str:
-        resp = requests.get(
+        resp = self._request(
+            "GET",
             f"{_FABRIC_BASE_URL}/workspaces/{workspace_id}",
             headers=self._headers(_FABRIC_SCOPE),
             timeout=30,
@@ -80,7 +109,7 @@ class FabricClient:
         items = []
         url = f"{_FABRIC_BASE_URL}/workspaces/{workspace_id}/items"
         while url:
-            resp = requests.get(url, headers=self._headers(_FABRIC_SCOPE), timeout=30)
+            resp = self._request("GET", url, headers=self._headers(_FABRIC_SCOPE), timeout=30)
             resp.raise_for_status()
             data = resp.json()
             items.extend(data.get("value", []))
@@ -94,7 +123,8 @@ class FabricClient:
         item_type: str,
         parts: list[dict],
     ) -> None:
-        resp = requests.post(
+        resp = self._request(
+            "POST",
             f"{_FABRIC_BASE_URL}/workspaces/{workspace_id}/items",
             headers=self._headers(_FABRIC_SCOPE),
             json={
@@ -115,7 +145,8 @@ class FabricClient:
         # item's ID directly since callers need it immediately (e.g. to
         # patch config/valueSets), unlike create_item's fire-and-forget void
         # return.
-        resp = requests.post(
+        resp = self._request(
+            "POST",
             f"{_FABRIC_BASE_URL}/workspaces/{workspace_id}/items",
             headers=self._headers(_FABRIC_SCOPE),
             json={"displayName": display_name, "type": "Lakehouse"},
@@ -135,18 +166,19 @@ class FabricClient:
         url = f"{_FABRIC_BASE_URL}/workspaces/{workspace_id}/items/{item_id}/getDefinition"
         if format:
             url += f"?format={format}"
-        resp = requests.post(url, headers=self._headers(_FABRIC_SCOPE), timeout=60)
+        resp = self._request("POST", url, headers=self._headers(_FABRIC_SCOPE), timeout=60)
         if resp.status_code == 202:
             operation_url = resp.headers["Location"]
             self._poll(operation_url)
-            resp = requests.get(f"{operation_url}/result", headers=self._headers(_FABRIC_SCOPE), timeout=30)
+            resp = self._request("GET", f"{operation_url}/result", headers=self._headers(_FABRIC_SCOPE), timeout=30)
             resp.raise_for_status()
             return resp.json().get("definition", {}).get("parts", [])
         resp.raise_for_status()
         return resp.json().get("definition", {}).get("parts", [])
 
     def delete_item(self, workspace_id: str, item_id: str) -> None:
-        resp = requests.delete(
+        resp = self._request(
+            "DELETE",
             f"{_FABRIC_BASE_URL}/workspaces/{workspace_id}/items/{item_id}",
             headers=self._headers(_FABRIC_SCOPE),
             timeout=30,
@@ -159,7 +191,8 @@ class FabricClient:
         item_id: str,
         parts: list[dict],
     ) -> None:
-        resp = requests.post(
+        resp = self._request(
+            "POST",
             f"{_FABRIC_BASE_URL}/workspaces/{workspace_id}/items/{item_id}/updateDefinition",
             headers=self._headers(_FABRIC_SCOPE),
             json={"definition": {"parts": parts}},
@@ -179,7 +212,7 @@ class FabricClient:
         items = []
         url = f"{_FABRIC_BASE_URL}/admin/workspaces"
         while url:
-            resp = requests.get(url, headers=self._headers(_FABRIC_SCOPE), timeout=30)
+            resp = self._request("GET", url, headers=self._headers(_FABRIC_SCOPE), timeout=30)
             resp.raise_for_status()
             data = resp.json()
             # Nested under "workspaces", not the generic "value" key most other
@@ -195,7 +228,7 @@ class FabricClient:
         if item_type:
             url += f"?type={item_type}"
         while url:
-            resp = requests.get(url, headers=self._headers(_FABRIC_SCOPE), timeout=30)
+            resp = self._request("GET", url, headers=self._headers(_FABRIC_SCOPE), timeout=30)
             resp.raise_for_status()
             data = resp.json()
             # Nested under "itemEntities", not "value" — same as workspaces above.
@@ -213,7 +246,8 @@ class FabricClient:
         # Core API (/v1/capacities), unlike workspaces/items which do have a
         # dedicated /admin/ namespace. Confirmed via a real 404 during the
         # first live deploy against the tenant.
-        resp = requests.get(
+        resp = self._request(
+            "GET",
             f"{_FABRIC_BASE_URL}/capacities",
             headers=self._headers(_FABRIC_SCOPE),
             timeout=30,
@@ -236,7 +270,7 @@ class FabricClient:
             f"?startDateTime='{start_iso}'&endDateTime='{end_iso}'"
         )
         while url:
-            resp = requests.get(url, headers=self._headers(_POWERBI_SCOPE), timeout=60)
+            resp = self._request("GET", url, headers=self._headers(_POWERBI_SCOPE), timeout=60)
             resp.raise_for_status()
             data = resp.json()
             events.extend(data.get("activityEventEntities", []))
