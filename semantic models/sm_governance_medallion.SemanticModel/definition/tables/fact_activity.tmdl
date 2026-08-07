@@ -1,10 +1,10 @@
 table fact_activity
-	lineageTag: 7119fd6f-6d05-4ccc-b803-5af75f6a184a
+	lineageTag: f0344ea7-a023-4461-a3d1-23577f519a1c
 	sourceLineageTag: [dbo].[fact_activity]
 
 	column event_id
 		dataType: string
-		lineageTag: 23727dd0-b362-4f2d-afbb-95043325d3b8
+		lineageTag: 56c0873d-85c3-46bd-92e9-be08b659e2e7
 		sourceLineageTag: event_id
 		summarizeBy: none
 		sourceColumn: event_id
@@ -14,7 +14,7 @@ table fact_activity
 	column creation_time
 		dataType: dateTime
 		formatString: General Date
-		lineageTag: c1340cf8-f339-4d98-9d3a-c67213148edd
+		lineageTag: 80896b2a-013c-482d-8a5e-af99418b3084
 		sourceLineageTag: creation_time
 		summarizeBy: none
 		sourceColumn: creation_time
@@ -24,7 +24,7 @@ table fact_activity
 	column date_id
 		dataType: dateTime
 		formatString: General Date
-		lineageTag: 334d8bde-83cf-41fd-bae4-83d65a3d40d5
+		lineageTag: 85b0e341-ab35-4c1b-9524-367c8d098413
 		sourceLineageTag: date_id
 		summarizeBy: none
 		sourceColumn: date_id
@@ -33,7 +33,7 @@ table fact_activity
 
 	column activity
 		dataType: string
-		lineageTag: cbb57302-7821-4ccd-b24c-35935bc6f3df
+		lineageTag: 4e96ae76-04ca-4f32-95f6-ae2090b1e0eb
 		sourceLineageTag: activity
 		summarizeBy: none
 		sourceColumn: activity
@@ -42,7 +42,7 @@ table fact_activity
 
 	column user_id
 		dataType: string
-		lineageTag: 398fd643-e16d-427a-a889-01ac06c6881a
+		lineageTag: d3dc4ea0-a390-4157-9d1d-6ae825d11d7a
 		sourceLineageTag: user_id
 		summarizeBy: none
 		sourceColumn: user_id
@@ -51,7 +51,7 @@ table fact_activity
 
 	column item_id
 		dataType: string
-		lineageTag: 3b868c40-3b3a-4597-8baa-badc090dd619
+		lineageTag: dc0e7646-942a-4c83-941a-d5cb9ff31644
 		sourceLineageTag: item_id
 		summarizeBy: none
 		sourceColumn: item_id
@@ -60,7 +60,7 @@ table fact_activity
 
 	column workspace_id
 		dataType: string
-		lineageTag: 839a8fa2-51c6-4f50-ae4d-c2e00cffeb6a
+		lineageTag: 8cebba1d-410e-4f95-bbbb-02838e84a4cf
 		sourceLineageTag: workspace_id
 		summarizeBy: none
 		sourceColumn: workspace_id
@@ -69,7 +69,7 @@ table fact_activity
 
 	column refresh_type
 		dataType: string
-		lineageTag: dc8d0122-84a9-4c82-b9ef-3e6410d87868
+		lineageTag: bc69b63a-770d-4c1e-90fc-51085baf3abf
 		sourceLineageTag: refresh_type
 		summarizeBy: none
 		sourceColumn: refresh_type
@@ -78,7 +78,7 @@ table fact_activity
 
 	column result_status
 		dataType: string
-		lineageTag: 02ce1610-25c5-4580-81f2-ad437ac25d60
+		lineageTag: c3a3ea2d-c988-4210-a0ea-10cf269bf069
 		sourceLineageTag: result_status
 		summarizeBy: none
 		sourceColumn: result_status
@@ -88,7 +88,7 @@ table fact_activity
 	column is_failure
 		dataType: boolean
 		formatString: """TRUE"";""TRUE"";""FALSE"""
-		lineageTag: 97f569cb-f205-454b-869a-9ea26ea036c1
+		lineageTag: 110b4f03-5285-4563-9991-67c85cea440d
 		sourceLineageTag: is_failure
 		summarizeBy: none
 		sourceColumn: is_failure
@@ -99,5 +99,5 @@ table fact_activity
 		mode: directLake
 		source
 			entityName: fact_activity
-			expressionSource: 'DirectLake - lh_governance_gold_dev'
+			expressionSource: 'DirectLake - lh_governance_gold'
 

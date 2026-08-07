@@ -1,10 +1,10 @@
 table fact_refresh
-	lineageTag: d400f66b-44d2-41d5-817b-761e23aaa57d
+	lineageTag: 3fa2d3ce-d770-47e7-a91c-44e2ac1ba9f4
 	sourceLineageTag: [dbo].[fact_refresh]
 
 	column refresh_id
 		dataType: string
-		lineageTag: 165a291b-7ec7-4af6-bb71-a938e71d1225
+		lineageTag: 080a1db4-e961-403b-9b8c-512036360c88
 		sourceLineageTag: refresh_id
 		summarizeBy: none
 		sourceColumn: refresh_id
@@ -13,7 +13,7 @@ table fact_refresh
 
 	column item_id
 		dataType: string
-		lineageTag: f9d0af83-a136-4a9d-9934-dde08155b5bf
+		lineageTag: 10fb065d-1e81-4ec8-859d-6c98fea94b00
 		sourceLineageTag: item_id
 		summarizeBy: none
 		sourceColumn: item_id
@@ -23,7 +23,7 @@ table fact_refresh
 	column date_id
 		dataType: dateTime
 		formatString: General Date
-		lineageTag: 30ccf460-abcc-49f1-aa1c-b19ffed423f8
+		lineageTag: ac91518c-4b11-4192-adfb-3efce22b05c2
 		sourceLineageTag: date_id
 		summarizeBy: none
 		sourceColumn: date_id
@@ -33,7 +33,7 @@ table fact_refresh
 	column start_time
 		dataType: dateTime
 		formatString: General Date
-		lineageTag: 003f609e-d78c-4fe2-a653-4e41b2b02ee9
+		lineageTag: 107ee8d1-0823-4591-a4dd-ceac97ac3ab6
 		sourceLineageTag: start_time
 		summarizeBy: none
 		sourceColumn: start_time
@@ -43,7 +43,7 @@ table fact_refresh
 	column end_time
 		dataType: dateTime
 		formatString: General Date
-		lineageTag: 65397f8a-0a9e-4ac0-8c40-f4023b01a969
+		lineageTag: ca6efae4-3f6b-4edd-baf9-e8cff289a352
 		sourceLineageTag: end_time
 		summarizeBy: none
 		sourceColumn: end_time
@@ -53,16 +53,16 @@ table fact_refresh
 	column duration_seconds
 		dataType: int64
 		formatString: 0
-		lineageTag: f2867d55-eb8f-4d8c-9c32-a0a73d7211e1
+		lineageTag: 6dc61e64-c9bf-406f-987d-de2c5ca292c5
 		sourceLineageTag: duration_seconds
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: duration_seconds
 
 		annotation SummarizationSetBy = Automatic
 
 	column refresh_type
 		dataType: string
-		lineageTag: bfed6dff-057c-4344-a699-5f85b94a6764
+		lineageTag: 18d16247-f9f1-4745-97a9-05c64a1e24bd
 		sourceLineageTag: refresh_type
 		summarizeBy: none
 		sourceColumn: refresh_type
@@ -71,7 +71,7 @@ table fact_refresh
 
 	column status
 		dataType: string
-		lineageTag: 50b6cddc-e60f-4910-a2bb-7a2b7e13e587
+		lineageTag: 83ea4a28-9330-4756-8b5f-b4dcbf6d624b
 		sourceLineageTag: status
 		summarizeBy: none
 		sourceColumn: status
@@ -81,7 +81,7 @@ table fact_refresh
 	column is_failure
 		dataType: boolean
 		formatString: """TRUE"";""TRUE"";""FALSE"""
-		lineageTag: ad2ac887-4007-4c62-b98c-c05d13bd6703
+		lineageTag: 9eeeffb6-d8ba-4250-b693-0a5802942b0e
 		sourceLineageTag: is_failure
 		summarizeBy: none
 		sourceColumn: is_failure
@@ -90,7 +90,7 @@ table fact_refresh
 
 	column error_json
 		dataType: string
-		lineageTag: e3e493c6-68a2-40f1-9cef-8087047e679f
+		lineageTag: 42d3f1b4-a278-4510-9f44-00616bd237fc
 		sourceLineageTag: error_json
 		summarizeBy: none
 		sourceColumn: error_json
@@ -101,5 +101,5 @@ table fact_refresh
 		mode: directLake
 		source
 			entityName: fact_refresh
-			expressionSource: 'DirectLake - lh_governance_gold_dev'
+			expressionSource: 'DirectLake - lh_governance_gold'
 

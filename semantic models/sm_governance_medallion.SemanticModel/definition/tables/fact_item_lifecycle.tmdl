@@ -1,10 +1,10 @@
 table fact_item_lifecycle
-	lineageTag: 07e7bb6e-31c1-40ba-86ce-dbc018f07417
+	lineageTag: 16ce28e2-c49f-4d8f-b193-9ad6367b402b
 	sourceLineageTag: [dbo].[fact_item_lifecycle]
 
 	column item_id
 		dataType: string
-		lineageTag: ffdfd513-b25d-4545-8528-0ab46a9d98c8
+		lineageTag: f552e9bf-1ad7-4398-b9c5-f81d87480bf4
 		sourceLineageTag: item_id
 		summarizeBy: none
 		sourceColumn: item_id
@@ -14,7 +14,7 @@ table fact_item_lifecycle
 	column last_refresh_date
 		dataType: dateTime
 		formatString: General Date
-		lineageTag: 24b549c5-7080-45ee-bb60-6e88407772dd
+		lineageTag: 12540c39-a1df-4480-9444-2f9473d35eb6
 		sourceLineageTag: last_refresh_date
 		summarizeBy: none
 		sourceColumn: last_refresh_date
@@ -24,7 +24,7 @@ table fact_item_lifecycle
 	column last_job_date
 		dataType: dateTime
 		formatString: General Date
-		lineageTag: 8c08bc7a-cc4f-4fa3-ba66-daa49534a317
+		lineageTag: 969a43ac-35dd-4cfb-87fa-9269da941804
 		sourceLineageTag: last_job_date
 		summarizeBy: none
 		sourceColumn: last_job_date
@@ -34,7 +34,7 @@ table fact_item_lifecycle
 	column last_activity_date
 		dataType: dateTime
 		formatString: General Date
-		lineageTag: 039be5bd-d6a8-4bae-a81c-697c6269301b
+		lineageTag: 7cec5f62-38bb-4424-adf8-3e35f24a4cff
 		sourceLineageTag: last_activity_date
 		summarizeBy: none
 		sourceColumn: last_activity_date
@@ -44,7 +44,7 @@ table fact_item_lifecycle
 	column last_seen_date
 		dataType: dateTime
 		formatString: General Date
-		lineageTag: 9f563583-2499-4576-9ab9-6f143d41aae2
+		lineageTag: ada1ab69-52fe-4a21-9794-f93fb0ba8609
 		sourceLineageTag: last_seen_date
 		summarizeBy: none
 		sourceColumn: last_seen_date
@@ -54,7 +54,7 @@ table fact_item_lifecycle
 	column days_since_last_seen
 		dataType: int64
 		formatString: 0
-		lineageTag: f81ecaa7-cdfc-4bfa-a59b-a82fa64b0216
+		lineageTag: 5165f56d-6854-46b2-9693-afc1e5716dfa
 		sourceLineageTag: days_since_last_seen
 		summarizeBy: sum
 		sourceColumn: days_since_last_seen
@@ -63,7 +63,7 @@ table fact_item_lifecycle
 
 	column lifecycle_status
 		dataType: string
-		lineageTag: 4fd5f81b-16a5-4918-b982-c3e0166ed9e9
+		lineageTag: 47ff3c76-2eec-45b4-b9b8-47ee73cea37b
 		sourceLineageTag: lifecycle_status
 		summarizeBy: none
 		sourceColumn: lifecycle_status
@@ -74,5 +74,5 @@ table fact_item_lifecycle
 		mode: directLake
 		source
 			entityName: fact_item_lifecycle
-			expressionSource: 'DirectLake - lh_governance_gold_dev'
+			expressionSource: 'DirectLake - lh_governance_gold'
 
