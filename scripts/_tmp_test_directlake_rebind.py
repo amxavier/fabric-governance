@@ -10,6 +10,7 @@ if it actually fixes the binding without an interactive rebuild.
 Lives only on the test/directlake-rebind branch, never merged. Delete the
 sm_test_rebind item and this file once validated either way.
 """
+import base64
 import os
 from pathlib import Path
 
@@ -35,7 +36,15 @@ def main() -> None:
         return
 
     parts = read_item_parts(SM_PATH)
-    print(f"Creating {TEST_MODEL_NAME} in DEV from {len(parts)} parts...")
+    # Test the two-phase hypothesis: strip all relationships from the initial
+    # TMDL import (empty file), to see whether the bulk import succeeds when
+    # there's no ambiguous-path graph to validate at all. Relationships would
+    # then need to be added afterward via TOM, one at a time.
+    for part in parts:
+        if part["path"] == "definition/relationships.tmdl":
+            part["payload"] = base64.b64encode(b"").decode("ascii")
+
+    print(f"Creating {TEST_MODEL_NAME} in DEV from {len(parts)} parts (relationships.tmdl emptied)...")
     client.create_item(DEV_WORKSPACE_ID, TEST_MODEL_NAME, "SemanticModel", parts)
 
     items = {i["displayName"]: i["id"] for i in client.get_workspace_items(DEV_WORKSPACE_ID)}
