@@ -97,7 +97,11 @@ def _parse_relationships(content: str) -> list[dict]:
     and can't validate that fromColumn/toColumn belong to the SAME
     relationship block rather than two different ones.
     """
-    blocks = re.split(r"\nrelationship ", content)[1:]  # drop preamble before first block
+    # Leading "\n" guarantees the split pattern also matches a relationship
+    # block that happens to be the very first line in the file (no newline
+    # precedes it there) — without this, that first block silently merges
+    # into the discarded preamble instead of being parsed.
+    blocks = re.split(r"\nrelationship ", "\n" + content)[1:]
     parsed = []
     for block in blocks:
         is_active = "isActive: false" not in block
