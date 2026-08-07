@@ -1,10 +1,10 @@
 table fact_capacity_consumption
-	lineageTag: d914b9cf-1554-47a0-bb30-33369f46c1e5
+	lineageTag: d413f7b6-36ec-4e88-90ee-c9fbd6f3b5a4
 	sourceLineageTag: [dbo].[fact_capacity_consumption]
 
 	column item_id
 		dataType: string
-		lineageTag: 7e72ed18-3945-4476-99bf-4dd115812ae6
+		lineageTag: 0839a224-7882-4c33-b744-f320d339fb57
 		sourceLineageTag: item_id
 		summarizeBy: none
 		sourceColumn: item_id
@@ -13,7 +13,7 @@ table fact_capacity_consumption
 
 	column workspace_id
 		dataType: string
-		lineageTag: 892154f8-7ba6-4ccf-9b63-a12edab481b4
+		lineageTag: bd8b6d47-72c8-40f0-99e4-2314ceca137c
 		sourceLineageTag: workspace_id
 		summarizeBy: none
 		sourceColumn: workspace_id
@@ -23,7 +23,7 @@ table fact_capacity_consumption
 	column date_id
 		dataType: dateTime
 		formatString: General Date
-		lineageTag: f350bf1f-b261-4a9c-a323-ee87d02e57e4
+		lineageTag: d8621b9d-b72f-484a-a7fe-c23a4a2c0629
 		sourceLineageTag: date_id
 		summarizeBy: none
 		sourceColumn: date_id
@@ -32,7 +32,7 @@ table fact_capacity_consumption
 
 	column artifact_kind
 		dataType: string
-		lineageTag: d9a57952-8f68-4ff6-b546-7eb093f5bb92
+		lineageTag: 3d5cd7b8-c6c7-4905-8717-287293ef63d4
 		sourceLineageTag: artifact_kind
 		summarizeBy: none
 		sourceColumn: artifact_kind
@@ -41,7 +41,7 @@ table fact_capacity_consumption
 
 	column billing_type
 		dataType: string
-		lineageTag: dad63504-63ef-4129-a614-dad28136c8c5
+		lineageTag: bf1f3013-823a-4627-b3f8-63bb046690ff
 		sourceLineageTag: billing_type
 		summarizeBy: none
 		sourceColumn: billing_type
@@ -50,9 +50,9 @@ table fact_capacity_consumption
 
 	column sum_cu
 		dataType: double
-		lineageTag: 514f51c6-97c1-44ac-af5c-2ae6df32bc46
+		lineageTag: 054260f3-003b-42ee-bc2a-b784aa36d59d
 		sourceLineageTag: sum_cu
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: sum_cu
 
 		annotation SummarizationSetBy = Automatic
@@ -61,9 +61,9 @@ table fact_capacity_consumption
 
 	column sum_duration_s
 		dataType: double
-		lineageTag: 1ddeb4d5-c03e-4e44-abe5-67bf9a6bbd5e
+		lineageTag: 4e075f83-3465-48fe-a00e-b7fa0bb9ea74
 		sourceLineageTag: sum_duration_s
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: sum_duration_s
 
 		annotation SummarizationSetBy = Automatic
@@ -72,9 +72,9 @@ table fact_capacity_consumption
 
 	column delta_cu
 		dataType: double
-		lineageTag: f63c9389-720d-4b5e-b07a-d13466a31d47
+		lineageTag: 8f9d252f-6853-45c1-b8d2-fa1c758c028a
 		sourceLineageTag: delta_cu
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: delta_cu
 
 		annotation SummarizationSetBy = Automatic
@@ -84,9 +84,9 @@ table fact_capacity_consumption
 	column count_operations
 		dataType: int64
 		formatString: 0
-		lineageTag: ce263a59-247c-4b06-b452-9413a32a6aef
+		lineageTag: ba92afb4-f88d-4af7-8fbc-a2737cafc6fc
 		sourceLineageTag: count_operations
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: count_operations
 
 		annotation SummarizationSetBy = Automatic
@@ -94,9 +94,9 @@ table fact_capacity_consumption
 	column count_successful_operations
 		dataType: int64
 		formatString: 0
-		lineageTag: 55c04a2f-bfbe-4a78-92d9-d053b452829e
+		lineageTag: 56a4d103-02d8-4c98-a93e-58a425376710
 		sourceLineageTag: count_successful_operations
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: count_successful_operations
 
 		annotation SummarizationSetBy = Automatic
@@ -104,9 +104,9 @@ table fact_capacity_consumption
 	column count_failure_operations
 		dataType: int64
 		formatString: 0
-		lineageTag: b503e89a-7f58-49eb-811b-f3cb448a25f7
+		lineageTag: e48dd710-1c73-46ec-9270-ab436cb73308
 		sourceLineageTag: count_failure_operations
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: count_failure_operations
 
 		annotation SummarizationSetBy = Automatic
@@ -114,9 +114,9 @@ table fact_capacity_consumption
 	column count_cancelled_operations
 		dataType: int64
 		formatString: 0
-		lineageTag: 2786554f-2751-421c-b9af-b0d444c0e84e
+		lineageTag: 55048e9e-0ebe-449b-a430-3bb68f17adb2
 		sourceLineageTag: count_cancelled_operations
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: count_cancelled_operations
 
 		annotation SummarizationSetBy = Automatic
@@ -124,9 +124,9 @@ table fact_capacity_consumption
 	column count_rejected_operations
 		dataType: int64
 		formatString: 0
-		lineageTag: 2dc2ad28-6b8b-4899-886a-f8acc2ea0eae
+		lineageTag: 5588abfd-f0f8-4420-a952-1964d52ba970
 		sourceLineageTag: count_rejected_operations
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: count_rejected_operations
 
 		annotation SummarizationSetBy = Automatic
@@ -134,9 +134,9 @@ table fact_capacity_consumption
 	column count_users
 		dataType: int64
 		formatString: 0
-		lineageTag: 8fc02314-50ea-4d0e-ac12-687aada1d762
+		lineageTag: 50163c32-b81c-4c5e-86b1-c725717d772d
 		sourceLineageTag: count_users
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: count_users
 
 		annotation SummarizationSetBy = Automatic
@@ -145,5 +145,5 @@ table fact_capacity_consumption
 		mode: directLake
 		source
 			entityName: fact_capacity_consumption
-			expressionSource: 'DirectLake - lh_governance_gold_dev'
+			expressionSource: 'DirectLake - lh_governance_gold'
 

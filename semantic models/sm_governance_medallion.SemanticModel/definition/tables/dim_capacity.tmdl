@@ -1,10 +1,10 @@
 table dim_capacity
-	lineageTag: 36b32435-2ffb-481e-927a-a1aadbc6cebb
+	lineageTag: b0054096-2e18-470e-b557-aa83c1c0f285
 	sourceLineageTag: [dbo].[dim_capacity]
 
 	column capacity_id
 		dataType: string
-		lineageTag: 88be8d9a-7c3d-4ab1-a45b-b4b62166b0f4
+		lineageTag: 57d50453-1d8e-467f-ac40-60daccd51fbb
 		sourceLineageTag: capacity_id
 		summarizeBy: none
 		sourceColumn: capacity_id
@@ -13,7 +13,7 @@ table dim_capacity
 
 	column capacity_name
 		dataType: string
-		lineageTag: 1ca237ff-04c7-4711-be62-48ecbd10b491
+		lineageTag: 5c93a85e-115c-4985-b74e-6c2cd32dd6bf
 		sourceLineageTag: capacity_name
 		summarizeBy: none
 		sourceColumn: capacity_name
@@ -22,7 +22,7 @@ table dim_capacity
 
 	column sku
 		dataType: string
-		lineageTag: 58f87d3d-60d2-417e-a517-733d2918874a
+		lineageTag: 8fa09099-956d-4517-9bb6-d03f466f7aa1
 		sourceLineageTag: sku
 		summarizeBy: none
 		sourceColumn: sku
@@ -31,7 +31,7 @@ table dim_capacity
 
 	column region
 		dataType: string
-		lineageTag: 3f642f8e-c921-4350-8ae3-e6508078cf9e
+		lineageTag: 1e6cb74a-ca16-4d84-bb0b-1580664e648e
 		sourceLineageTag: region
 		summarizeBy: none
 		sourceColumn: region
@@ -40,7 +40,7 @@ table dim_capacity
 
 	column state
 		dataType: string
-		lineageTag: 35100b84-d373-4c2c-a911-8412587de41b
+		lineageTag: babdc59c-7cce-4321-bb8c-6ded7e40d597
 		sourceLineageTag: state
 		summarizeBy: none
 		sourceColumn: state
@@ -50,7 +50,7 @@ table dim_capacity
 	column is_trial_sku
 		dataType: boolean
 		formatString: """TRUE"";""TRUE"";""FALSE"""
-		lineageTag: b117dca3-8723-4f5b-86ab-ae8700ba74de
+		lineageTag: 48fc6af2-ccbb-42c3-8f8c-1112e0f3f3bf
 		sourceLineageTag: is_trial_sku
 		summarizeBy: none
 		sourceColumn: is_trial_sku
@@ -61,5 +61,5 @@ table dim_capacity
 		mode: directLake
 		source
 			entityName: dim_capacity
-			expressionSource: 'DirectLake - lh_governance_gold_dev'
+			expressionSource: 'DirectLake - lh_governance_gold'
 

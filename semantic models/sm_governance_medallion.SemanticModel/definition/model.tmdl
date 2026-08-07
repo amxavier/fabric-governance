@@ -8,19 +8,19 @@ model Model
 
 annotation __PBI_TimeIntelligenceEnabled = 1
 
-annotation PBI_QueryOrder = ["DirectLake - lh_governance_gold_dev"]
+annotation PBI_QueryOrder = ["DirectLake - lh_governance_gold"]
 
 annotation PBI_ProTooling = ["DirectLakeOnOneLakeInWeb","WebModelingEdit"]
 
-ref table fact_refresh
-ref table dim_user
-ref table fact_activity
-ref table dim_workspace
 ref table dim_date
+ref table dim_workspace
+ref table dim_user
+ref table fact_capacity_utilization
+ref table fact_item_lifecycle
+ref table fact_capacity_consumption
+ref table fact_activity
 ref table dim_capacity
+ref table fact_refresh
 ref table dim_item
 ref table _measure
-ref table fact_capacity_utilization
-ref table fact_capacity_consumption
-ref table fact_item_lifecycle
 
