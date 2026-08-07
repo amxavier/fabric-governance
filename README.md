@@ -156,6 +156,13 @@ fabric-governance/
    - Enabled in the Fabric Admin Portal tenant settings: "Service principals can access read-only Admin APIs" (and the Power BI equivalent for Activity Events), with the SP in the allowed security group
    - Workspace Admin/Contributor role on the 3 governance workspaces (needed for `deploy.py` to publish notebooks/pipeline/semantic model/report — not for the Bronze notebooks' own tenant-wide reads, which go through the Admin API instead)
 
+4. **Provision `sm_governance_medallion` in the new environment.** DirectLake models deployed in bulk via REST/TMDL — including relationships marked `isActive: false` to break an ambiguous path (e.g. two fact tables sharing two dimensions) — are rejected by Fabric's import validator ("ambiguous paths between X and Y"), even though the same graph is perfectly valid once built incrementally. Building the model by hand in the portal works around this (the wizard validates one relationship at a time), but doesn't scale to a third, fourth, ... environment. The scripted alternative, validated 2026-08-07 against a throwaway model in DEV:
+   1. `python scripts/deploy_semantic_model.py <branch>` (or the `Deploy Semantic Model (new environment only)` workflow) — deploys the TMDL via REST with `definition/relationships.tmdl` emptied, sidestepping the bulk-import validator entirely.
+   2. Open `nb_setup_semantic_model_relationships.Notebook` in the target workspace, point `DATASET`/`WORKSPACE` at the new model, and run it top to bottom — adds the 14 relationships via TOM (`sempy_labs.tom`) one at a time in a single session (same reason this sidesteps the validator: incremental writes, not a bulk one), then refreshes the model and confirms real data comes back through Direct Lake.
+   3. Continue with steps 3 (pipeline activity) and the report binding as usual — `deploy.py`'s report Phase 3 finds the semantic model by name automatically once it exists.
+
+   This must be run interactively (your own sign-in) — TOM/XMLA write operations reject the Service Principal's app-only token on this tenant, same as the `/admin/*` REST APIs (see [Delegated Authentication](#delegated-authentication-for-admin) below). Deliberately **not** wired into `deploy.py`'s normal full/selective flow or into any push trigger: DEV and QA already have working, interactively-built models, and a routine deploy must never overwrite them — this path is only for provisioning a new environment's model from scratch.
+
 ### Required GitHub Secrets
 
 | Secret | Description |
