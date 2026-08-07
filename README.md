@@ -158,7 +158,7 @@ This project deliberately reuses existing infrastructure rather than provisionin
 
 ### Remaining manual steps (not automatable via CI/CD)
 
-1. **Create `lh_governance_bronze`, `lh_governance_silver`, and `lh_governance_gold`** in each of the three existing workspaces (DEV/QA/PRD), then replace the placeholder lakehouse GUID with the real ID Fabric assigns to `lh_governance_gold` once created (bronze/silver too, in every notebook's METADATA/`known_lakehouses`) — same pattern the sibling project uses for its own lakehouses.
+1. **Create `lh_governance_bronze`, `lh_governance_silver`, and `lh_governance_gold`** in each of the three existing workspaces (DEV/QA/PRD): `python scripts/provision_lakehouses.py <branch>` (or the `Provision Lakehouses (new environment only)` workflow) — creates the three lakehouses if missing and commits the real `lh_governance_gold` ID into `config/valueSets/<branch>.json`'s `onelake_url`. Notebook METADATA/`known_lakehouses` needs no manual edit: `deploy.py` already resolves lakehouse IDs by name against the target workspace at deploy time.
 
 2. **Bootstrap delegated authentication for the four `/admin/*`-calling notebooks** (`nb_bronze_workspaces`, `nb_bronze_items`, `nb_bronze_activity_events`, `nb_bronze_refresh_history`) — see [Delegated Authentication](#delegated-authentication-for-admin) below for why this is needed and the one-time setup (interactive device-code sign-in), which populates a small Delta table (`_auth_delegated`) in `lh_governance_bronze` that these notebooks read from on every run.
 
