@@ -176,7 +176,16 @@ def main() -> None:
         for lh_name in ["lh_governance_bronze", "lh_governance_silver", "lh_governance_gold"]:
             if lh_name in dev_items and lh_name in target_items:
                 notebook_replacements[dev_items[lh_name]] = target_items[lh_name]
-        print(f"Notebook lakehouse ID map: {len(notebook_replacements) - 1} lakehouses resolved\n")
+
+        # Same idea, but for nb_setup_semantic_model_relationships.Notebook's
+        # WORKSPACE = "lakehouses_dev" constant — a plain display-name string,
+        # not a GUID, so it needs its own lookup rather than reusing the
+        # lakehouse ID map above.
+        dev_workspace_name = client.get_workspace_name(dev_workspace_id)
+        target_workspace_name = client.get_workspace_name(workspace_id)
+        notebook_replacements[f'WORKSPACE = "{dev_workspace_name}"'] = f'WORKSPACE = "{target_workspace_name}"'
+
+        print(f"Notebook lakehouse ID map: {len(notebook_replacements) - 2} lakehouses resolved\n")
 
     # Split into three phases based on dependency order
     phase1 = [p for p in deployable if not p.name.endswith((".DataPipeline", ".Report"))]
