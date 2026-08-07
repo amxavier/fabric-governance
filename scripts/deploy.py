@@ -47,7 +47,15 @@ ARTIFACT_DIRS = [
 
 
 def _current_branch() -> str:
-    env_branch = os.getenv("GITHUB_REF_NAME") or os.getenv("BRANCH_NAME")
+    # BRANCH_NAME checked FIRST, deliberately overriding GITHUB_REF_NAME:
+    # GITHUB_REF_NAME is set by the runner itself and cannot be overridden
+    # via a step's own `env:` (confirmed live 2026-08-07 — cd_deploy.yml
+    # tried exactly that under workflow_run, where GITHUB_REF_NAME always
+    # reflects the *workflow file's* ref, i.e. the default branch, not the
+    # branch whose CI run actually triggered this deploy; the override was
+    # silently ignored and it deployed dev's notebooks against PRD's
+    # workspace_id). cd_deploy.yml now sets BRANCH_NAME explicitly instead.
+    env_branch = os.getenv("BRANCH_NAME") or os.getenv("GITHUB_REF_NAME")
     if env_branch:
         return env_branch
     result = subprocess.run(
