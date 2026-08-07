@@ -1,16 +1,20 @@
 # Deploys Fabric artifacts directly to the target workspace via REST API.
-# Triggered on push to dev, qa, or main — each branch maps to its own workspace
-# via config/valueSets/{branch}.json. No Git Integration or Deployment Pipeline needed.
+# Triggered when "CI - Validate Fabric Artifacts" succeeds on dev, qa, or main
+# — each branch maps to its own workspace via config/valueSets/{branch}.json.
+# No Git Integration or Deployment Pipeline needed.
+#
+# Deliberately NOT triggered directly on push: that let a commit failing CI
+# (missing artifact, broken test) deploy to a live workspace before or
+# alongside CI reporting the failure, since the two workflows ran in
+# parallel with no ordering between them. Gating on workflow_run means a
+# broken commit never reaches Fabric.
 name: CD - Deploy to Fabric
 
 on:
-  push:
+  workflow_run:
+    workflows: ["CI - Validate Fabric Artifacts"]
+    types: [completed]
     branches: [dev, qa, main]
-    paths:
-      - "notebooks/**"
-      - "pipelines/**"
-      - "semantic models/**"
-      - "report/**"
   workflow_dispatch:
     inputs:
       deploy_mode:
@@ -24,11 +28,15 @@ on:
 
 jobs:
   deploy:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          # workflow_run doesn't default to the commit CI validated — pin it
+          # explicitly. Falls back to the normal ref for workflow_dispatch.
+          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
           fetch-depth: 2  # needed for git diff HEAD~1 in selective mode
 
       - name: Set up Python

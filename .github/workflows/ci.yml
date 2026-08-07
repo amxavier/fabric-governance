@@ -20,21 +20,11 @@ jobs:
         run: |
           echo "Validating Fabric artifacts..."
 
+          # Fixed top-level items (one of each, not expected to grow).
           required=(
             "lh_governance_bronze.Lakehouse"
             "lh_governance_silver.Lakehouse"
             "lh_governance_gold.Lakehouse"
-            "notebooks/nb_bronze_capacities.Notebook"
-            "notebooks/nb_bronze_workspaces.Notebook"
-            "notebooks/nb_bronze_items.Notebook"
-            "notebooks/nb_bronze_activity_events.Notebook"
-            "notebooks/nb_bronze_refresh_history.Notebook"
-            "notebooks/nb_silver_capacities.Notebook"
-            "notebooks/nb_silver_workspaces.Notebook"
-            "notebooks/nb_silver_items.Notebook"
-            "notebooks/nb_silver_activity_events.Notebook"
-            "notebooks/nb_silver_refresh_history.Notebook"
-            "notebooks/nb_gold_governance_model.Notebook"
             "pipelines/pl_governance_orchestration.DataPipeline"
             "semantic models/sm_governance_medallion.SemanticModel"
             "report/rpt_governance_dashboard.Report"
@@ -48,6 +38,25 @@ jobs:
               echo "OK: $artifact"
             fi
           done
+
+          # Notebooks: structural check on every *.Notebook folder instead of
+          # a hardcoded name list — a fixed list silently drifts as notebooks
+          # are added (this one did: 11 names hardcoded here while 22
+          # notebooks existed in the repo, so CI was never actually
+          # validating most of them). Every notebook needs both files to be
+          # deployable at all, so this still catches real breakage.
+          notebook_count=0
+          for nb in notebooks/*.Notebook; do
+            notebook_count=$((notebook_count + 1))
+            for f in ".platform" "notebook-content.py"; do
+              if [ ! -f "$nb/$f" ]; then
+                echo "MISSING: $nb/$f"
+                exit 1
+              fi
+            done
+            echo "OK: $nb"
+          done
+          echo "Validated $notebook_count notebooks."
 
           echo "All artifacts validated successfully."
 
