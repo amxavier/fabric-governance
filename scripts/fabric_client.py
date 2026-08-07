@@ -109,6 +109,25 @@ class FabricClient:
             return
         resp.raise_for_status()
 
+    def create_lakehouse(self, workspace_id: str, display_name: str) -> str:
+        # Unlike create_item, a Lakehouse has no "definition" payload at all —
+        # sending one (even {"parts": []}) is rejected. Returns the new
+        # item's ID directly since callers need it immediately (e.g. to
+        # patch config/valueSets), unlike create_item's fire-and-forget void
+        # return.
+        resp = requests.post(
+            f"{_FABRIC_BASE_URL}/workspaces/{workspace_id}/items",
+            headers=self._headers(_FABRIC_SCOPE),
+            json={"displayName": display_name, "type": "Lakehouse"},
+            timeout=60,
+        )
+        if resp.status_code == 202:
+            self._poll(resp.headers["Location"])
+            items = {i["displayName"]: i["id"] for i in self.get_workspace_items(workspace_id)}
+            return items[display_name]
+        resp.raise_for_status()
+        return resp.json()["id"]
+
     def get_item_definition(self, workspace_id: str, item_id: str, format: str | None = None) -> list[dict]:
         # format=TMDL is required for SemanticModel items — without it, Fabric
         # returns only the minimal .platform/definition.pbism stub instead of
