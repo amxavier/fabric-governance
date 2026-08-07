@@ -271,6 +271,16 @@ The three Fabric workspaces and the Service Principal are reused from the siblin
 
 ---
 
+## Built With
+
+- **Microsoft Fabric** — Lakehouse, Data Pipeline, Direct Lake semantic model, Power BI report
+- **PySpark** / **Delta Lake** — Bronze/Silver/Gold transformations
+- **GitHub Actions** — CI/CD (test, deploy, provisioning workflows)
+- **semantic-link-labs** (`sempy_labs.tom`) — programmatic Direct Lake model relationship management
+- **[Claude](https://claude.com/claude-code)** — AI pair-programming assistant used throughout development (architecture decisions, debugging, and the CI/CD tooling in `scripts/`)
+
+---
+
 ## Author
 
 **Andrelino Xavier** — Data Engineer
