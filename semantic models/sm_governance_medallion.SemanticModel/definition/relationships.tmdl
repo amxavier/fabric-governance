@@ -1,60 +1,61 @@
-relationship 612d8756-49f4-4f9a-ada8-b0bde6c2bec7
+relationship 859f5f05-263c-406b-b25d-ad5d729f3189
 	fromColumn: fact_activity.item_id
 	toColumn: dim_item.item_id
 
-relationship ee775ab1-dc68-4649-9584-8c5280ba8919
+relationship 0cb9e2c5-1f13-2da4-1ed8-9c52200ba5f2
 	isActive: false
 	fromColumn: fact_activity.workspace_id
 	toColumn: dim_workspace.workspace_id
 
-relationship 74bbd8d2-862d-4dcf-8d80-bd51dbde7dc8
+relationship 66df1a91-9094-9b2d-6039-701ecec18e86
 	fromColumn: fact_activity.user_id
 	toColumn: dim_user.user_key
 
-relationship 9f092f7a-cbb6-488e-b994-d6017b6f7a1b
+relationship 151504e2-4789-acee-425f-181ba597397b
 	fromColumn: fact_activity.date_id
 	toColumn: dim_date.date_id
 
-relationship 4b2eacf5-21ab-478a-b0ec-1c79d76933b4
-	fromColumn: fact_refresh.item_id
-	toColumn: dim_item.item_id
+relationship f6c6da2d-b927-0cf6-3c4a-ebad1d712597
+	fromColumn: dim_item.item_id
+	toColumn: fact_refresh.item_id
 
-relationship 68feec79-8cef-4064-b330-ddd18e771a66
-	fromColumn: fact_refresh.date_id
-	toColumn: dim_date.date_id
+relationship 0f80e101-0cc2-8080-5fd5-50071c5dfe3b
+	isActive: false
+	fromColumn: dim_date.date_id
+	toColumn: fact_refresh.date_id
 
-relationship f139020e-a066-4498-86e3-6487ade3d546
+relationship 66a42a87-f97a-b543-6ead-c57371e95234
 	fromColumn: dim_item.workspace_id
 	toColumn: dim_workspace.workspace_id
 
-relationship 8ad098cb-5a56-4384-8379-17bdb04eff2b
+relationship 4960d34b-0ec6-d95e-42a4-2c7aadc98aa1
 	fromColumn: dim_workspace.capacity_id
 	toColumn: dim_capacity.capacity_id
 
-relationship 6d72c984-d437-fca0-b904-18d436fa26d4
+relationship c77461ac-ca2a-45b2-82f4-62f64e477183
 	isActive: false
 	fromColumn: fact_capacity_consumption.workspace_id
 	toColumn: dim_workspace.workspace_id
 
-relationship 70337404-4c01-847a-cf13-fc37d8b7dcf0
+relationship 4d0953cb-c5bf-2648-8022-3a3f7465a622
 	isActive: false
-	fromColumn: fact_capacity_consumption.date_id
-	toColumn: dim_date.date_id
+	fromColumn: dim_date.date_id
+	toColumn: fact_capacity_consumption.date_id
 
-relationship 8db46da2-1ea1-70b1-e2bd-8ba6116b5425
+relationship dd6800c2-ec16-79fe-a849-d52f72304654
+	fromColumn: dim_item.item_id
+	toColumn: fact_capacity_consumption.item_id
+
+relationship 663d2a0b-1542-adcb-5197-56ebb37da594
 	isActive: false
 	fromColumn: fact_capacity_utilization.sku
 	toColumn: dim_capacity.sku
 
-relationship 5eaae05d-8cf6-2c2b-a001-e82f475a5ea1
-	fromColumn: fact_capacity_consumption.item_id
-	toColumn: dim_item.item_id
-
-relationship e49647c9-d0ff-755a-40e4-1d3e517fa626
-	fromColumn: fact_capacity_utilization.date_id
-	toColumn: dim_date.date_id
-
-relationship 2e2e20b8-a2fd-cc97-c719-954ca543b574
+relationship a177a139-92ad-71d0-3278-66fabc51e9dc
 	fromColumn: fact_item_lifecycle.item_id
 	toColumn: dim_item.item_id
+
+relationship 10ea0ef0-713f-d190-4f9c-f06a59134b88
+	fromColumn: fact_capacity_utilization.date_id
+	toColumn: dim_date.date_id
 

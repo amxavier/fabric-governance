@@ -1,10 +1,10 @@
 table dim_user
-	lineageTag: 3e09f064-ab37-4a36-9b28-d48da3cc2882
+	lineageTag: 348cd20f-fb4f-4395-8f68-b7f42a7107b5
 	sourceLineageTag: [dbo].[dim_user]
 
 	column user_key
 		dataType: string
-		lineageTag: a8325989-a53d-49a3-aa33-a6157ca44905
+		lineageTag: e26d5fc7-c86f-4fa7-8c3a-45bfb16be0af
 		sourceLineageTag: user_key
 		summarizeBy: none
 		sourceColumn: user_key
@@ -13,7 +13,7 @@ table dim_user
 
 	column user_email
 		dataType: string
-		lineageTag: 86721120-f754-4632-bb1d-d39f99c8e77e
+		lineageTag: b0e3067b-b0a1-4786-a7b9-2e1e9c2a0e70
 		sourceLineageTag: user_email
 		summarizeBy: none
 		sourceColumn: user_email
@@ -24,5 +24,5 @@ table dim_user
 		mode: directLake
 		source
 			entityName: dim_user
-			expressionSource: 'DirectLake - lh_governance_gold_dev'
+			expressionSource: 'DirectLake - lh_governance_gold'
 

@@ -1,10 +1,10 @@
 table dim_item
-	lineageTag: 9b564221-cbfd-4350-95ba-76509ee67c5a
+	lineageTag: db7d0aa2-a767-466d-ba72-448b1137cc29
 	sourceLineageTag: [dbo].[dim_item]
 
 	column item_id
 		dataType: string
-		lineageTag: b4337600-bb02-470c-be32-45a698b9e261
+		lineageTag: f2ccef91-2c04-4a8b-bf39-17405bd3b873
 		sourceLineageTag: item_id
 		summarizeBy: none
 		sourceColumn: item_id
@@ -13,7 +13,7 @@ table dim_item
 
 	column item_name
 		dataType: string
-		lineageTag: 885b327d-ffa5-46ed-853b-39df694eaddc
+		lineageTag: 2656f144-8e79-4399-bce1-4a31a2e6e1eb
 		sourceLineageTag: item_name
 		summarizeBy: none
 		sourceColumn: item_name
@@ -22,7 +22,7 @@ table dim_item
 
 	column item_type
 		dataType: string
-		lineageTag: a5dcd66a-68fc-4534-8bea-f3084548fb3c
+		lineageTag: 210db465-c790-42a5-9848-d79db0ce9a87
 		sourceLineageTag: item_type
 		summarizeBy: none
 		sourceColumn: item_type
@@ -31,7 +31,7 @@ table dim_item
 
 	column workspace_id
 		dataType: string
-		lineageTag: 76da7515-0cba-41d7-9d39-5a0dd8242fce
+		lineageTag: 33d2177d-9910-4232-82fa-a8afd794286f
 		sourceLineageTag: workspace_id
 		summarizeBy: none
 		sourceColumn: workspace_id
@@ -40,7 +40,7 @@ table dim_item
 
 	column state
 		dataType: string
-		lineageTag: fae844b6-c263-4cd7-affd-b459c0a2d4fe
+		lineageTag: dab85314-7232-4342-b767-b3583b006966
 		sourceLineageTag: state
 		summarizeBy: none
 		sourceColumn: state
@@ -49,7 +49,7 @@ table dim_item
 
 	column description
 		dataType: string
-		lineageTag: e09f463b-682c-4c9d-ad3d-8678052d1b52
+		lineageTag: 0c672689-69f8-4958-b4fe-c699b1765b0e
 		sourceLineageTag: description
 		summarizeBy: none
 		sourceColumn: description
@@ -60,5 +60,5 @@ table dim_item
 		mode: directLake
 		source
 			entityName: dim_item
-			expressionSource: 'DirectLake - lh_governance_gold_dev'
+			expressionSource: 'DirectLake - lh_governance_gold'
 
