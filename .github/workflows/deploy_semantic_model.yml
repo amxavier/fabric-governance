@@ -1,0 +1,31 @@
+# Deliberately separate from cd_deploy.yml and never triggered by push —
+# deploy.py excludes sm_governance_medallion from its normal flow on purpose
+# (see deploy.py comments), since DEV/QA already have working,
+# interactively-built models that a routine deploy must never overwrite.
+# This workflow is only for provisioning a NEW environment's model from
+# scratch via the validated TMDL + TOM pattern (see
+# scripts/deploy_semantic_model.py and
+# notebooks/nb_setup_semantic_model_relationships.Notebook).
+name: Deploy Semantic Model (new environment only)
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Target environment (config/valueSets/<branch>.json) — dev, qa, or main (PRD)"
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - env:
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        run: python scripts/deploy_semantic_model.py "${{ github.event.inputs.branch }}"
