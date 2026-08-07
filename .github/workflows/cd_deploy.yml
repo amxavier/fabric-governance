@@ -53,12 +53,14 @@ jobs:
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
           DEPLOY_MODE: ${{ github.event.inputs.deploy_mode || 'selective' }}
-          # GITHUB_REF_NAME is auto-set by the runner to the *workflow's own*
-          # ref for workflow_run events — always the default branch,
-          # regardless of which branch's CI run actually triggered this
-          # (confirmed live 2026-08-07: a dev-branch CI success deployed
-          # against PRD's workspace_id because of this). Override it
-          # explicitly with the real source branch; deploy.py reads this
-          # exact variable to pick config/valueSets/<branch>.json.
-          GITHUB_REF_NAME: ${{ github.event.workflow_run.head_branch || github.ref_name }}
+          # GITHUB_REF_NAME is auto-set by the runner to the *workflow file's
+          # own* ref for workflow_run events — always the default branch,
+          # regardless of which branch's CI run actually triggered this —
+          # and can't be overridden by setting it here (confirmed live
+          # 2026-08-07, twice: a dev-branch CI success deployed dev's own
+          # commits against PRD's workspace_id both before AND after trying
+          # exactly this override; GITHUB_REF_NAME never changed). Use a
+          # different variable instead — deploy.py now checks BRANCH_NAME
+          # ahead of GITHUB_REF_NAME for exactly this reason.
+          BRANCH_NAME: ${{ github.event.workflow_run.head_branch || github.ref_name }}
         run: python scripts/deploy.py
