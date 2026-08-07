@@ -209,6 +209,21 @@ def main() -> None:
         else:
             failed.append(get_display_name(item_path))
 
+    # Phase 2 resolves notebook IDs by looking up notebooks that currently
+    # exist in the workspace (client.get_workspace_items(), fetched fresh
+    # each phase) — a notebook that just failed in Phase 1 simply won't be
+    # in that list, so patch_pipeline_notebook_ids() would silently leave
+    # its activity's notebookId as the raw git logicalId instead of a real
+    # item GUID. A pipeline published that way doesn't error at deploy time —
+    # it just runs a no-op/broken activity on every future scheduled run
+    # until someone notices the data went stale. Skip Phase 2/3 outright on
+    # any Phase 1 failure rather than risk publishing that silently.
+    if failed and (phase2 or phase3):
+        print(f"── Skipping Phase 2/3: {len(failed)} Phase 1 failure(s) ({', '.join(failed)}) ──")
+        print("  A pipeline or report published now could reference an unresolved item ID.\n")
+        failed.extend(get_display_name(p) for p in phase2 + phase3)
+        phase2, phase3 = [], []
+
     # ── Phase 2: DataPipeline (patch notebook IDs) ───────────────────────────
     if phase2:
         print("── Phase 2: DataPipeline ──")
