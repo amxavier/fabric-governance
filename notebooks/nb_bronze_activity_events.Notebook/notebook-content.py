@@ -77,7 +77,6 @@ ACTIVITY_EVENTS_URL = (
 
 _lh_bronze = notebookutils.lakehouse.get("lh_governance_bronze")
 BRONZE_PATH = f"{_lh_bronze['properties']['abfsPath']}/Tables/{DESTINATION_TABLE}"
-AUTH_TABLE_PATH = f"{_lh_bronze['properties']['abfsPath']}/Tables/_auth_delegated"
 
 print(f"[Bronze] Window       : {WINDOW_START.isoformat()} -> {WINDOW_END.isoformat()}")
 print(f"[Bronze] lh_governance_bronze id : {_lh_bronze['id']}")
@@ -106,37 +105,22 @@ print(f"[Bronze] Write path   : {BRONZE_PATH}")
 # The fix: exchange a refresh token — obtained once via an interactive
 # device-code + MFA sign-in — for a fresh access token on every run, and
 # persist the rotated refresh token Microsoft returns back into this same
-# Delta table so the next run can still authenticate. tenant_id/client_id
-# aren't secrets; only the refresh token is, and it never leaves this
-# lakehouse (no Key Vault needed, no risk of it landing in git or in a public
-# GitHub Actions log).
+# Delta table so the next run can still authenticate. See
+# `nb_util_delegated_auth` for the shared implementation — it used to be
+# duplicated verbatim here.
 
 # CELL ********************
 
-def _get_delegated_token(scope: str) -> str:
-    auth_row = spark.read.format("delta").load(AUTH_TABLE_PATH).collect()[0]
-    resp = requests.post(
-        f"https://login.microsoftonline.com/{auth_row['tenant_id']}/oauth2/v2.0/token",
-        data={
-            "grant_type": "refresh_token",
-            "client_id": auth_row["client_id"],
-            "refresh_token": auth_row["refresh_token"],
-            "scope": f"{scope} offline_access",
-        },
-        timeout=30,
-    )
-    resp.raise_for_status()
-    token_data = resp.json()
+%run nb_util_delegated_auth
 
-    new_refresh_token = token_data.get("refresh_token", auth_row["refresh_token"])
-    spark.createDataFrame([{
-        "tenant_id": auth_row["tenant_id"],
-        "client_id": auth_row["client_id"],
-        "refresh_token": new_refresh_token,
-        "updated_at": datetime.now(timezone.utc).isoformat(),
-    }]).write.format("delta").mode("overwrite").save(AUTH_TABLE_PATH)
+# METADATA ********************
 
-    return token_data["access_token"]
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
 
 # Power BI's resource/audience, not Fabric's — activityevents lives on
 # api.powerbi.com, unlike nb_bronze_workspaces/items which call

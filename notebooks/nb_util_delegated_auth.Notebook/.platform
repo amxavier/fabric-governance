@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Notebook",
+    "displayName": "nb_util_delegated_auth"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "bff6950d-af48-ce8f-7eba-bccba64ca26e"
+  }
+}
