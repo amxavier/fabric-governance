@@ -1,4 +1,5 @@
 import json
+import re
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -46,27 +47,72 @@ EXPECTED_TABLES = [
     "_measure",
 ]
 
-EXPECTED_RELATIONSHIPS = [
-    ("fact_activity.item_id", "dim_item.item_id"),
-    ("fact_activity.workspace_id", "dim_workspace.workspace_id"),
-    ("fact_activity.user_id", "dim_user.user_key"),
-    ("fact_activity.date_id", "dim_date.date_id"),
-    ("fact_refresh.item_id", "dim_item.item_id"),
-    ("fact_refresh.date_id", "dim_date.date_id"),
-    ("dim_item.workspace_id", "dim_workspace.workspace_id"),
-    ("dim_workspace.capacity_id", "dim_capacity.capacity_id"),
-    ("fact_capacity_consumption.item_id", "dim_item.item_id"),
-    ("fact_capacity_consumption.workspace_id", "dim_workspace.workspace_id"),
-    ("fact_capacity_consumption.date_id", "dim_date.date_id"),
-    ("fact_capacity_utilization.date_id", "dim_date.date_id"),
-    ("fact_capacity_utilization.sku", "dim_capacity.sku"),
-    ("fact_item_lifecycle.item_id", "dim_item.item_id"),
+# Order-independent pairs — TMDL's fromColumn/toColumn direction isn't a
+# reliable signal of which side is "many" (see EXPECTED_INACTIVE_PAIRS
+# below and the 2026-08-07 investigation): relationships built via the
+# portal wizard can list either table as "from", and Fabric infers
+# cardinality from actual data uniqueness rather than a declared field
+# when the TMDL has no explicit fromCardinality/toCardinality — the
+# relationships.tmdl format used here never does. That's exactly how the
+# fact_capacity_utilization/dim_date cardinality bug slipped in without
+# this file changing shape at all, so don't expect a fixed direction here.
+EXPECTED_RELATIONSHIP_PAIRS = [
+    frozenset(("fact_activity.item_id", "dim_item.item_id")),
+    frozenset(("fact_activity.workspace_id", "dim_workspace.workspace_id")),
+    frozenset(("fact_activity.user_id", "dim_user.user_key")),
+    frozenset(("fact_activity.date_id", "dim_date.date_id")),
+    frozenset(("fact_refresh.item_id", "dim_item.item_id")),
+    frozenset(("fact_refresh.date_id", "dim_date.date_id")),
+    frozenset(("dim_item.workspace_id", "dim_workspace.workspace_id")),
+    frozenset(("dim_workspace.capacity_id", "dim_capacity.capacity_id")),
+    frozenset(("fact_capacity_consumption.item_id", "dim_item.item_id")),
+    frozenset(("fact_capacity_consumption.workspace_id", "dim_workspace.workspace_id")),
+    frozenset(("fact_capacity_consumption.date_id", "dim_date.date_id")),
+    frozenset(("fact_capacity_utilization.date_id", "dim_date.date_id")),
+    frozenset(("fact_capacity_utilization.sku", "dim_capacity.sku")),
+    frozenset(("fact_item_lifecycle.item_id", "dim_item.item_id")),
 ]
 
-# Real DEV workspace (reused from the sibling microsoft-fabric-medallion-lakehouse
-# project's workspace) and lh_governance_gold (created directly for this project).
-DEV_WORKSPACE_GUID = "dc072922-4ffb-4424-868c-28087b02ecba"
-DEV_LH_GOLD_GUID = "50efdcbf-bfca-48a0-ab39-8b5a52ed407f"
+# Pairs that MUST be inactive to avoid an ambiguous relationship path (two
+# fact tables sharing two dimensions — see relationships.tmdl's own
+# comments/history, and the 2026-08-07 TOM validation). A bulk TMDL import
+# that gets any of these wrong either fails outright ("ambiguous paths
+# between X and Y") or — worse — imports fine but leaves a filter silently
+# not propagating (the fact_capacity_utilization/dim_date bug: same failure
+# family, opposite symptom).
+EXPECTED_INACTIVE_PAIRS = [
+    frozenset(("fact_activity.workspace_id", "dim_workspace.workspace_id")),
+    frozenset(("fact_refresh.date_id", "dim_date.date_id")),
+    frozenset(("fact_capacity_consumption.workspace_id", "dim_workspace.workspace_id")),
+    frozenset(("fact_capacity_consumption.date_id", "dim_date.date_id")),
+    frozenset(("fact_capacity_utilization.sku", "dim_capacity.sku")),
+]
+
+
+def _parse_relationships(content: str) -> list[dict]:
+    """Parse relationships.tmdl into [{"pair": frozenset, "is_active": bool}, ...].
+
+    Real parsing instead of substring checks — a substring check can't
+    tell isActive apart from a coincidental match elsewhere in the file,
+    and can't validate that fromColumn/toColumn belong to the SAME
+    relationship block rather than two different ones.
+    """
+    # Leading "\n" guarantees the split pattern also matches a relationship
+    # block that happens to be the very first line in the file (no newline
+    # precedes it there) — without this, that first block silently merges
+    # into the discarded preamble instead of being parsed.
+    blocks = re.split(r"\nrelationship ", "\n" + content)[1:]
+    parsed = []
+    for block in blocks:
+        is_active = "isActive: false" not in block
+        from_match = re.search(r"fromColumn:\s*(\S+)", block)
+        to_match = re.search(r"toColumn:\s*(\S+)", block)
+        assert from_match and to_match, f"Malformed relationship block (missing fromColumn/toColumn): {block[:80]!r}"
+        parsed.append({
+            "pair": frozenset((from_match.group(1), to_match.group(1))),
+            "is_active": is_active,
+        })
+    return parsed
 
 
 def test_semantic_model_folder_exists():
@@ -109,14 +155,46 @@ def test_all_measures_defined():
 
 def test_all_relationships_defined():
     content = (DEFINITION_PATH / "relationships.tmdl").read_text(encoding="utf-8")
-    for from_col, to_col in EXPECTED_RELATIONSHIPS:
-        assert f"fromColumn: {from_col}" in content, f"Missing relationship fromColumn: {from_col}"
-        assert f"toColumn: {to_col}" in content, f"Missing relationship toColumn: {to_col}"
+    actual_pairs = {r["pair"] for r in _parse_relationships(content)}
+    for expected in EXPECTED_RELATIONSHIP_PAIRS:
+        assert expected in actual_pairs, f"Missing relationship: {set(expected)}"
 
 
-def test_expressions_tmdl_contains_dev_placeholders():
-    # DEV placeholders must be present so the deploy script (or a manual pass once
-    # the real DEV workspace exists) can perform environment substitution.
+def test_ambiguous_path_relationships_are_inactive():
+    # This is the test that would have caught the cardinality-adjacent
+    # class of bug found 2026-08-07: not the exact cardinality (TMDL
+    # doesn't declare it explicitly for these, so it can't be asserted
+    # statically — see module docstring above), but at least that the
+    # specific relationships known to create a cycle if left active stay
+    # inactive after any future pull/rebuild.
+    content = (DEFINITION_PATH / "relationships.tmdl").read_text(encoding="utf-8")
+    by_pair = {r["pair"]: r["is_active"] for r in _parse_relationships(content)}
+    for expected in EXPECTED_INACTIVE_PAIRS:
+        assert expected in by_pair, f"Missing relationship: {set(expected)}"
+        assert not by_pair[expected], (
+            f"{set(expected)} must be isActive: false to avoid an ambiguous "
+            f"relationship path — see relationships.tmdl history."
+        )
+
+
+def test_expressions_tmdl_has_valid_directlake_source():
+    # This file is only ever populated by pulling a real, live model back
+    # from whichever environment last had it manually corrected in the
+    # portal (DEV or QA, historically) — deploy.py deliberately never
+    # writes to it (see scripts/deploy.py). So it legitimately holds a
+    # different environment's real workspace/lakehouse GUID depending on
+    # when it was last pulled; asserting one specific hardcoded GUID here
+    # (as this test used to) goes stale the next time it's pulled from a
+    # different environment, exactly as happened 2026-08-07. Validate
+    # shape instead of a specific value: a real OneLake DataLake URL with
+    # two well-formed GUIDs (workspace/lakehouse), not a placeholder.
     content = (DEFINITION_PATH / "expressions.tmdl").read_text(encoding="utf-8")
-    assert DEV_WORKSPACE_GUID in content
-    assert DEV_LH_GOLD_GUID in content
+    match = re.search(
+        r'onelake\.dfs\.fabric\.microsoft\.com/'
+        r'([0-9a-f-]{36})/([0-9a-f-]{36})',
+        content,
+    )
+    assert match, "No valid OneLake DirectLake source URL found in expressions.tmdl"
+    workspace_guid, lakehouse_guid = match.groups()
+    assert workspace_guid != "00000000-0000-0000-0000-000000000000", "Workspace GUID is a placeholder, not real"
+    assert lakehouse_guid != "00000000-0000-0000-0000-000000000000", "Lakehouse GUID is a placeholder, not real"
