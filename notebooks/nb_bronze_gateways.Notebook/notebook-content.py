@@ -84,37 +84,31 @@ _lh_bronze = notebookutils.lakehouse.get("lh_governance_bronze")
 GATEWAYS_PATH = f"{_lh_bronze['properties']['abfsPath']}/Tables/raw_gateways"
 DATASOURCES_PATH = f"{_lh_bronze['properties']['abfsPath']}/Tables/raw_dataset_datasources"
 ITEMS_PATH = f"{_lh_bronze['properties']['abfsPath']}/Tables/raw_items"
-AUTH_TABLE_PATH = f"{_lh_bronze['properties']['abfsPath']}/Tables/_auth_delegated"
 
 print(f"[Bronze] lh_governance_bronze id : {_lh_bronze['id']}")
 print(f"[Bronze] raw_gateways path        : {GATEWAYS_PATH}")
 print(f"[Bronze] raw_dataset_datasources  : {DATASOURCES_PATH}")
 
 
-def _get_delegated_token(scope: str) -> str:
-    auth_row = spark.read.format("delta").load(AUTH_TABLE_PATH).collect()[0]
-    resp = requests.post(
-        f"https://login.microsoftonline.com/{auth_row['tenant_id']}/oauth2/v2.0/token",
-        data={
-            "grant_type": "refresh_token",
-            "client_id": auth_row["client_id"],
-            "refresh_token": auth_row["refresh_token"],
-            "scope": f"{scope} offline_access",
-        },
-        timeout=30,
-    )
-    resp.raise_for_status()
-    token_data = resp.json()
+# METADATA ********************
 
-    new_refresh_token = token_data.get("refresh_token", auth_row["refresh_token"])
-    spark.createDataFrame([{
-        "tenant_id": auth_row["tenant_id"],
-        "client_id": auth_row["client_id"],
-        "refresh_token": new_refresh_token,
-        "updated_at": datetime.now(timezone.utc).isoformat(),
-    }]).write.format("delta").mode("overwrite").save(AUTH_TABLE_PATH)
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
 
-    return token_data["access_token"]
+# CELL ********************
+
+%run nb_util_delegated_auth
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
 
 TOKEN = _get_delegated_token("https://analysis.windows.net/powerbi/api/.default")
 HEADERS = {"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"}
