@@ -1,0 +1,43 @@
+# One-off, manual utility for standing up a new environment's lakehouse
+# trio — creates lh_governance_bronze/silver/gold if missing, and commits
+# the real lh_governance_gold ID into config/valueSets/<branch>.json's
+# onelake_url. Not part of cd_deploy.yml: lakehouses are provisioned once
+# per environment, not on every push.
+name: Provision Lakehouses (new environment only)
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Target environment (config/valueSets/<branch>.json) — dev, qa, or main (PRD)"
+        required: true
+
+jobs:
+  provision:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - env:
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        run: python scripts/provision_lakehouses.py "${{ github.event.inputs.branch }}"
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add "config/valueSets/${{ github.event.inputs.branch }}.json"
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Provision lakehouses + wire real onelake_url for ${{ github.event.inputs.branch }}"
+            git push origin HEAD:"${{ github.event.inputs.branch }}"
+          fi
