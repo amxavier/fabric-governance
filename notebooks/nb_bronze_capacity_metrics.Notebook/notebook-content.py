@@ -91,7 +91,6 @@ METRICS_DATASET_ID = "a2354849-42a1-40b1-80ed-473e68401b75"
 
 _lh_bronze = notebookutils.lakehouse.get("lh_governance_bronze")
 BRONZE_PATH = f"{_lh_bronze['properties']['abfsPath']}/Tables/{DESTINATION_TABLE}"
-AUTH_TABLE_PATH = f"{_lh_bronze['properties']['abfsPath']}/Tables/_auth_delegated"
 
 print(f"[Bronze] lh_governance_bronze id : {_lh_bronze['id']}")
 print(f"[Bronze] Write path              : {BRONZE_PATH}")
@@ -165,30 +164,26 @@ from pyspark.sql import functions as F
 from pyspark.sql.types import DateType, StructType, StructField, StringType, DoubleType, LongType
 from delta.tables import DeltaTable
 
-def _get_delegated_token(scope: str) -> str:
-    auth_row = spark.read.format("delta").load(AUTH_TABLE_PATH).collect()[0]
-    resp = requests.post(
-        f"https://login.microsoftonline.com/{auth_row['tenant_id']}/oauth2/v2.0/token",
-        data={
-            "grant_type": "refresh_token",
-            "client_id": auth_row["client_id"],
-            "refresh_token": auth_row["refresh_token"],
-            "scope": f"{scope} offline_access",
-        },
-        timeout=30,
-    )
-    resp.raise_for_status()
-    token_data = resp.json()
 
-    new_refresh_token = token_data.get("refresh_token", auth_row["refresh_token"])
-    spark.createDataFrame([{
-        "tenant_id": auth_row["tenant_id"],
-        "client_id": auth_row["client_id"],
-        "refresh_token": new_refresh_token,
-        "updated_at": datetime.now(timezone.utc).isoformat(),
-    }]).write.format("delta").mode("overwrite").save(AUTH_TABLE_PATH)
+# METADATA ********************
 
-    return token_data["access_token"]
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+%run nb_util_delegated_auth
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
 
 def _execute_dax(workspace_id: str, dataset_id: str, dax_query: str) -> list[dict]:
     token = _get_delegated_token("https://analysis.windows.net/powerbi/api/.default")
