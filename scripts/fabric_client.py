@@ -109,15 +109,37 @@ class FabricClient:
             return
         resp.raise_for_status()
 
-    def get_item_definition(self, workspace_id: str, item_id: str) -> list[dict]:
+    def create_lakehouse(self, workspace_id: str, display_name: str) -> str:
+        # Unlike create_item, a Lakehouse has no "definition" payload at all —
+        # sending one (even {"parts": []}) is rejected. Returns the new
+        # item's ID directly since callers need it immediately (e.g. to
+        # patch config/valueSets), unlike create_item's fire-and-forget void
+        # return.
         resp = requests.post(
-            f"{_FABRIC_BASE_URL}/workspaces/{workspace_id}/items/{item_id}/getDefinition",
+            f"{_FABRIC_BASE_URL}/workspaces/{workspace_id}/items",
             headers=self._headers(_FABRIC_SCOPE),
+            json={"displayName": display_name, "type": "Lakehouse"},
             timeout=60,
         )
         if resp.status_code == 202:
             self._poll(resp.headers["Location"])
-            resp = requests.get(resp.headers["Location"], headers=self._headers(_FABRIC_SCOPE), timeout=30)
+            items = {i["displayName"]: i["id"] for i in self.get_workspace_items(workspace_id)}
+            return items[display_name]
+        resp.raise_for_status()
+        return resp.json()["id"]
+
+    def get_item_definition(self, workspace_id: str, item_id: str, format: str | None = None) -> list[dict]:
+        # format=TMDL is required for SemanticModel items — without it, Fabric
+        # returns only the minimal .platform/definition.pbism stub instead of
+        # the actual model/tables/relationships TMDL files.
+        url = f"{_FABRIC_BASE_URL}/workspaces/{workspace_id}/items/{item_id}/getDefinition"
+        if format:
+            url += f"?format={format}"
+        resp = requests.post(url, headers=self._headers(_FABRIC_SCOPE), timeout=60)
+        if resp.status_code == 202:
+            operation_url = resp.headers["Location"]
+            self._poll(operation_url)
+            resp = requests.get(f"{operation_url}/result", headers=self._headers(_FABRIC_SCOPE), timeout=30)
             resp.raise_for_status()
             return resp.json().get("definition", {}).get("parts", [])
         resp.raise_for_status()
@@ -160,7 +182,9 @@ class FabricClient:
             resp = requests.get(url, headers=self._headers(_FABRIC_SCOPE), timeout=30)
             resp.raise_for_status()
             data = resp.json()
-            items.extend(data.get("value", []))
+            # Nested under "workspaces", not the generic "value" key most other
+            # Fabric REST endpoints use — confirmed against Microsoft Learn.
+            items.extend(data.get("workspaces", []))
             token = data.get("continuationToken")
             url = f"{_FABRIC_BASE_URL}/admin/workspaces?continuationToken={token}" if token else None
         return items
@@ -174,7 +198,8 @@ class FabricClient:
             resp = requests.get(url, headers=self._headers(_FABRIC_SCOPE), timeout=30)
             resp.raise_for_status()
             data = resp.json()
-            items.extend(data.get("value", []))
+            # Nested under "itemEntities", not "value" — same as workspaces above.
+            items.extend(data.get("itemEntities", []))
             token = data.get("continuationToken")
             if not token:
                 url = None
@@ -184,8 +209,12 @@ class FabricClient:
         return items
 
     def list_capacities_admin(self) -> list[dict]:
+        # No /admin/capacities endpoint exists — capacities are listed via the
+        # Core API (/v1/capacities), unlike workspaces/items which do have a
+        # dedicated /admin/ namespace. Confirmed via a real 404 during the
+        # first live deploy against the tenant.
         resp = requests.get(
-            f"{_FABRIC_BASE_URL}/admin/capacities",
+            f"{_FABRIC_BASE_URL}/capacities",
             headers=self._headers(_FABRIC_SCOPE),
             timeout=30,
         )
@@ -197,7 +226,9 @@ class FabricClient:
     def get_activity_events(self, start_iso: str, end_iso: str) -> list[dict]:
         """
         Fetch activity events for a window <= 24h (Power BI Admin API constraint).
-        start_iso/end_iso: e.g. "2026-07-23T00:00:00.000Z" (single-quoted by the API itself).
+        start_iso/end_iso must fall on the SAME UTC calendar day — e.g.
+        "2026-07-23T00:00:00.000Z" to "2026-07-23T23:59:59.999Z", not the
+        following day's midnight, or the API returns 400 Bad Request.
         """
         events = []
         url = (
@@ -213,11 +244,3 @@ class FabricClient:
             # different shape from every other endpoint in this client.
             url = data.get("continuationUri")
         return events
-
-    def get_dataset_refresh_history(self, dataset_id: str, top: int | None = None) -> list[dict]:
-        url = f"{_POWERBI_BASE_URL}/admin/datasets/{dataset_id}/refreshhistory"
-        if top:
-            url += f"?$top={top}"
-        resp = requests.get(url, headers=self._headers(_POWERBI_SCOPE), timeout=30)
-        resp.raise_for_status()
-        return resp.json().get("value", [])
