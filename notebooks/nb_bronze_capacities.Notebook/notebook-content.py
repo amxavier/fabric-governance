@@ -25,7 +25,7 @@
 # ### nb_bronze_capacities
 #
 # **Layer:** Bronze — Raw Ingestion, SCD Type 2
-# **Source:** Power BI Admin REST API — `GET /v1.0/myorg/admin/capacities`
+# **Source:** Fabric REST API (Core) — `GET /v1/capacities`
 # **Destination:** `lh_governance_bronze` → Delta Table `raw_capacities`
 # **Schedule:** Daily (before workspaces/items, since workspaces reference capacityId)
 #
@@ -58,16 +58,17 @@ INGESTION_DATE = INGESTION_TS.date().isoformat()
 # runs outside Fabric and must request each scope explicitly).
 TOKEN = notebookutils.credentials.getToken("pbi")
 HEADERS = {"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"}
-# The Fabric REST API's /v1/capacities is a trap here: it only returns
-# capacities the caller is admin/contributor on, not every capacity in the
-# tenant (confirmed live 2026-08-11 — it returned an unrelated PP3 capacity
-# visible to this identity instead of the FT1 trial that actually hosts every
-# workspace in this tenant, silently poisoning dim_capacity with the wrong
-# row). There's no Fabric-native admin/capacities equivalent, but the older
-# Power BI Admin API has one that's genuinely tenant-wide for an admin/SP
-# caller — same "pbi" token audience as the rest of this notebook already
-# uses, no extra credential handling needed.
-CAPACITIES_URL = "https://api.powerbi.com/v1.0/myorg/admin/capacities"
+# /v1/capacities only returns capacities the calling identity is
+# admin/contributor on, not every capacity in the tenant — confirmed live
+# 2026-08-11 when it returned an unrelated PP3 capacity instead of the FT1
+# trial that actually hosts every workspace here, because the identity
+# running this at the time wasn't assigned on FT1. The Power BI Admin
+# equivalent (/v1.0/myorg/admin/capacities) is genuinely tenant-wide but
+# 403s for this project's service principal specifically on this endpoint
+# (also confirmed live), so the fix is on the Fabric side, not here: the SP
+# (sp-fabric-cicd) is now added as Contributor/Admin directly on the FT1
+# capacity, which makes this endpoint correctly include it.
+CAPACITIES_URL = "https://api.fabric.microsoft.com/v1/capacities"
 
 _lh_bronze = notebookutils.lakehouse.get("lh_governance_bronze")
 BRONZE_PATH = f"{_lh_bronze['properties']['abfsPath']}/Tables/{DESTINATION_TABLE}"
