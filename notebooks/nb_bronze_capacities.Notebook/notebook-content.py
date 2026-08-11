@@ -25,7 +25,7 @@
 # ### nb_bronze_capacities
 #
 # **Layer:** Bronze — Raw Ingestion, SCD Type 2
-# **Source:** Fabric REST API (Core, not Admin) — `GET /v1/capacities`
+# **Source:** Power BI Admin REST API — `GET /v1.0/myorg/admin/capacities`
 # **Destination:** `lh_governance_bronze` → Delta Table `raw_capacities`
 # **Schedule:** Daily (before workspaces/items, since workspaces reference capacityId)
 #
@@ -58,11 +58,16 @@ INGESTION_DATE = INGESTION_TS.date().isoformat()
 # runs outside Fabric and must request each scope explicitly).
 TOKEN = notebookutils.credentials.getToken("pbi")
 HEADERS = {"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"}
-# There is no /v1/admin/capacities endpoint — capacity listing lives on the
-# Core API (/v1/capacities), not the Admin API namespace like workspaces/items.
-# With a Capacity.Read.All-equivalent grant this still returns every tenant
-# capacity, not just ones the caller is explicitly assigned to.
-CAPACITIES_URL = "https://api.fabric.microsoft.com/v1/capacities"
+# The Fabric REST API's /v1/capacities is a trap here: it only returns
+# capacities the caller is admin/contributor on, not every capacity in the
+# tenant (confirmed live 2026-08-11 — it returned an unrelated PP3 capacity
+# visible to this identity instead of the FT1 trial that actually hosts every
+# workspace in this tenant, silently poisoning dim_capacity with the wrong
+# row). There's no Fabric-native admin/capacities equivalent, but the older
+# Power BI Admin API has one that's genuinely tenant-wide for an admin/SP
+# caller — same "pbi" token audience as the rest of this notebook already
+# uses, no extra credential handling needed.
+CAPACITIES_URL = "https://api.powerbi.com/v1.0/myorg/admin/capacities"
 
 _lh_bronze = notebookutils.lakehouse.get("lh_governance_bronze")
 BRONZE_PATH = f"{_lh_bronze['properties']['abfsPath']}/Tables/{DESTINATION_TABLE}"
