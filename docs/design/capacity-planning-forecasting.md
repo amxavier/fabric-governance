@@ -1,6 +1,6 @@
 # Design: Capacity Planning & Forecasting
 
-**Status:** Planned, not started. Investigation (Step 0) done; Step 1 begins in a fresh session.
+**Status:** Step 1 written (`nb_gold_capacity_forecast`), not yet deployed/run against real DEV data. Steps 2-10 not started.
 
 ## Mission
 
