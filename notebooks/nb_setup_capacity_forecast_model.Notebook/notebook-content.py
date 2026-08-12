@@ -68,24 +68,55 @@ get_ipython().run_line_magic("pip", "install semantic-link-labs")
 # META   "language_group": "synapse_pyspark"
 # META }
 
-# MARKDOWN ********************
-
-# ### Add the two tables (columns + Direct Lake partition) and their relationships
-
 # CELL ********************
 
 import sempy_labs as labs
 from sempy_labs.tom import connect_semantic_model
 
-# Looked up live rather than hardcoded — the Direct Lake expression name is
-# not guaranteed to match across environments (confirmed live 2026-08-12:
-# DEV's is 'DirectLake - lh_governance_gold_dev', with a suffix the
-# git-checked-in expressions.tmdl doesn't have, since that file is never
-# auto-synced — deploy.py excludes the whole SemanticModel folder from
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
+# ### Resolve the Direct Lake expression name live
+#
+# Not hardcoded — the expression name isn't guaranteed to match across
+# environments (confirmed live 2026-08-12: DEV's is
+# `'DirectLake - lh_governance_gold_dev'`, with a suffix the
+# git-checked-in `expressions.tmdl` doesn't have, since that file is never
+# auto-synced — `deploy.py` excludes the whole SemanticModel folder from
 # deploy to protect the interactively-built Direct Lake binding).
+#
+# `tom.model.Expressions` is a .NET `NamedMetadataObjectCollection` —
+# iterable, but its indexer only accepts a string name, not an int position
+# (`Expressions[0]` raises `TypeError: No method matches ... get_Item:
+# (<class 'int'>)`, confirmed live) — so pull the name via iteration, not
+# positional indexing.
+
+# CELL ********************
+
 with connect_semantic_model(dataset=DATASET, workspace=WORKSPACE, readonly=True) as tom:
-    EXPRESSION = tom.model.Expressions[0].Name
+    EXPRESSION = [e.Name for e in tom.model.Expressions][0]
 print(f"Using Direct Lake expression: {EXPRESSION!r}")
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
+# ### Add the two tables (columns + Direct Lake partition) and their relationships
+
+# CELL ********************
 
 fact_capacity_forecast_columns = [
     # (column_name, data_type, format_string, summarize_by)
