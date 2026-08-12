@@ -245,16 +245,28 @@ def main() -> None:
         }
         print(f"  Notebook ID mapping: {len(logicalid_to_itemid)} notebooks resolved\n")
 
+        # Resolved here (not just in Phase 3) so the pipeline's
+        # PBISemanticModelRefresh activity can be patched to point at this
+        # workspace's own semantic model instead of whichever environment's
+        # it was last pulled from. None if the model hasn't been provisioned
+        # in this workspace yet — patch_pipeline_notebook_ids leaves
+        # groupId/datasetId untouched in that case rather than writing a
+        # bogus reference.
+        sm_item_id = workspace_items.get(SEMANTIC_MODEL_NAME)
+
         for item_path in phase2:
             parts = read_item_parts(item_path, replacements or None)
-            parts = patch_pipeline_notebook_ids(parts, logicalid_to_itemid, workspace_id)
+            parts = patch_pipeline_notebook_ids(parts, logicalid_to_itemid, workspace_id, sm_item_id)
             # Debug: confirm what is being sent to Fabric
             for p in parts:
                 if p["path"] == "pipeline-content.json":
                     sent = json.loads(base64.b64decode(p["payload"]))
                     for act in sent.get("properties", {}).get("activities", []):
                         tp = act.get("typeProperties", {})
-                        print(f"  [PATCH] {act['name']}: notebookId={tp.get('notebookId')} workspaceId={tp.get('workspaceId')}")
+                        if act.get("type") == "PBISemanticModelRefresh":
+                            print(f"  [PATCH] {act['name']}: groupId={tp.get('groupId')} datasetId={tp.get('datasetId')}")
+                        else:
+                            print(f"  [PATCH] {act['name']}: notebookId={tp.get('notebookId')} workspaceId={tp.get('workspaceId')}")
             if _deploy_item(client, workspace_id, workspace_items, item_path, parts):
                 success += 1
             else:
