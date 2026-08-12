@@ -1,8 +1,8 @@
 # Design: Capacity Planning & Forecasting
 
-**Status:** Steps 1-7 done and validated live in DEV (2026-08-11/12), including the Step 6 guardrail
-sub-step (see "sku relationship decision" below — decided: stay inactive, nothing further to do there).
-Steps 8 (report layout), 9 (gate tests), 10 (README) remain.
+**Status:** All 10 steps done, DEV only (2026-08-11/12) — notebook, semantic model (tables,
+relationships, 6 measures), report layout spec, gate-blocking tests, README. QA/PRD promotion
+and the report page itself (built interactively, per the Step 8 spec) are the only remaining work.
 
 ## Mission
 
