@@ -296,8 +296,15 @@ fact_capacity_forecast = (
         ),
         on="sku",
     )
-    .withColumn("cu_forecast_lower", F.col("cu_forecast") - 1.96 * F.col("residual_std"))
+    # Band computed from the true (unclamped) regression value first, so its
+    # width stays a faithful ±1.96×residual_std around the actual fit — only
+    # then floor cu_forecast/cu_forecast_lower at 0, since a steep negative
+    # trend extrapolated 52 weeks out can otherwise project negative CU,
+    # which isn't a real value a capacity can consume. cu_forecast_upper
+    # never needs a floor.
+    .withColumn("cu_forecast_lower", F.greatest(F.lit(0.0), F.col("cu_forecast") - 1.96 * F.col("residual_std")))
     .withColumn("cu_forecast_upper", F.col("cu_forecast") + 1.96 * F.col("residual_std"))
+    .withColumn("cu_forecast", F.greatest(F.lit(0.0), F.col("cu_forecast")))
     # Weekly budget derived from the same base_capacity_units already
     # shipped on every source row (see the SECONDS_PER_DAY comment above)
     # — a constant per SKU, repeated on every week's row so the report can
