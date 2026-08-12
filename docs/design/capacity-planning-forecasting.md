@@ -1,9 +1,14 @@
 # Design: Capacity Planning & Forecasting
 
-**Status:** All 10 steps done AND built, DEV only (2026-08-11/12) — notebook, semantic model
-(tables, relationships, 6 measures), the "Capacity & Planning" report page itself (5 cards +
-5-series line chart, built as PBIR JSON and validated live), gate-blocking tests, README, and
-the pipeline wired to run the forecast daily. Only QA/PRD promotion remains.
+**Status:** Complete and live in all three environments — DEV, QA, and PRD (2026-08-11/12).
+Notebook, semantic model (tables, relationships, 6 measures), the "Capacity & Planning" report
+page (5 cards + 5-series line chart, built as PBIR JSON), gate-blocking tests, README, and the
+pipeline wired to run the forecast daily — all validated live with real data in each
+environment. `deploy.py` now auto-patches `refresh_semantic_model`'s target per environment
+(see README's Semantic Model Lifecycle section), so promoting this project further needs no
+manual pipeline reconfiguration — only the one-time interactive TOM run per environment
+(`nb_setup_capacity_forecast_model`, blocked from Service Principal automation by this
+tenant's XMLA auth restriction, unless that assumption gets re-verified — see project memory).
 
 ## Mission
 
