@@ -115,7 +115,7 @@ All three environments are live, validated end to end (full daily pipeline run, 
 | `deploy_semantic_model.yml` | Manual | One-off: provision `sm_governance_medallion` from scratch in a new environment |
 | `pull_semantic_model.yml` | Manual | Syncs a live item's current definition (semantic model, pipeline, report) back into git |
 
-**`cd_deploy.yml` only runs after `ci.yml` succeeds** (via `workflow_run`, not a direct push trigger) — a commit that fails a test never reaches a live workspace. `deploy.py` itself is a 3-phase orchestrator (Notebooks+SemanticModel → DataPipeline, patching notebook IDs → Report, patching the semantic model connection), and aborts Phase 2/3 outright if anything in Phase 1 failed, rather than risk publishing a pipeline or report that references an item that doesn't actually exist yet.
+**`cd_deploy.yml` only runs after `ci.yml` succeeds** (via `workflow_run`, not a direct push trigger) — a commit that fails a test never reaches a live workspace. `deploy.py` itself is a 3-phase orchestrator (Notebooks+SemanticModel → DataPipeline, patching notebook IDs and the semantic-model-refresh activity's target → Report, patching the semantic model connection), and aborts Phase 2/3 outright if anything in Phase 1 failed, rather than risk publishing a pipeline or report that references an item that doesn't actually exist yet.
 
 `sm_governance_medallion` is deliberately excluded from `cd_deploy.yml`'s normal flow — see [Semantic Model Lifecycle](#semantic-model-lifecycle) below.
 
@@ -132,6 +132,8 @@ Direct Lake models deployed in bulk via REST/TMDL — including relationships ma
 This must be run interactively (your own sign-in) — TOM/XMLA write operations reject the Service Principal's app-only token on this tenant, same as the `/admin/*` REST APIs below. `scripts/pull_item_definition.py` (or the `pull_semantic_model.yml` workflow) syncs the live, interactively-maintained definition back into git afterward, for documentation — `deploy.py` never writes to it.
 
 **A model created via the Service Principal (through `deploy_semantic_model.py`) is SP-owned**, which can block the portal's **Edit tables**/Power Query features ("ask the model owner to enable granular access control..."). Fix: **Take ownership** of the item as yourself (`...` menu on the item → Take over) — safe for a Direct Lake model specifically, since it has no stored data-source credential tied to the owner the way an Import-mode model would, and the item's ID (what the report and pipeline actually bind to) doesn't change.
+
+**`pl_governance_orchestration`'s `refresh_semantic_model` activity needs no manual re-pointing per environment.** Its `groupId`/`datasetId` are a captured-GUID field with no `logicalId` equivalent (unlike notebook activities), so early promotions to QA and PRD initially left them pointing at whichever environment's model was last committed — confirmed live 2026-08-12. Fixing this by hand looked like it would need a new Fabric Connection item per environment, but checking that assumption instead of accepting it found otherwise: DEV's and QA's independently-corrected activities have the *identical* `externalReferences.connection` GUID, proving the connection is a reusable, workspace-agnostic auth binding, not something to recreate per environment. Only `groupId` (target `workspace_id`) and `datasetId` (target workspace's real `sm_governance_medallion` item ID) actually vary — `deploy.py`'s Phase 2 now resolves both (the same way it already resolves notebook IDs) and patches this activity on every deploy, `full` or `selective`. The connection itself is left untouched.
 
 ---
 
@@ -273,10 +275,9 @@ The three Fabric workspaces and the Service Principal are reused from the siblin
 
 1. `python scripts/provision_lakehouses.py <branch>` (or the `Provision Lakehouses` workflow) — creates `lh_governance_bronze/silver/gold` and wires the real `lh_governance_gold` ID into `config/valueSets/<branch>.json`.
 2. Run `CD - Deploy to Fabric` in **full** mode — publishes all notebooks, the pipeline, and the report (the report step will fail until step 3 is done; that's expected).
-3. Provision the semantic model — see [Semantic Model Lifecycle](#semantic-model-lifecycle) above — then re-run the full deploy so the report finds it.
+3. Provision the semantic model — see [Semantic Model Lifecycle](#semantic-model-lifecycle) above — then re-run the full deploy so the report finds it, and so `pl_governance_orchestration`'s `refresh_semantic_model` activity gets auto-patched to point at this environment's own model (`groupId`/`datasetId`, resolved from the now-provisioned `sm_governance_medallion` — see the note at the end of [Semantic Model Lifecycle](#semantic-model-lifecycle)). No manual re-point needed here anymore.
 4. Run the [delegated-auth bootstrap](#one-time-bootstrap-per-environment) once for this environment.
-5. Point the pipeline's `refresh_semantic_model` activity at this environment's semantic model (open the pipeline in the portal, re-point the `PBISemanticModelRefresh` activity, creating a new Connection if prompted), then run `pull_semantic_model.yml` against `pl_governance_orchestration` to sync the corrected IDs back into git.
-6. Trigger `schedule_ingestion.yml` manually (`environments` input) to run the pipeline once and confirm real data reaches the report.
+5. Trigger `schedule_ingestion.yml` manually (`environments` input) to run the pipeline once and confirm real data reaches the report.
 
 ---
 
