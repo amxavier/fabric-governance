@@ -77,7 +77,15 @@ get_ipython().run_line_magic("pip", "install semantic-link-labs")
 import sempy_labs as labs
 from sempy_labs.tom import connect_semantic_model
 
-EXPRESSION = "DirectLake - lh_governance_gold"
+# Looked up live rather than hardcoded — the Direct Lake expression name is
+# not guaranteed to match across environments (confirmed live 2026-08-12:
+# DEV's is 'DirectLake - lh_governance_gold_dev', with a suffix the
+# git-checked-in expressions.tmdl doesn't have, since that file is never
+# auto-synced — deploy.py excludes the whole SemanticModel folder from
+# deploy to protect the interactively-built Direct Lake binding).
+with connect_semantic_model(dataset=DATASET, workspace=WORKSPACE, readonly=True) as tom:
+    EXPRESSION = tom.model.Expressions[0].Name
+print(f"Using Direct Lake expression: {EXPRESSION!r}")
 
 fact_capacity_forecast_columns = [
     # (column_name, data_type, format_string, summarize_by)
