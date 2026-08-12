@@ -1,6 +1,8 @@
 # Design: Capacity Planning & Forecasting
 
-**Status:** Step 1 written (`nb_gold_capacity_forecast`), not yet deployed/run against real DEV data. Steps 2-10 not started.
+**Status:** Steps 1-7 done and validated live in DEV (2026-08-11/12), including the Step 6 guardrail
+sub-step (see "sku relationship decision" below — decided: stay inactive, nothing further to do there).
+Steps 8 (report layout), 9 (gate tests), 10 (README) remain.
 
 ## Mission
 
@@ -87,12 +89,19 @@ CI/CD gate.
 - The confidence fields (`forecast_confidence`, `confidence_caveat`) are mandatory output,
   not optional polish — the whole point is to be honest about how much history backs the
   forecast.
-- **Reactivating `fact_capacity_utilization.sku → dim_capacity.sku` is a separate,
-  explicitly reviewed step** — verify against the live model in DEV (Manage
-  relationships / a real data check, not just "should be fine") before relying on it,
-  the same way the 2026-08-07 audit had to catch an inverted-cardinality relationship
-  that looked correct in isolation. Do not fold this into the same TOM script run as the
-  new table relationships without checking it in between.
+- **sku → dim_capacity relationships — decided, 2026-08-12: stay inactive.** Mapped the
+  full active-relationship graph by hand: `dim_capacity → dim_workspace → dim_item →
+  fact_activity → dim_date` is already an active chain. `fact_capacity_utilization` and
+  `fact_capacity_forecast` are both already active on `dim_date` (via `date_id` /
+  `week_start_date`), so activating either one's `sku → dim_capacity.sku` relationship
+  closes a real cycle (two distinct paths between `dim_capacity` and `dim_date`) —
+  confirmed the same ambiguous-path bug class the 2026-08-07 audit found, not a false
+  alarm. Fixing it would mean deactivating something already relied on elsewhere (e.g.
+  `fact_activity.date_id → dim_date.date_id`), which has its own blast radius — user
+  chose to leave both `sku` relationships inactive rather than take that on now. Anything
+  needing capacity-level attributes joined to CU/forecast data should use
+  `USERELATIONSHIP` in the measure (same pattern as `'Total CU (Item, by Date)'` in
+  `_measure.tmdl`), not rely on auto filter propagation through `sku`.
 
 ## Execution order for the next session
 
