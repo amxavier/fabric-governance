@@ -632,11 +632,34 @@
         }
       },
       {
+        "name": "update_gold_capacity_forecast",
+        "type": "TridentNotebook",
+        "dependsOn": [
+          {
+            "activity": "update_gold_governance_model",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "notebookId": "c8e4ba03-67c6-8667-aa12-2bcbf992143a",
+          "workspaceId": "dc072922-4ffb-4424-868c-28087b02ecba"
+        }
+      },
+      {
         "name": "refresh_semantic_model",
         "type": "PBISemanticModelRefresh",
         "dependsOn": [
           {
-            "activity": "update_gold_governance_model",
+            "activity": "update_gold_capacity_forecast",
             "dependencyConditions": [
               "Succeeded"
             ]
