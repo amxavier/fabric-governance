@@ -22,5 +22,7 @@ ref table fact_activity
 ref table dim_capacity
 ref table fact_refresh
 ref table dim_item
+ref table fact_capacity_forecast
+ref table capacity_planning_summary
 ref table _measure
 

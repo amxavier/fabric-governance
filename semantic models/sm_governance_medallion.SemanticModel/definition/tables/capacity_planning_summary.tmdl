@@ -1,0 +1,123 @@
+table capacity_planning_summary
+	lineageTag: 9d3e7a1c-5f8b-4d2a-9c6e-1b7f4a3d8e24
+	sourceLineageTag: [dbo].[capacity_planning_summary]
+
+	column capacity_id
+		dataType: string
+		lineageTag: 3f8b5d2e-7a1c-4f9d-8b3e-6a2c9f5d1b26
+		sourceLineageTag: capacity_id
+		summarizeBy: none
+		sourceColumn: capacity_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column growth_cu_per_week
+		dataType: double
+		lineageTag: 7a2c9f5d-1b8e-4a3c-9f6d-2e7b5a9c3f28
+		sourceLineageTag: growth_cu_per_week
+		summarizeBy: sum
+		sourceColumn: growth_cu_per_week
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column growth_pct_per_week
+		dataType: double
+		lineageTag: 1c8e5b3f-9a2d-4c7e-8b1f-5a3c9e7b2d30
+		sourceLineageTag: growth_pct_per_week
+		summarizeBy: sum
+		sourceColumn: growth_pct_per_week
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column current_headroom_pct
+		dataType: double
+		lineageTag: 5b9d3f7a-2c8e-4b1d-9a6f-3c7e5b9d1a32
+		sourceLineageTag: current_headroom_pct
+		summarizeBy: sum
+		sourceColumn: current_headroom_pct
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column capacity_daily_cu_limit
+		dataType: double
+		lineageTag: 9c3f7a1d-5b8e-4c2f-9d6a-1e3b7c9f5a34
+		sourceLineageTag: capacity_daily_cu_limit
+		summarizeBy: sum
+		sourceColumn: capacity_daily_cu_limit
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column projected_saturation_date
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 2d7b9f3a-6c1e-4d8b-9f3a-5c7e1b9d3f36
+		sourceLineageTag: projected_saturation_date
+		summarizeBy: none
+		sourceColumn: projected_saturation_date
+
+		annotation SummarizationSetBy = Automatic
+
+	column weeks_to_saturation
+		dataType: double
+		lineageTag: 6e1b8d3f-9c2a-4e7b-8d1f-3a5c9e7b1d38
+		sourceLineageTag: weeks_to_saturation
+		summarizeBy: sum
+		sourceColumn: weeks_to_saturation
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column n_weeks_history
+		dataType: int64
+		formatString: 0
+		lineageTag: 3f9c5a1e-7b2d-4f8c-9a3e-6d1b7f9c5a40
+		sourceLineageTag: n_weeks_history
+		summarizeBy: sum
+		sourceColumn: n_weeks_history
+
+		annotation SummarizationSetBy = Automatic
+
+	column r_squared
+		dataType: double
+		lineageTag: 8d2f6b9a-3c7e-4d1f-9b8a-2c6e9d3f7b42
+		sourceLineageTag: r_squared
+		summarizeBy: sum
+		sourceColumn: r_squared
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column forecast_confidence
+		dataType: string
+		lineageTag: 4a9c7e3b-1d8f-4a2c-9e7b-3d1c8a9e7b44
+		sourceLineageTag: forecast_confidence
+		summarizeBy: none
+		sourceColumn: forecast_confidence
+
+		annotation SummarizationSetBy = Automatic
+
+	column confidence_caveat
+		dataType: string
+		lineageTag: 1e8b3d9f-5a2c-4e7d-8b9f-3a5c1e8b9d46
+		sourceLineageTag: confidence_caveat
+		summarizeBy: none
+		sourceColumn: confidence_caveat
+
+		annotation SummarizationSetBy = Automatic
+
+	partition capacity_planning_summary = entity
+		mode: directLake
+		source
+			entityName: capacity_planning_summary
+			expressionSource: 'DirectLake - lh_governance_gold'
+

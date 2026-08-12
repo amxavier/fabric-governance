@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Notebook",
+    "displayName": "nb_setup_capacity_forecast_model"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "e4b8c2f6-1a9d-4c3e-8b7f-2d6a9c1e5f30"
+  }
+}
