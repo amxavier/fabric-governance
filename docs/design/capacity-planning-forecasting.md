@@ -1,8 +1,9 @@
 # Design: Capacity Planning & Forecasting
 
-**Status:** All 10 steps done, DEV only (2026-08-11/12) — notebook, semantic model (tables,
-relationships, 6 measures), report layout spec, gate-blocking tests, README. QA/PRD promotion
-and the report page itself (built interactively, per the Step 8 spec) are the only remaining work.
+**Status:** All 10 steps done AND built, DEV only (2026-08-11/12) — notebook, semantic model
+(tables, relationships, 6 measures), the "Capacity & Planning" report page itself (5 cards +
+5-series line chart, built as PBIR JSON and validated live), gate-blocking tests, README, and
+the pipeline wired to run the forecast daily. Only QA/PRD promotion remains.
 
 ## Mission
 
