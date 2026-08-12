@@ -109,7 +109,11 @@
               },
               "queryRef": "Sum(fact_capacity_forecast.cu_forecast_upper)",
               "nativeQueryRef": "Sum of cu_forecast_upper"
-            },
+            }
+          ]
+        },
+        "Y2": {
+          "projections": [
             {
               "field": {
                 "Aggregation": {
@@ -354,17 +358,10 @@
       "labels": [
         {
           "properties": {
-            "labelDisplayUnits": {
+            "show": {
               "expr": {
                 "Literal": {
-                  "Value": "1000D"
-                }
-              }
-            },
-            "labelPrecision": {
-              "expr": {
-                "Literal": {
-                  "Value": "0L"
+                  "Value": "false"
                 }
               }
             }
