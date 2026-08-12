@@ -13,8 +13,8 @@
           "secureInput": false
         },
         "typeProperties": {
-          "notebookId": "ef27e94c-e657-4bc6-bcf7-2f3adefe8281",
-          "workspaceId": "4bf443aa-d454-4c66-9025-a67fe4a287a8"
+          "notebookId": "b8c11757-e1d0-40be-898f-4a0be987c549",
+          "workspaceId": "dc072922-4ffb-4424-868c-28087b02ecba"
         }
       },
       {
@@ -36,8 +36,8 @@
           "secureInput": false
         },
         "typeProperties": {
-          "notebookId": "14a16b6d-6779-43a5-8e92-fc54fc09748b",
-          "workspaceId": "4bf443aa-d454-4c66-9025-a67fe4a287a8"
+          "notebookId": "43044cbb-e853-47f2-802d-cbf29384956b",
+          "workspaceId": "dc072922-4ffb-4424-868c-28087b02ecba"
         }
       },
       {
@@ -59,8 +59,8 @@
           "secureInput": false
         },
         "typeProperties": {
-          "notebookId": "27d5004d-a582-43a7-87e5-77386a95a4b2",
-          "workspaceId": "4bf443aa-d454-4c66-9025-a67fe4a287a8"
+          "notebookId": "f52dfa8f-d7ab-4547-9405-c3c1512bdaae",
+          "workspaceId": "dc072922-4ffb-4424-868c-28087b02ecba"
         }
       },
       {
@@ -82,8 +82,8 @@
           "secureInput": false
         },
         "typeProperties": {
-          "notebookId": "566610b5-fb0a-42a2-a74e-8b8329df196c",
-          "workspaceId": "4bf443aa-d454-4c66-9025-a67fe4a287a8"
+          "notebookId": "66973509-33b4-4ffc-b405-1d250aa7cd4e",
+          "workspaceId": "dc072922-4ffb-4424-868c-28087b02ecba"
         }
       },
       {
@@ -105,8 +105,8 @@
           "secureInput": false
         },
         "typeProperties": {
-          "notebookId": "e37078e3-172c-49b5-bbc7-b808948f670c",
-          "workspaceId": "4bf443aa-d454-4c66-9025-a67fe4a287a8"
+          "notebookId": "c1474caf-ca0c-4dcd-addb-4788f27711fe",
+          "workspaceId": "dc072922-4ffb-4424-868c-28087b02ecba"
         }
       },
       {
@@ -134,8 +134,8 @@
           "secureInput": false
         },
         "typeProperties": {
-          "notebookId": "d3ec1885-4de2-43a2-9063-3d86571185af",
-          "workspaceId": "4bf443aa-d454-4c66-9025-a67fe4a287a8"
+          "notebookId": "9d5a6dff-583c-42e1-b557-429e4881acd1",
+          "workspaceId": "dc072922-4ffb-4424-868c-28087b02ecba"
         }
       },
       {
@@ -157,8 +157,8 @@
           "secureInput": false
         },
         "typeProperties": {
-          "notebookId": "89295a4d-96a9-4282-b5af-43591fae4654",
-          "workspaceId": "4bf443aa-d454-4c66-9025-a67fe4a287a8"
+          "notebookId": "60d3c238-1618-4707-8626-4bf7f5e41ca4",
+          "workspaceId": "dc072922-4ffb-4424-868c-28087b02ecba"
         }
       },
       {
@@ -180,8 +180,8 @@
           "secureInput": false
         },
         "typeProperties": {
-          "notebookId": "82eb5a36-703c-498b-abb7-e98a6937850d",
-          "workspaceId": "4bf443aa-d454-4c66-9025-a67fe4a287a8"
+          "notebookId": "da0e03cd-0be6-4024-adc5-46526092c46a",
+          "workspaceId": "dc072922-4ffb-4424-868c-28087b02ecba"
         }
       },
       {
@@ -203,8 +203,8 @@
           "secureInput": false
         },
         "typeProperties": {
-          "notebookId": "5e70f0b4-7e2c-4dad-8466-b0bbac7d59f8",
-          "workspaceId": "4bf443aa-d454-4c66-9025-a67fe4a287a8"
+          "notebookId": "c8802951-9ce6-434a-8ba5-bdd6204a68bf",
+          "workspaceId": "dc072922-4ffb-4424-868c-28087b02ecba"
         }
       },
       {
@@ -226,8 +226,8 @@
           "secureInput": false
         },
         "typeProperties": {
-          "notebookId": "c9a7b81d-5467-4c5f-a3a5-421284c74ae6",
-          "workspaceId": "4bf443aa-d454-4c66-9025-a67fe4a287a8"
+          "notebookId": "cf81caff-b710-4ccb-95c4-c65b04061961",
+          "workspaceId": "dc072922-4ffb-4424-868c-28087b02ecba"
         }
       },
       {
@@ -249,8 +249,8 @@
           "secureInput": false
         },
         "typeProperties": {
-          "notebookId": "fe9f84b6-d829-4a72-9423-646139fb09f6",
-          "workspaceId": "4bf443aa-d454-4c66-9025-a67fe4a287a8"
+          "notebookId": "9b74debc-f670-4f3b-a2e2-b23e1f9f3c76",
+          "workspaceId": "dc072922-4ffb-4424-868c-28087b02ecba"
         }
       },
       {
@@ -278,8 +278,8 @@
           "secureInput": false
         },
         "typeProperties": {
-          "notebookId": "0f5898ae-159e-45e0-94e7-c708031361c3",
-          "workspaceId": "4bf443aa-d454-4c66-9025-a67fe4a287a8"
+          "notebookId": "5c180560-a545-4a34-a180-8e275a3f913f",
+          "workspaceId": "dc072922-4ffb-4424-868c-28087b02ecba"
         }
       },
       {
@@ -307,8 +307,8 @@
           "secureInput": false
         },
         "typeProperties": {
-          "notebookId": "03c7a559-f086-431b-8376-9abcd53bc86e",
-          "workspaceId": "4bf443aa-d454-4c66-9025-a67fe4a287a8"
+          "notebookId": "b9ddf66a-08f4-45fa-b56a-d0ecb210f668",
+          "workspaceId": "dc072922-4ffb-4424-868c-28087b02ecba"
         }
       },
       {
@@ -336,8 +336,8 @@
           "secureInput": false
         },
         "typeProperties": {
-          "notebookId": "b84a3167-1f0d-4615-bb75-5cf56518723d",
-          "workspaceId": "4bf443aa-d454-4c66-9025-a67fe4a287a8"
+          "notebookId": "0384dd4f-d798-4e53-8618-0a9e1bf3130a",
+          "workspaceId": "dc072922-4ffb-4424-868c-28087b02ecba"
         }
       },
       {
@@ -365,8 +365,8 @@
           "secureInput": false
         },
         "typeProperties": {
-          "notebookId": "4d987db2-e2f5-4617-9cd0-52d075e31ed3",
-          "workspaceId": "4bf443aa-d454-4c66-9025-a67fe4a287a8"
+          "notebookId": "8579513c-51ac-4078-b425-79b3b76f9c03",
+          "workspaceId": "dc072922-4ffb-4424-868c-28087b02ecba"
         }
       },
       {
@@ -394,8 +394,8 @@
           "secureInput": false
         },
         "typeProperties": {
-          "notebookId": "781bc150-1624-429f-a15f-16773faa6016",
-          "workspaceId": "4bf443aa-d454-4c66-9025-a67fe4a287a8"
+          "notebookId": "7991a4cc-ea2d-4dd8-a55e-8085215b0a24",
+          "workspaceId": "dc072922-4ffb-4424-868c-28087b02ecba"
         }
       },
       {
@@ -423,8 +423,8 @@
           "secureInput": false
         },
         "typeProperties": {
-          "notebookId": "879c0956-a899-4798-b69c-408240bd25b3",
-          "workspaceId": "4bf443aa-d454-4c66-9025-a67fe4a287a8"
+          "notebookId": "70c73414-dfa3-4941-bc66-d4b1d360bdfa",
+          "workspaceId": "dc072922-4ffb-4424-868c-28087b02ecba"
         }
       },
       {
@@ -452,8 +452,8 @@
           "secureInput": false
         },
         "typeProperties": {
-          "notebookId": "483c9f14-7366-462b-a8f9-d1863c490408",
-          "workspaceId": "4bf443aa-d454-4c66-9025-a67fe4a287a8"
+          "notebookId": "80a25898-fc30-4bb5-ad6a-62973e9f994c",
+          "workspaceId": "dc072922-4ffb-4424-868c-28087b02ecba"
         }
       },
       {
@@ -481,8 +481,8 @@
           "secureInput": false
         },
         "typeProperties": {
-          "notebookId": "e7d34391-8074-4b8e-a54a-922c7e334310",
-          "workspaceId": "4bf443aa-d454-4c66-9025-a67fe4a287a8"
+          "notebookId": "c9166533-e2d5-4383-9b31-9248b7cc79b8",
+          "workspaceId": "dc072922-4ffb-4424-868c-28087b02ecba"
         }
       },
       {
@@ -504,8 +504,8 @@
           "secureInput": false
         },
         "typeProperties": {
-          "notebookId": "eca54ac1-6d41-4d8f-92b4-5f6047b2c8fb",
-          "workspaceId": "4bf443aa-d454-4c66-9025-a67fe4a287a8"
+          "notebookId": "2b7a1316-3645-458d-8c15-0e76178134d1",
+          "workspaceId": "dc072922-4ffb-4424-868c-28087b02ecba"
         }
       },
       {
@@ -527,8 +527,8 @@
           "secureInput": false
         },
         "typeProperties": {
-          "notebookId": "3a911837-4801-47b0-bfa2-fecf6ad35530",
-          "workspaceId": "4bf443aa-d454-4c66-9025-a67fe4a287a8"
+          "notebookId": "1e727b17-5ea1-4c42-a9f4-fbdc110054ab",
+          "workspaceId": "dc072922-4ffb-4424-868c-28087b02ecba"
         }
       },
       {
@@ -556,8 +556,8 @@
           "secureInput": false
         },
         "typeProperties": {
-          "notebookId": "b105d062-3548-47b8-835f-c890e75fbe42",
-          "workspaceId": "4bf443aa-d454-4c66-9025-a67fe4a287a8"
+          "notebookId": "c6b701f0-4cc0-45ae-9c6b-4a4d2753f180",
+          "workspaceId": "dc072922-4ffb-4424-868c-28087b02ecba"
         }
       },
       {
@@ -627,13 +627,13 @@
           "secureInput": false
         },
         "typeProperties": {
-          "notebookId": "c3ac53e9-6fcf-4706-a004-e5e8f0b44d62",
-          "workspaceId": "4bf443aa-d454-4c66-9025-a67fe4a287a8"
+          "notebookId": "ba596644-9fad-4f5c-837d-412655d730e9",
+          "workspaceId": "dc072922-4ffb-4424-868c-28087b02ecba"
         }
       },
       {
-        "name": "refresh_semantic_model",
-        "type": "PBISemanticModelRefresh",
+        "name": "update_gold_capacity_forecast",
+        "type": "TridentNotebook",
         "dependsOn": [
           {
             "activity": "update_gold_governance_model",
@@ -650,10 +650,33 @@
           "secureInput": false
         },
         "typeProperties": {
+          "notebookId": "c8e4ba03-67c6-8667-aa12-2bcbf992143a",
+          "workspaceId": "dc072922-4ffb-4424-868c-28087b02ecba"
+        }
+      },
+      {
+        "name": "refresh_semantic_model",
+        "type": "PBISemanticModelRefresh",
+        "dependsOn": [
+          {
+            "activity": "update_gold_capacity_forecast",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
           "method": "POST",
           "operationType": "SemanticModelRefresh",
-          "groupId": "4bf443aa-d454-4c66-9025-a67fe4a287a8",
-          "datasetId": "59548717-6585-4f9f-a6d9-6ec928be03a3",
+          "groupId": "dc072922-4ffb-4424-868c-28087b02ecba",
+          "datasetId": "7044b4a1-1883-444c-a09b-6132df78a397",
           "waitOnCompletion": true,
           "commitMode": "Transactional"
         },

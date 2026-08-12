@@ -79,5 +79,7 @@ def test_report_references_expected_measures():
         "Monthly Cost (USD)", "Idle Cost (USD)",
         "Tracked Items", "Active Items", "Inactive Items",
         "Cleanup Candidates", "No Signal Items",
+        "Projected Saturation Date", "Weeks to Saturation",
+        "Current Headroom %", "Weekly CU Growth %", "Forecast Confidence",
     ]:
         assert measure in all_text, f"No visual references measure: {measure}"

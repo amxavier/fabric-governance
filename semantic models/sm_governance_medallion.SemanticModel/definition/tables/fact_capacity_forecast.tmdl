@@ -1,0 +1,94 @@
+table fact_capacity_forecast
+	lineageTag: 9c1e6f2a-6b3d-4e7a-9c2f-2f5a3d8b1e04
+	sourceLineageTag: [dbo].[fact_capacity_forecast]
+
+	column sku
+		dataType: string
+		lineageTag: 3a7d5c1e-8f2b-4c6a-9d1e-7b4f2a6c8e10
+		sourceLineageTag: sku
+		summarizeBy: none
+		sourceColumn: sku
+
+		annotation SummarizationSetBy = Automatic
+
+	column week_start_date
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 5e2b8f4a-1c9d-4e6f-8a3b-2d7c5e9f1a06
+		sourceLineageTag: week_start_date
+		summarizeBy: none
+		sourceColumn: week_start_date
+
+		annotation SummarizationSetBy = Automatic
+
+	column cu_actual
+		dataType: double
+		lineageTag: 7f4a2c9e-3d6b-4a8f-9c1e-5b7d3f2a8c12
+		sourceLineageTag: cu_actual
+		summarizeBy: sum
+		sourceColumn: cu_actual
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column cu_forecast
+		dataType: double
+		lineageTag: 1b8e5d3a-9c2f-4e7b-8a6d-3f9c1e5b7d14
+		sourceLineageTag: cu_forecast
+		summarizeBy: sum
+		sourceColumn: cu_forecast
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column cu_forecast_lower
+		dataType: double
+		lineageTag: 4d9c2f7a-5e8b-4c3d-9a1f-6b7d4e2c9f16
+		sourceLineageTag: cu_forecast_lower
+		summarizeBy: sum
+		sourceColumn: cu_forecast_lower
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column cu_forecast_upper
+		dataType: double
+		lineageTag: 8a3f6d1e-2c9b-4f5a-8d7e-1c4b9f2e5a18
+		sourceLineageTag: cu_forecast_upper
+		summarizeBy: sum
+		sourceColumn: cu_forecast_upper
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column capacity_weekly_cu_limit
+		dataType: double
+		lineageTag: 2e7b4d9f-6a1c-4d8e-9f3b-7c5a2e8d4f20
+		sourceLineageTag: capacity_weekly_cu_limit
+		summarizeBy: sum
+		sourceColumn: capacity_weekly_cu_limit
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column is_forecast
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 6f1a8e3c-4b9d-4f2a-8c6e-3d1b7f9a5c22
+		sourceLineageTag: is_forecast
+		summarizeBy: none
+		sourceColumn: is_forecast
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_capacity_forecast = entity
+		mode: directLake
+		source
+			entityName: fact_capacity_forecast
+			expressionSource: 'DirectLake - lh_governance_gold'
+

@@ -59,3 +59,16 @@ relationship 10ea0ef0-713f-d190-4f9c-f06a59134b88
 	fromColumn: fact_capacity_utilization.date_id
 	toColumn: dim_date.date_id
 
+relationship 5f8a2c9e-7b3d-4e1a-9c6f-2d8b5a3e7c48
+	fromColumn: fact_capacity_forecast.week_start_date
+	toColumn: dim_date.date_id
+
+relationship 3b7d1e9c-5a8f-4c2e-9d6b-1f3a7c5e9b50
+	fromColumn: capacity_planning_summary.capacity_id
+	toColumn: dim_capacity.capacity_id
+
+relationship 9e2c5a8f-1d7b-4e3c-8a9f-5b2d7e1c9a52
+	isActive: false
+	fromColumn: fact_capacity_forecast.sku
+	toColumn: dim_capacity.sku
+
