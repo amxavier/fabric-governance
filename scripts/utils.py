@@ -106,12 +106,23 @@ def patch_pipeline_notebook_ids(
     parts: list[dict],
     logicalid_to_itemid: dict[str, str],
     workspace_id: str | None = None,
+    sm_item_id: str | None = None,
 ) -> list[dict]:
-    """Replace notebook logicalIds and workspaceId in pipeline-content.json with target workspace values.
+    """Replace notebook logicalIds, workspaceId, and the semantic-model-refresh
+    activity's groupId/datasetId in pipeline-content.json with target workspace values.
 
     workspaceId "00000000..." works in the workspace where the pipeline was natively created,
     but fails with BadRequest when the pipeline is deployed via REST API to a different workspace.
     Setting it to the actual workspace ID fixes cross-environment execution.
+
+    PBISemanticModelRefresh's groupId/datasetId are a captured-GUID field with no
+    logicalId equivalent (unlike notebookId) — left unpatched, a pipeline deployed to
+    a new environment silently refreshes whichever environment's semantic model it was
+    last pulled from instead of its own (confirmed live 2026-08-12, across two
+    separate environment promotions). externalReferences.connection is deliberately
+    NOT touched: confirmed identical across DEV and QA's independently-corrected
+    pipelines, so it's a reusable, workspace-agnostic auth binding, not something
+    that needs recreating per environment.
     """
     patched = []
     for part in parts:
@@ -126,6 +137,10 @@ def patch_pipeline_notebook_ids(
                         props["notebookId"] = logicalid_to_itemid[logical_id]
                     if workspace_id:
                         props["workspaceId"] = workspace_id
+                elif activity.get("type") == "PBISemanticModelRefresh" and sm_item_id and workspace_id:
+                    props = activity["typeProperties"]
+                    props["groupId"] = workspace_id
+                    props["datasetId"] = sm_item_id
             updated = json.dumps(content, indent=2).encode("utf-8")
             patched.append({
                 "path": part["path"],
