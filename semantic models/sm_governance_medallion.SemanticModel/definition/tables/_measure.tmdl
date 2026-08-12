@@ -127,6 +127,43 @@ table _measure
 		formatString: 0
 		lineageTag: a2d578f9-54ee-494c-99bc-d7a1b63931bc
 
+	measure 'Projected Saturation Date' = SELECTEDVALUE(capacity_planning_summary[projected_saturation_date])
+		formatString: General Date
+		lineageTag: 7c3e9a1d-5f8b-4c2a-9d6e-1b7f3a5c9e54
+
+	measure 'Weeks to Saturation' = SELECTEDVALUE(capacity_planning_summary[weeks_to_saturation])
+		lineageTag: 2a8d5f3c-9b1e-4a7d-8c3f-6e2b9d5a1f56
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Current Headroom %' = SELECTEDVALUE(capacity_planning_summary[current_headroom_pct])
+		lineageTag: 9f3c7e1a-4d8b-4f2c-9a6e-3b1d7f9c5a58
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Weekly CU Growth %' = SELECTEDVALUE(capacity_planning_summary[growth_pct_per_week])
+		lineageTag: 5e1b8c3f-7a2d-4e9c-8b1f-3a5c7e1b9d60
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Forecast Confidence' =
+
+			VAR Confidence = SELECTEDVALUE(capacity_planning_summary[forecast_confidence])
+			VAR Caveat = SELECTEDVALUE(capacity_planning_summary[confidence_caveat])
+			RETURN Confidence & " — " & Caveat
+		lineageTag: 8d2f6a9c-3e7b-4d1f-9c8a-2e6b9d3f7c62
+
+	measure 'Forecast Confidence Color' =
+
+			SWITCH(
+			    SELECTEDVALUE(capacity_planning_summary[forecast_confidence]),
+			    "High", "#45B499",
+			    "Medium", "#DCB35A",
+			    "Low", "#C76A5F",
+			    "#A89C86"
+			)
+		lineageTag: 3c9e7b1f-6d2a-4c8e-9b3f-7a1d5c9e3b64
+
 	column Column
 		isHidden
 		formatString: 0

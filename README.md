@@ -19,6 +19,7 @@ Sibling project: [microsoft-fabric-medallion-lakehouse](https://github.com/amxav
 - **"What does this cost?"** — capacity unit (CU) consumption by item and by day, cross-referenced against activity/refresh events.
 - **"What can we clean up?"** — items with no refresh, job, or activity signal in 45+ days, classified Active / Inactive / Cleanup Candidate.
 - **"Who can see this?"** — workspace role assignments and per-item sharing, an LGPD/access-audit angle across every governed item.
+- **"At the current growth rate, when do we run out of capacity?"** — the native Capacity Metrics app only keeps a rolling 14-day window, structurally unable to answer this. Because this project persists daily CU history with full retention, a weekly-aggregated OLS trend can project forward and flag a saturation date — with an honest confidence rating (`Low`/`Medium`/`High`) that says how much history actually backs the projection, not just a number.
 
 ---
 
@@ -65,6 +66,7 @@ flowchart LR
 | **Gold** | `dim_capacity`, `dim_workspace`, `dim_item`, `dim_user`, `dim_date`, `dim_gateway` | Governance star schema dimensions |
 | **Gold** | `fact_activity`, `fact_refresh`, `fact_capacity_consumption`, `fact_capacity_utilization`, `fact_item_lifecycle`, `fact_item_job_history` | Event/measure facts, keyed to the dimensions above |
 | **Gold** | `bridge_item_datasource`, `bridge_workspace_access`, `bridge_item_access` | Many-to-many lineage/access bridges (no measures of their own) |
+| **Gold** | `fact_capacity_forecast`, `capacity_planning_summary` | Built by `nb_gold_capacity_forecast` — reads `fact_capacity_utilization` back out of Gold (already daily grain there) rather than from Silver, the one Gold notebook that's Gold-to-Gold. Weekly OLS trend + 52-week projection, with `n_weeks`/`r_squared`/`forecast_confidence` on every row so the projection is never mistaken for more certainty than the history supports |
 
 The core diagnostic pattern this schema enables: join `fact_refresh` failures against `fact_activity` for the same `item_id` in the preceding window — did someone change the owner, republish, or edit parameters right before it broke?
 
@@ -78,8 +80,8 @@ The core diagnostic pattern this schema enables: join `fact_refresh` failures ag
 | Storage | OneLake (Delta Lake) |
 | Processing | PySpark (Spark 3.x) |
 | Orchestration | Fabric Data Pipeline (24 activities) |
-| Semantic Layer | Power BI Semantic Model (Direct Lake), 15 tables, 21 relationships, 26 DAX measures |
-| Reporting | Power BI Report (PBIR format), 4 pages |
+| Semantic Layer | Power BI Semantic Model (Direct Lake), 13 tables, 17 relationships, 32 DAX measures |
+| Reporting | Power BI Report (PBIR format), 4 pages (a 5th, Capacity & Planning, is specced but not yet built — see `docs/design/capacity-planning-forecasting.md`) |
 | CI/CD | GitHub Actions (6 workflows) |
 | Auth | Azure AD Service Principal, with a delegated-user fallback for endpoints that reject app-only auth (see below) |
 | Deployment | Fabric REST API (direct, 3-phase) — no native Deployment Pipelines |
@@ -125,7 +127,7 @@ Direct Lake models deployed in bulk via REST/TMDL — including relationships ma
 
 1. `python scripts/deploy_semantic_model.py <branch>` (or the `Deploy Semantic Model` workflow) — deploys the TMDL via REST with `relationships.tmdl` emptied, sidestepping the bulk-import validator entirely.
 2. Open `nb_setup_semantic_model_relationships.Notebook` in the target workspace, point `DATASET`/`WORKSPACE` at it, and run it top to bottom — adds every relationship via TOM (`sempy_labs.tom`) one at a time in a single session (incremental writes sidestep the same validator), then refreshes the model and confirms real data comes back through Direct Lake.
-3. New tables added later (e.g. the lineage/access bridge tables) follow the same pattern: add the table via the portal's **Edit tables** (Direct Lake, picks straight from the Lakehouse), then add just its new relationships via the same TOM script.
+3. New tables added later (e.g. the lineage/access bridge tables) follow the same pattern: add the table via the portal's **Edit tables** (Direct Lake, picks straight from the Lakehouse), then add just its new relationships via the same TOM script. `nb_setup_capacity_forecast_model.Notebook` is a variant of this for `fact_capacity_forecast`/`capacity_planning_summary`: it builds the tables (columns + Direct Lake partition), relationships, *and* their DAX measures entirely via TOM (`tom.add_table`/`add_data_column`/`add_entity_partition`/`add_relationship`/`add_measure`) instead of the portal's Edit tables UI — one script, one interactive run, same incremental-write reasoning. The Direct Lake expression name (`tom.model.Expressions`) is resolved live inside the script rather than hardcoded — it isn't guaranteed to match across environments (DEV's has a `_dev` suffix the committed `expressions.tmdl` doesn't), and that file is never auto-synced anyway.
 
 This must be run interactively (your own sign-in) — TOM/XMLA write operations reject the Service Principal's app-only token on this tenant, same as the `/admin/*` REST APIs below. `scripts/pull_item_definition.py` (or the `pull_semantic_model.yml` workflow) syncs the live, interactively-maintained definition back into git afterward, for documentation — `deploy.py` never writes to it.
 
@@ -196,6 +198,10 @@ spark.createDataFrame([{
 
 **Change-detection before SCD2 merge** — Bronze dimension notebooks only expire+reinsert a row when a tracked attribute actually changed, not on every run. Tenant metadata is mostly stable day to day; versioning every row regardless would turn the change history into noise.
 
+**Plain OLS regression for capacity forecasting, not a forecasting library** — `nb_gold_capacity_forecast` computes a weekly linear trend from explicit sum aggregates (the formulas are the entire algorithm, no `pyspark.ml` model object to save/load). A real limitation — no seasonality beyond weekly smoothing, no change-point detection — but honest, auditable by anyone who remembers the math, and every output row carries `n_weeks`/`r_squared`/`forecast_confidence` so a thin-history projection is never mistaken for a confident one.
+
+**`fact_capacity_forecast.sku → dim_capacity.sku` stays inactive, deliberately** — both `fact_capacity_utilization` and `fact_capacity_forecast` are already active on `dim_date`, which is already reachable from `dim_capacity` via `dim_workspace → dim_item → fact_activity`. Activating either fact's `sku` relationship closes a real cycle (two paths between `dim_capacity` and `dim_date`), not a false alarm — see `docs/design/capacity-planning-forecasting.md` for the full graph trace. Anything joining capacity attributes to CU/forecast data uses `USERELATIONSHIP` in the measure instead of relying on relationship auto-propagation.
+
 ---
 
 ## Project Structure
@@ -229,14 +235,17 @@ fabric-governance/
 ├── notebooks/
 │   ├── nb_util_delegated_auth.Notebook/         # shared token-exchange helper, %run by 8 notebooks
 │   ├── nb_setup_semantic_model_relationships.Notebook/
+│   ├── nb_setup_capacity_forecast_model.Notebook/  # adds fact_capacity_forecast/capacity_planning_summary via TOM
 │   ├── nb_bronze_*.Notebook/                    # 10 notebooks
 │   ├── nb_silver_*.Notebook/                    # 12 notebooks
-│   └── nb_gold_governance_model.Notebook/
+│   ├── nb_gold_governance_model.Notebook/
+│   └── nb_gold_capacity_forecast.Notebook/      # weekly OLS trend + saturation forecast
 │
 ├── pipelines/pl_governance_orchestration.DataPipeline/
 ├── semantic models/sm_governance_medallion.SemanticModel/
 ├── report/rpt_governance_dashboard.Report/
 │
+├── docs/design/                          # design docs for larger features, written before/alongside the code
 ├── tests/
 ├── requirements.txt
 └── README.md

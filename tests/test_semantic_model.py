@@ -33,6 +33,12 @@ EXPECTED_MEASURES = [
     "Inactive Items",
     "Cleanup Candidates",
     "No Signal Items",
+    "Projected Saturation Date",
+    "Weeks to Saturation",
+    "Current Headroom %",
+    "Weekly CU Growth %",
+    "Forecast Confidence",
+    "Forecast Confidence Color",
 ]
 
 # Table/measure home is "_measure" (not "measure") — renamed when the model
@@ -44,6 +50,7 @@ EXPECTED_TABLES = [
     "fact_activity", "fact_refresh",
     "fact_capacity_consumption", "fact_capacity_utilization",
     "fact_item_lifecycle",
+    "fact_capacity_forecast", "capacity_planning_summary",
     "_measure",
 ]
 
@@ -71,6 +78,9 @@ EXPECTED_RELATIONSHIP_PAIRS = [
     frozenset(("fact_capacity_utilization.date_id", "dim_date.date_id")),
     frozenset(("fact_capacity_utilization.sku", "dim_capacity.sku")),
     frozenset(("fact_item_lifecycle.item_id", "dim_item.item_id")),
+    frozenset(("fact_capacity_forecast.week_start_date", "dim_date.date_id")),
+    frozenset(("capacity_planning_summary.capacity_id", "dim_capacity.capacity_id")),
+    frozenset(("fact_capacity_forecast.sku", "dim_capacity.sku")),
 ]
 
 # Pairs that MUST be inactive to avoid an ambiguous relationship path (two
@@ -86,6 +96,7 @@ EXPECTED_INACTIVE_PAIRS = [
     frozenset(("fact_capacity_consumption.workspace_id", "dim_workspace.workspace_id")),
     frozenset(("fact_capacity_consumption.date_id", "dim_date.date_id")),
     frozenset(("fact_capacity_utilization.sku", "dim_capacity.sku")),
+    frozenset(("fact_capacity_forecast.sku", "dim_capacity.sku")),
 ]
 
 
