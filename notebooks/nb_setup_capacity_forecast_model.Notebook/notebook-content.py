@@ -214,6 +214,17 @@ measures = [
         'RETURN Confidence & " — " & Caveat',
         None,
     ),
+    (
+        "Forecast Confidence Color",
+        'SWITCH(\n'
+        '    SELECTEDVALUE(capacity_planning_summary[forecast_confidence]),\n'
+        '    "High", "#45B499",\n'
+        '    "Medium", "#DCB35A",\n'
+        '    "Low", "#C76A5F",\n'
+        '    "#A89C86"\n'
+        ')',
+        None,
+    ),
 ]
 
 with connect_semantic_model(dataset=DATASET, workspace=WORKSPACE, readonly=False) as tom:

@@ -153,6 +153,17 @@ table _measure
 			RETURN Confidence & " — " & Caveat
 		lineageTag: 8d2f6a9c-3e7b-4d1f-9c8a-2e6b9d3f7c62
 
+	measure 'Forecast Confidence Color' =
+
+			SWITCH(
+			    SELECTEDVALUE(capacity_planning_summary[forecast_confidence]),
+			    "High", "#45B499",
+			    "Medium", "#DCB35A",
+			    "Low", "#C76A5F",
+			    "#A89C86"
+			)
+		lineageTag: 3c9e7b1f-6d2a-4c8e-9b3f-7a1d5c9e3b64
+
 	column Column
 		isHidden
 		formatString: 0
