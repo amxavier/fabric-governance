@@ -103,6 +103,67 @@ CI/CD gate.
   `USERELATIONSHIP` in the measure (same pattern as `'Total CU (Item, by Date)'` in
   `_measure.tmdl`), not rely on auto filter propagation through `sku`.
 
+## Report layout spec — "Capacity & Planning" page (Step 8, not built)
+
+New page in `rpt_governance_dashboard`, alongside the existing Overview / Capacity Cost /
+Refresh Health / Cleanup Candidates pages. Spec only — build interactively in the portal,
+same as the other pages (PBIR JSON is fragile to hand-edit; the semantic model is the part
+worth automating, not the report canvas). Apply `report/theme_foundry.json` (View → Themes
+→ Browse for themes) for consistent colors/fonts with the rest of the report.
+
+**Top row — 4 decision cards** (Card visual, one measure each, `_measure` table):
+1. `[Projected Saturation Date]` — title "Capacity Saturation Date". When null (current
+   live state — headroom is 99.99%), Power BI's Card visual just shows blank; consider a
+   conditional title/subtitle via a tooltip or a small text box underneath reading "No
+   saturation predicted within the forecast horizon" bound to
+   `ISBLANK([Projected Saturation Date])` via a rule-based text box, so blank doesn't read
+   as "broken."
+2. `[Weeks to Saturation]` — title "Weeks to Saturation". Same blank-state note as above.
+3. `[Current Headroom %]` — title "Headroom %". Format as plain number with a "%" suffix
+   in the card's display units / suffix setting (not a DAX `%` format — see the
+   `_measure.tmdl` comment on why) — e.g. "99.99%" via the card's text suffix, not the
+   measure's format string.
+4. `[Weekly CU Growth %]` — title "Weekly Growth %". Same suffix approach as #3.
+
+**Confidence indicator**, next to or below the cards: a Card or KPI visual bound to
+`[Forecast Confidence]` (the text already reads e.g. "Low — Projection based on 5 week(s)
+of history — confidence increases as history accumulates.") with its background or
+accent color bound to `[Forecast Confidence Color]` via conditional formatting — this is
+the guardrail's "confidence fields are mandatory output, not optional polish" made
+visible, not buried in a tooltip.
+
+**Main visual — actual vs. forecast trend**: a Line Chart, X axis `fact_capacity_forecast[week_start_date]`,
+with these value series:
+- `cu_actual` — solid line, `good` palette color (`#45B499`)
+- `cu_forecast` — dashed/dotted line style (Format → line styles), same color family but
+  lower opacity, so the actual/forecast boundary reads visually without needing a separate
+  legend entry per point
+- `cu_forecast_lower` / `cu_forecast_upper` — thin dotted lines in a muted neutral color
+  (`#A89C86` from the theme), framing the confidence band. Power BI's native Line Chart
+  doesn't fill an area between two lines, so this reads as a "channel" rather than a solid
+  shaded band — acceptable given the goal is honesty about uncertainty, not polish; a
+  filled band is a possible later enhancement via a Line and Area combo but not required
+  for this spec.
+- `capacity_weekly_cu_limit` — flat reference line, `bad` palette color (`#C76A5F`),
+  distinct dash style, so the ceiling reads clearly against actual/forecast
+
+**Saturation marker**: only meaningful once `projected_saturation_date` is non-null for at
+least one capacity. When it is, add a vertical reference line via the visual's Analytics
+pane bound to `[Projected Saturation Date]` (Power BI supports a dynamic reference line
+value in recent versions) — don't hardcode a static date. Skip this element entirely for
+now (current live data has no saturation date in the 52-week horizon) rather than build
+against a value that doesn't exist yet; add it when the forecast actually produces one.
+
+**Filter/slicer — skip for now, not a clean fit yet.** A `dim_capacity[capacity_name]`
+slicer would correctly filter `capacity_planning_summary` (its relationship to
+`dim_capacity` is active) but would silently NOT filter `fact_capacity_forecast` — its
+`sku → dim_capacity` relationship is the one left inactive (see guardrail above), so the
+main trend chart wouldn't respond to the slicer even though the cards would, which is a
+worse trap than no slicer at all. Only one real capacity exists today so this has no
+visible effect yet, but don't add the slicer until either the relationship question is
+revisited or the chart's measures are rewritten with explicit `USERELATIONSHIP` against
+`fact_capacity_forecast[sku] → dim_capacity[sku]`.
+
 ## Execution order for the next session
 
 Start cold with **Step 1, DEV only**. Do not touch QA/PRD until DEV's Gold notebook,
