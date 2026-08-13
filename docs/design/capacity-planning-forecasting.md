@@ -6,9 +6,10 @@ page (5 cards + 5-series line chart, built as PBIR JSON), gate-blocking tests, R
 pipeline wired to run the forecast daily — all validated live with real data in each
 environment. `deploy.py` now auto-patches `refresh_semantic_model`'s target per environment
 (see README's Semantic Model Lifecycle section), so promoting this project further needs no
-manual pipeline reconfiguration — only the one-time interactive TOM run per environment
-(`nb_setup_capacity_forecast_model`, blocked from Service Principal automation by this
-tenant's XMLA auth restriction, unless that assumption gets re-verified — see project memory).
+manual pipeline reconfiguration. `nb_setup_capacity_forecast_model` (the one-time TOM setup
+per environment) is confirmed to work fine under the Service Principal too (verified live
+2026-08-13 — see README) — it's still run manually today, but purely by convention (it's a
+once-per-environment step), not because of any auth restriction.
 
 ## Mission
 

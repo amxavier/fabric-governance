@@ -31,10 +31,13 @@
 # `docs/design/capacity-planning-forecasting.md`'s guardrails — don't fold it
 # into this run.
 #
-# **Must be run interactively (your own sign-in), not via the pipeline's
-# Service Principal identity** — TOM/XMLA write operations reject app-only
-# Service Principal tokens on this tenant (see README, "Delegated
-# Authentication for /admin/*" — same rejection pattern).
+# Run interactively today, but TOM/XMLA writes are confirmed to work fine
+# under the pipeline's Service Principal identity too (verified live
+# 2026-08-13 — see README, "Semantic Model Lifecycle") — a different auth
+# path from the `/admin/*` REST rejection, wrongly assumed to share the
+# same restriction until actually tested. Stays manual/occasional because
+# it's meant to run once per environment, not because of any credential
+# restriction.
 #
 # Edit `DATASET`/`WORKSPACE` below to point at the environment you're adding
 # this to, then run all cells top to bottom.
