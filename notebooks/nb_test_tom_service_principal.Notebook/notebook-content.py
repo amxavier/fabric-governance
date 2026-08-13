@@ -60,3 +60,42 @@ with connect_semantic_model(dataset=DATASET, workspace=WORKSPACE, readonly=True)
 print(f"SUCCESS — TOM connection worked under this notebook's execution identity.")
 print(f"Tables visible: {tables}")
 
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
+# ### Attempt a real write — add, verify, then remove a throwaway measure
+#
+# Fully self-contained and reversible: nothing persists in the model
+# regardless of outcome, since the last step always deletes what the
+# first step added (or the run fails outright on the add, in which case
+# there's nothing to clean up). This is the actual question that
+# matters — read access alone doesn't prove
+# `nb_setup_capacity_forecast_model`-style automation would work
+# unattended via the pipeline.
+
+# CELL ********************
+
+import uuid
+
+TEST_MEASURE = f"_sp_write_test_{uuid.uuid4().hex[:8]}"
+
+with connect_semantic_model(dataset=DATASET, workspace=WORKSPACE, readonly=False) as tom:
+    tom.add_measure(table_name="_measure", measure_name=TEST_MEASURE, expression="1")
+print(f"WRITE SUCCESS — added throwaway measure {TEST_MEASURE!r}")
+
+with connect_semantic_model(dataset=DATASET, workspace=WORKSPACE, readonly=True) as tom:
+    names = [m.Name for m in tom.model.Tables["_measure"].Measures]
+    found = TEST_MEASURE in names
+print(f"VERIFY — {TEST_MEASURE!r} present after write: {found}")
+
+with connect_semantic_model(dataset=DATASET, workspace=WORKSPACE, readonly=False) as tom:
+    tom.remove_object(tom.model.Tables["_measure"].Measures[TEST_MEASURE])
+print(f"CLEANUP SUCCESS — removed {TEST_MEASURE!r}, model back to its original state")
+
