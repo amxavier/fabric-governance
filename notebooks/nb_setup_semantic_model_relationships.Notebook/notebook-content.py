@@ -28,7 +28,7 @@
 #
 # Run interactively today, but **TOM/XMLA writes are confirmed to work
 # fine under the pipeline's Service Principal identity too** (verified
-# live 2026-08-13 — a real add/verify/remove measure round-trip via the
+# live 2026-08-12 — a real add/verify/remove measure round-trip via the
 # SP succeeded) — this is a different auth path from the `/admin/*` REST
 # rejection documented in the README, and assuming the same restriction
 # applied without testing it was wrong. Stays a manual/occasional

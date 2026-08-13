@@ -84,11 +84,19 @@ def test_saturation_filter_returns_null_on_flat_or_negative_slope():
 def test_no_negative_cu_forecast_values():
     # A steep negative trend extrapolated FORECAST_HORIZON_WEEKS out can
     # otherwise project negative CU, which isn't a value a capacity can
-    # consume. cu_forecast and cu_forecast_lower must both be floored at 0;
-    # cu_forecast_upper deliberately isn't (higher is always a valid bound).
+    # consume. All three of cu_forecast/cu_forecast_lower/cu_forecast_upper
+    # must be floored at 0 — cu_forecast_upper included, even though "higher
+    # is always a valid bound" sounds right in isolation: once cu_forecast
+    # itself is clamped to 0, an unclamped upper that's still negative would
+    # sit below the now-zeroed forecast, inverting the confidence band
+    # (confirmed as a real bug via code review, not just a theoretical one).
     source = _source()
     assert 'F.greatest(F.lit(0.0), F.col("cu_forecast") - 1.96 * F.col("residual_std"))' in source, (
         "cu_forecast_lower must be floored at 0."
+    )
+    assert 'F.greatest(F.lit(0.0), F.col("cu_forecast") + 1.96 * F.col("residual_std"))' in source, (
+        "cu_forecast_upper must be floored at 0 too, or it can end up below "
+        "the clamped cu_forecast, inverting the band."
     )
     assert source.count('F.greatest(F.lit(0.0), F.col("cu_forecast"))') >= 1, (
         "cu_forecast must be floored at 0 after the confidence band is computed from it."
