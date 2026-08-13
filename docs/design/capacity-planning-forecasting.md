@@ -8,7 +8,7 @@ environment. `deploy.py` now auto-patches `refresh_semantic_model`'s target per 
 (see README's Semantic Model Lifecycle section), so promoting this project further needs no
 manual pipeline reconfiguration. `nb_setup_capacity_forecast_model` (the one-time TOM setup
 per environment) is confirmed to work fine under the Service Principal too (verified live
-2026-08-13 — see README) — it's still run manually today, but purely by convention (it's a
+2026-08-12 — see README) — it's still run manually today, but purely by convention (it's a
 once-per-environment step), not because of any auth restriction.
 
 ## Mission
@@ -132,12 +132,18 @@ worth automating, not the report canvas). Apply `report/theme_foundry.json` (Vie
    measure's format string.
 4. `[Weekly CU Growth %]` — title "Weekly Growth %". Same suffix approach as #3.
 
-**Confidence indicator**, next to or below the cards: a Card or KPI visual bound to
+**Confidence indicator**, next to or below the cards: a Card visual bound to
 `[Forecast Confidence]` (the text already reads e.g. "Low — Projection based on 5 week(s)
-of history — confidence increases as history accumulates.") with its background or
-accent color bound to `[Forecast Confidence Color]` via conditional formatting — this is
-the guardrail's "confidence fields are mandatory output, not optional polish" made
-visible, not buried in a tooltip.
+of history — confidence increases as history accumulates.") — this is the guardrail's
+"confidence fields are mandatory output, not optional polish" made visible, not buried in
+a tooltip. **Built and shipped as plain text only** — `[Forecast Confidence Color]` exists
+in `_measure` for this but isn't wired to the card in the committed PBIR JSON: Card visuals
+don't support container/background conditional formatting bound to a measure via the
+visual.json schema (confirmed against `microsoft/skills-for-fabric`'s reference docs — only
+chart `dataPoint` and table/matrix cells support it that way). Applying the color is a
+manual portal step (Format pane → Conditional formatting, if the Card visual's UI exposes
+it) — same "ajustes finos" pattern as the rest of this report, not a gap in the measure
+itself.
 
 **Main visual — actual vs. forecast trend**: a Line Chart, X axis `fact_capacity_forecast[week_start_date]`,
 with these value series:
