@@ -2,22 +2,6 @@
   "properties": {
     "activities": [
       {
-        "name": "test_tom_service_principal",
-        "type": "TridentNotebook",
-        "dependsOn": [],
-        "policy": {
-          "timeout": "0.12:00:00",
-          "retry": 0,
-          "retryIntervalInSeconds": 30,
-          "secureOutput": false,
-          "secureInput": false
-        },
-        "typeProperties": {
-          "notebookId": "a3f7c9e1-6b8d-4e2a-9c1f-5d7b3a9e6c40",
-          "workspaceId": "dc072922-4ffb-4424-868c-28087b02ecba"
-        }
-      },
-      {
         "name": "update_bronze_capacities",
         "type": "TridentNotebook",
         "dependsOn": [],

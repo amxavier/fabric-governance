@@ -26,13 +26,15 @@
 # that date for the investigation). This notebook is the automated
 # replacement for reconstructing the model by hand in the portal.
 #
-# **Must be run interactively (your own sign-in), not via the pipeline's
-# Service Principal identity** — TOM/XMLA write operations reject
-# app-only Service Principal tokens on this tenant, the same rejection
-# pattern already documented for the `/admin/*` REST APIs (see README,
-# "Delegated Authentication for /admin/*"). Unlike those notebooks, this one
-# doesn't have a scripted delegated-token workaround (yet) — it's a
-# one-off, occasional setup step, not part of the daily schedule.
+# Run interactively today, but **TOM/XMLA writes are confirmed to work
+# fine under the pipeline's Service Principal identity too** (verified
+# live 2026-08-13 — a real add/verify/remove measure round-trip via the
+# SP succeeded) — this is a different auth path from the `/admin/*` REST
+# rejection documented in the README, and assuming the same restriction
+# applied without testing it was wrong. Stays a manual/occasional
+# notebook because it's meant to run once per environment (a second run
+# fails on "relationship already exists"), not because of any credential
+# restriction.
 #
 # Edit `DATASET`/`WORKSPACE` below to point at the environment you just
 # created the model in, then run all cells top to bottom.
