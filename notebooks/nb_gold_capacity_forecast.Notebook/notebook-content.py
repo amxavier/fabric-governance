@@ -298,12 +298,18 @@ fact_capacity_forecast = (
     )
     # Band computed from the true (unclamped) regression value first, so its
     # width stays a faithful ±1.96×residual_std around the actual fit — only
-    # then floor cu_forecast/cu_forecast_lower at 0, since a steep negative
-    # trend extrapolated 52 weeks out can otherwise project negative CU,
-    # which isn't a real value a capacity can consume. cu_forecast_upper
-    # never needs a floor.
+    # then floor cu_forecast/cu_forecast_lower/cu_forecast_upper at 0, since a
+    # steep negative trend extrapolated 52 weeks out can otherwise project
+    # negative CU, which isn't a real value a capacity can consume.
+    # cu_forecast_upper DOES still need the floor even though "higher is
+    # always a valid bound": once cu_forecast itself gets clamped to 0, an
+    # unclamped upper that's still negative (deeply negative trend, small
+    # residual_std) would sit BELOW the now-zeroed cu_forecast, inverting the
+    # band. Flooring both with the same max(0, x) preserves upper >= forecast
+    # (monotonic: upper_raw >= forecast_raw since residual_std >= 0, so
+    # max(0, upper_raw) >= max(0, forecast_raw) always).
     .withColumn("cu_forecast_lower", F.greatest(F.lit(0.0), F.col("cu_forecast") - 1.96 * F.col("residual_std")))
-    .withColumn("cu_forecast_upper", F.col("cu_forecast") + 1.96 * F.col("residual_std"))
+    .withColumn("cu_forecast_upper", F.greatest(F.lit(0.0), F.col("cu_forecast") + 1.96 * F.col("residual_std")))
     .withColumn("cu_forecast", F.greatest(F.lit(0.0), F.col("cu_forecast")))
     # Weekly budget derived from the same base_capacity_units already
     # shipped on every source row (see the SECONDS_PER_DAY comment above)

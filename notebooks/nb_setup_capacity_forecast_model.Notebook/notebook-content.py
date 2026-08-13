@@ -33,7 +33,7 @@
 #
 # Run interactively today, but TOM/XMLA writes are confirmed to work fine
 # under the pipeline's Service Principal identity too (verified live
-# 2026-08-13 — see README, "Semantic Model Lifecycle") — a different auth
+# 2026-08-12 — see README, "Semantic Model Lifecycle") — a different auth
 # path from the `/admin/*` REST rejection, wrongly assumed to share the
 # same restriction until actually tested. Stays manual/occasional because
 # it's meant to run once per environment, not because of any credential
