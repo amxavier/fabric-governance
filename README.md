@@ -12,6 +12,16 @@ Sibling project: [microsoft-fabric-medallion-lakehouse](https://github.com/amxav
 
 ---
 
+## Why This Project
+
+Fabric's **OneLake Catalog — Govern for admins** (currently in preview, and the successor to the old Purview Hub) already gives a daily snapshot of the tenant's current state: inventory, sensitivity label coverage, endorsement, and curation. Fabric Capacity Metrics does the same for capacity consumption. Both are native and first-party, and this project doesn't try to replace either.
+
+What they don't do is keep history. Admin Monitoring retains roughly 30 days, Capacity Metrics 14 — enough to see today's state or a recent trend, not enough to answer "when did this item stop being endorsed" or "when did label coverage start dropping," and nothing survives once that window rolls past. This project exists to fill that specific gap: every scan is versioned with SCD Type 2 in its own lakehouse, under the project's own control, so history outlives whatever retention window the native tools apply. The Capacity Planning/forecast module is a direct consequence of that — a weekly trend and saturation projection needs more than 14 or 30 days of data to mean anything, which the native tools can't provide on their own.
+
+The native tools are the "now." This project is the "over time."
+
+---
+
 ## What it answers
 
 - **Inventory** — every workspace, item (Report, SemanticModel, Lakehouse, SQLEndpoint, DataPipeline, Notebook, Dataflow, Warehouse, SQLDatabase, App) and capacity in the tenant, with full change history.
