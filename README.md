@@ -4,22 +4,22 @@
 [![CD Deploy](https://github.com/amxavier/fabric-governance/actions/workflows/cd_deploy.yml/badge.svg)](https://github.com/amxavier/fabric-governance/actions/workflows/cd_deploy.yml)
 [![Scheduled Scan](https://github.com/amxavier/fabric-governance/actions/workflows/schedule_ingestion.yml/badge.svg)](https://github.com/amxavier/fabric-governance/actions/workflows/schedule_ingestion.yml)
 
-Tenant-wide governance for **Microsoft Fabric**, built as a Medallion Architecture pipeline: who published or refreshed what, when, whether it failed, what it cost, and which items nobody uses anymore — so an incident like "this report stopped refreshing" or a question like "can we shrink our capacity" can be answered from data instead of digging through the Fabric portal by hand.
+Tenant-wide governance for **Microsoft Fabric**, built as a Medallion pipeline. It tracks who published or refreshed what, when, whether it failed, what it cost, and which items nobody uses anymore, so questions like "why did this report stop refreshing" or "can we shrink our capacity" get answered from data instead of by digging through the Fabric portal workspace by workspace.
 
-Live in three environments (DEV/QA/PRD), each a full, independent copy of the pipeline running on its own schedule against its own tenant scan.
+Runs in three environments (DEV/QA/PRD), each a full, independent copy of the pipeline on its own daily schedule.
 
-Sibling project: [microsoft-fabric-medallion-lakehouse](https://github.com/amxavier/microsoft-fabric-medallion-lakehouse) — this repo reuses its CI/CD and notebook conventions, but is architecturally independent (tenant-wide Admin API scope vs. per-workspace scope), and reuses its three Fabric workspaces and Service Principal rather than provisioning its own.
+Sibling project: [microsoft-fabric-medallion-lakehouse](https://github.com/amxavier/microsoft-fabric-medallion-lakehouse). This repo shares its CI/CD conventions and reuses its three Fabric workspaces and Service Principal, but scans the whole tenant via the Admin API instead of a single workspace.
 
 ---
 
 ## What it answers
 
-- **Inventory** — every workspace, item (Report, SemanticModel, Lakehouse, SQLEndpoint, DataPipeline, Notebook, Dataflow, Warehouse, SQLDatabase, App), and capacity in the tenant, with full change history.
-- **"Why did this break?"** — join a refresh failure against the activity log for the same item in the preceding window: did someone change the owner, republish, or edit parameters right before it broke?
-- **"What does this cost?"** — capacity unit (CU) consumption by item and by day, cross-referenced against activity/refresh events.
-- **"What can we clean up?"** — items with no refresh, job, or activity signal in 45+ days, classified Active / Inactive / Cleanup Candidate.
-- **"Who can see this?"** — workspace role assignments and per-item sharing, an LGPD/access-audit angle across every governed item.
-- **"At the current growth rate, when do we run out of capacity?"** — the native Capacity Metrics app only keeps a rolling 14-day window, structurally unable to answer this. Because this project persists daily CU history with full retention, a weekly-aggregated OLS trend can project forward and flag a saturation date — with an honest confidence rating (`Low`/`Medium`/`High`) that says how much history actually backs the projection, not just a number.
+- **Inventory** — every workspace, item (Report, SemanticModel, Lakehouse, SQLEndpoint, DataPipeline, Notebook, Dataflow, Warehouse, SQLDatabase, App) and capacity in the tenant, with full change history.
+- **Why did this break?** Join a refresh failure against the activity log for the same item in the preceding window and see what changed right before it broke.
+- **What does this cost?** Capacity Unit consumption by item and by day, cross-referenced against activity and refresh events.
+- **What can we clean up?** Items with no refresh, job, or activity signal in 45+ days, classified Active / Inactive / Cleanup Candidate.
+- **Who can see this?** Workspace role assignments and per-item sharing, an access-audit angle across every governed item.
+- **When do we run out of capacity?** The native Capacity Metrics app only keeps a rolling 14-day window. This project keeps full daily history, so a weekly OLS trend can project forward and flag a saturation date, with a confidence rating that reflects how much history actually backs it instead of just a number.
 
 ---
 
@@ -38,7 +38,7 @@ flowchart LR
 
     B["Bronze\nraw_* — SCD2 for metadata, append-only for events"]
     S["Silver\nsilver_* — cleaned, typed, enriched"]
-    G["Gold\n15 tables — governance star schema"]
+    G["Gold\n17 tables — governance star schema"]
     SM["Semantic Model\nsm_governance_medallion (Direct Lake)"]
     PBI["Power BI Report\nrpt_governance_dashboard"]
 
@@ -56,19 +56,19 @@ flowchart LR
     SM --> PBI
 ```
 
-### Layer Responsibilities
+### Layer responsibilities
 
 | Layer | Table(s) | Description |
 |-------|----------|-------------|
-| **Bronze** | `raw_capacities`, `raw_workspaces`, `raw_items`, `raw_gateways`, `raw_workspace_role_assignments` | Tenant-wide snapshots, **SCD Type 2** — metadata changes preserved from the earliest layer |
-| **Bronze** | `raw_activity_events`, `raw_refresh_history`, `raw_capacity_metrics`, `raw_capacity_cu_detail`, `raw_dataset_datasources`, `raw_item_users`, `raw_item_job_history` | Append-only or daily-snapshot — events and usage are immutable/point-in-time by nature |
+| **Bronze** | `raw_capacities`, `raw_workspaces`, `raw_items`, `raw_gateways`, `raw_workspace_role_assignments` | Tenant-wide snapshots, SCD Type 2 — metadata changes preserved from the earliest layer |
+| **Bronze** | `raw_activity_events`, `raw_refresh_history`, `raw_capacity_metrics`, `raw_capacity_cu_detail`, `raw_dataset_datasources`, `raw_item_users`, `raw_item_job_history` | Append-only or daily-snapshot — events and usage are point-in-time by nature |
 | **Silver** | `silver_*` (12 notebooks) | Cleaned, typed, joined for readability |
 | **Gold** | `dim_capacity`, `dim_workspace`, `dim_item`, `dim_user`, `dim_date`, `dim_gateway` | Governance star schema dimensions |
 | **Gold** | `fact_activity`, `fact_refresh`, `fact_capacity_consumption`, `fact_capacity_utilization`, `fact_item_lifecycle`, `fact_item_job_history` | Event/measure facts, keyed to the dimensions above |
-| **Gold** | `bridge_item_datasource`, `bridge_workspace_access`, `bridge_item_access` | Many-to-many lineage/access bridges (no measures of their own) |
-| **Gold** | `fact_capacity_forecast`, `capacity_planning_summary` | Built by `nb_gold_capacity_forecast` — reads `fact_capacity_utilization` back out of Gold (already daily grain there) rather than from Silver, the one Gold notebook that's Gold-to-Gold. Weekly OLS trend + 52-week projection, with `n_weeks`/`r_squared`/`forecast_confidence` on every row so the projection is never mistaken for more certainty than the history supports |
+| **Gold** | `bridge_item_datasource`, `bridge_workspace_access`, `bridge_item_access` | Many-to-many lineage/access bridges |
+| **Gold** | `fact_capacity_forecast`, `capacity_planning_summary` | Weekly OLS trend and 52-week projection, built from `fact_capacity_utilization`. Every row carries `n_weeks`/`r_squared`/`forecast_confidence` so the projection is never mistaken for more certainty than the history supports |
 
-The core diagnostic pattern this schema enables: join `fact_refresh` failures against `fact_activity` for the same `item_id` in the preceding window — did someone change the owner, republish, or edit parameters right before it broke?
+The core diagnostic pattern this schema enables: join `fact_refresh` failures against `fact_activity` for the same `item_id` in the preceding window to see what changed right before something broke.
 
 ---
 
@@ -79,18 +79,18 @@ The core diagnostic pattern this schema enables: join `fact_refresh` failures ag
 | Platform | Microsoft Fabric |
 | Storage | OneLake (Delta Lake) |
 | Processing | PySpark (Spark 3.x) |
-| Orchestration | Fabric Data Pipeline (24 activities) |
-| Semantic Layer | Power BI Semantic Model (Direct Lake), 13 tables, 17 relationships, 32 DAX measures |
-| Reporting | Power BI Report (PBIR format), 4 pages (a 5th, Capacity & Planning, is specced but not yet built — see `docs/design/capacity-planning-forecasting.md`) |
+| Orchestration | Fabric Data Pipeline (~25 activities) |
+| Semantic Layer | Power BI Semantic Model (Direct Lake), 13 tables, 17 relationships, DAX measures |
+| Reporting | Power BI Report (PBIR format), 5 pages: Overview, Capacity Cost, Capacity & Planning, Refresh Health, Cleanup |
 | CI/CD | GitHub Actions (6 workflows) |
-| Auth | Azure AD Service Principal, with a delegated-user fallback for endpoints that reject app-only auth (see below) |
+| Auth | Azure AD Service Principal, with a delegated-user fallback for endpoints that reject app-only auth |
 | Deployment | Fabric REST API (direct, 3-phase) — no native Deployment Pipelines |
 
 ---
 
 ## Environments
 
-This project **reuses the same three Fabric workspaces and Service Principal** as the sibling [microsoft-fabric-medallion-lakehouse](https://github.com/amxavier/microsoft-fabric-medallion-lakehouse) project.
+This project reuses the same three Fabric workspaces and Service Principal as the sibling [microsoft-fabric-medallion-lakehouse](https://github.com/amxavier/microsoft-fabric-medallion-lakehouse) project.
 
 ```
 dev branch  →  DEV workspace  (lakehouses_dev)
@@ -98,9 +98,9 @@ qa branch   →  QA workspace   (lakehouses_qa)
 main branch →  PRD workspace  (lakehouses_prd)
 ```
 
-Within each workspace, this project adds its **own**, separately-named Lakehouse trio — `lh_governance_bronze`, `lh_governance_silver`, `lh_governance_gold` — so governance tables never mix with the sibling project's `lh_bronze`/`lh_silver`/`lh_gold` tables in the same workspace. `scripts/provision_lakehouses.py <branch>` creates them and wires the real IDs into `config/valueSets/<branch>.json` automatically — see [Getting Started](#getting-started).
+Within each workspace this project adds its own Lakehouse trio — `lh_governance_bronze`, `lh_governance_silver`, `lh_governance_gold` — so governance tables never mix with the sibling project's. `scripts/provision_lakehouses.py <branch>` creates them and wires the real IDs into `config/valueSets/<branch>.json` automatically; see [Getting Started](#getting-started).
 
-All three environments are live, validated end to end (full daily pipeline run, real data in the report), and kept deliberately independent: `main` only receives a change once it's been validated on `dev` then `qa`.
+All three environments run the full daily pipeline end to end. Changes are promoted `dev` → `qa` → `main`; `main` only receives a change once it's validated on the other two.
 
 ---
 
@@ -115,94 +115,41 @@ All three environments are live, validated end to end (full daily pipeline run, 
 | `deploy_semantic_model.yml` | Manual | One-off: provision `sm_governance_medallion` from scratch in a new environment |
 | `pull_semantic_model.yml` | Manual | Syncs a live item's current definition (semantic model, pipeline, report) back into git |
 
-**`cd_deploy.yml` only runs after `ci.yml` succeeds** (via `workflow_run`, not a direct push trigger) — a commit that fails a test never reaches a live workspace. `deploy.py` itself is a 3-phase orchestrator (Notebooks+SemanticModel → DataPipeline, patching notebook IDs and the semantic-model-refresh activity's target → Report, patching the semantic model connection), and aborts Phase 2/3 outright if anything in Phase 1 failed, rather than risk publishing a pipeline or report that references an item that doesn't actually exist yet.
+`cd_deploy.yml` only runs after `ci.yml` succeeds, so a commit that fails a test never reaches a live workspace. `deploy.py` deploys in three phases — Notebooks + Semantic Model, then the Data Pipeline (patching notebook IDs and the refresh activity's target), then the Report (patching the semantic model connection) — and stops if an earlier phase failed rather than publish something that references an item that doesn't exist yet.
 
-`sm_governance_medallion` is deliberately excluded from `cd_deploy.yml`'s normal flow — see [Semantic Model Lifecycle](#semantic-model-lifecycle) below.
+`sm_governance_medallion` is excluded from `cd_deploy.yml`'s normal flow; see below.
 
 ---
 
 ## Semantic Model Lifecycle
 
-Direct Lake models deployed in bulk via REST/TMDL — including relationships marked `isActive: false` to break an ambiguous path (a common shape here: two fact tables sharing two dimensions) — are rejected by Fabric's import validator ("ambiguous paths between X and Y"), even though the exact same graph is valid once built incrementally. Because of this, `sm_governance_medallion` is **not** managed by the normal deploy flow; it's provisioned once per environment via a two-phase process and maintained interactively afterward:
+Fabric's import validator rejects Direct Lake models deployed in bulk via REST/TMDL whenever the relationship graph has an ambiguous path — even one deliberately broken with `isActive: false`. So `sm_governance_medallion` isn't managed by the normal deploy flow: it's provisioned once per environment (`scripts/deploy_semantic_model.py`, TMDL with relationships emptied) and then built up interactively, running `nb_setup_semantic_model_relationships.Notebook` and `nb_setup_capacity_forecast_model.Notebook` to add tables, relationships, and measures one at a time via TOM (`sempy_labs.tom`). Both notebooks run once per environment and stay manual for that reason, not because of any credential limit. `pull_semantic_model.yml` syncs the live definition back into git afterward for documentation.
 
-1. `python scripts/deploy_semantic_model.py <branch>` (or the `Deploy Semantic Model` workflow) — deploys the TMDL via REST with `relationships.tmdl` emptied, sidestepping the bulk-import validator entirely.
-2. Open `nb_setup_semantic_model_relationships.Notebook` in the target workspace, point `DATASET`/`WORKSPACE` at it, and run it top to bottom — adds every relationship via TOM (`sempy_labs.tom`) one at a time in a single session (incremental writes sidestep the same validator), then refreshes the model and confirms real data comes back through Direct Lake.
-3. New tables added later (e.g. the lineage/access bridge tables) follow the same pattern: add the table via the portal's **Edit tables** (Direct Lake, picks straight from the Lakehouse), then add just its new relationships via the same TOM script. `nb_setup_capacity_forecast_model.Notebook` is a variant of this for `fact_capacity_forecast`/`capacity_planning_summary`: it builds the tables (columns + Direct Lake partition), relationships, *and* their DAX measures entirely via TOM (`tom.add_table`/`add_data_column`/`add_entity_partition`/`add_relationship`/`add_measure`) instead of the portal's Edit tables UI — one script, one interactive run, same incremental-write reasoning. The Direct Lake expression name (`tom.model.Expressions`) is resolved live inside the script rather than hardcoded — it isn't guaranteed to match across environments (DEV's has a `_dev` suffix the committed `expressions.tmdl` doesn't), and that file is never auto-synced anyway.
+One gotcha: a model provisioned via the Service Principal is SP-owned, which blocks the portal's **Edit tables**. Fix is to **Take ownership** of the item as yourself — safe for Direct Lake, since there's no stored credential tied to the owner and the item ID doesn't change.
 
-Run interactively today, but not because it has to be: **TOM/XMLA writes work fine under the Service Principal on this tenant** (confirmed live 2026-08-12 — add/verify/remove a real measure, all succeeded, run via the pipeline's own SP identity). That's a different auth path from the `/admin/*` REST rejection below; assuming the same restriction applied without testing it was wrong, caught only by re-checking the assumption instead of repeating it. These TOM notebooks stay manual/occasional in practice because each is meant to run once per environment (a second run fails on "table/relationship already exists"), not because of any credential restriction — a future one-off environment setup could trigger one via the pipeline under the SP instead of requiring an interactive session. `scripts/pull_item_definition.py` (or the `pull_semantic_model.yml` workflow) syncs the live definition back into git afterward, for documentation — `deploy.py` never writes to it.
-
-**A model created via the Service Principal (through `deploy_semantic_model.py`) is SP-owned**, which can block the portal's **Edit tables**/Power Query features ("ask the model owner to enable granular access control..."). Fix: **Take ownership** of the item as yourself (`...` menu on the item → Take over) — safe for a Direct Lake model specifically, since it has no stored data-source credential tied to the owner the way an Import-mode model would, and the item's ID (what the report and pipeline actually bind to) doesn't change.
-
-**`pl_governance_orchestration`'s `refresh_semantic_model` activity needs no manual re-pointing per environment.** Its `groupId`/`datasetId` are a captured-GUID field with no `logicalId` equivalent (unlike notebook activities), so early promotions to QA and PRD initially left them pointing at whichever environment's model was last committed — confirmed live 2026-08-12. Fixing this by hand looked like it would need a new Fabric Connection item per environment, but checking that assumption instead of accepting it found otherwise: DEV's and QA's independently-corrected activities have the *identical* `externalReferences.connection` GUID, proving the connection is a reusable, workspace-agnostic auth binding, not something to recreate per environment. Only `groupId` (target `workspace_id`) and `datasetId` (target workspace's real `sm_governance_medallion` item ID) actually vary — `deploy.py`'s Phase 2 now resolves both (the same way it already resolves notebook IDs) and patches this activity on every deploy, `full` or `selective`. The connection itself is left untouched.
+`pl_governance_orchestration`'s `refresh_semantic_model` activity needs no manual re-pointing: `deploy.py` resolves its `groupId`/`datasetId` per environment and patches it on every deploy, same as it does for notebook IDs.
 
 ---
 
 ## Delegated Authentication for `/admin/*`
 
-Every `/admin/*`-shaped endpoint this project depends on — Fabric's `/v1/admin/workspaces`/`/v1/admin/items`, Power BI's `/admin/activityevents`/`/admin/capacities/refreshables`, `executeQueries` against the Capacity Metrics app, and per-item sharing (`/admin/*/users`) — **rejects the Service Principal outright**, regardless of how it authenticates or how the tenant is configured. Confirmed via decoded JWTs (genuine, correctly-scoped app-only tokens, still rejected) and matching reports from the [Fabric community](https://community.fabric.microsoft.com/t5/Developer/Admin-API-s-and-Service-Principal-Authentication-401/m-p/3134240) — several of these APIs are Preview and simply don't support app-only auth yet.
+Fabric and Power BI's `/admin/*` endpoints — workspaces, items, activity events, refreshables, `executeQueries` against the Capacity Metrics app, per-item sharing — reject the Service Principal outright, regardless of configuration. Several are still Preview and don't support app-only auth yet.
 
-**The workaround**: the 8 affected Bronze notebooks (`nb_bronze_workspaces`, `nb_bronze_items`, `nb_bronze_activity_events`, `nb_bronze_refresh_history`, `nb_bronze_capacity_metrics`, `nb_bronze_capacity_cu_detail`, `nb_bronze_gateways`, `nb_bronze_permissions`) exchange a stored **refresh token** (obtained once via interactive sign-in) for a fresh delegated access token on every run. The implementation lives in one place, `nb_util_delegated_auth.Notebook`, pulled in via `%run nb_util_delegated_auth` — not duplicated per notebook. The refresh token — and the new one Microsoft issues on every redemption — lives in a small Delta table, `_auth_delegated`, inside `lh_governance_bronze`; `tenant_id`/`client_id` aren't secrets, and the refresh token never leaves the lakehouse (same protection level a Key Vault would add here, at zero cost).
+Workaround: 8 Bronze notebooks exchange a stored refresh token for a fresh delegated access token on every run, through a shared helper (`nb_util_delegated_auth.Notebook`). The token lives in a Delta table inside `lh_governance_bronze` and never leaves the lakehouse. All 8 notebooks share the token, so they run as a single chain in the pipeline rather than in parallel — two concurrent redemptions of the same token invalidate each other.
 
-All 8 notebooks share one token, so they're serialized into a single dependency chain in the pipeline (`workspaces → items → activity_events → capacity_metrics → capacity_cu_detail → gateways → permissions → refresh_history`) rather than run in parallel — two concurrent redemptions of the same refresh token invalidate each other.
-
-### One-time bootstrap (per environment)
-
-Run this interactively in any notebook attached to the environment's `lh_governance_bronze` (delete the cell afterward — it briefly holds a device code, not a secret):
-
-```python
-import requests
-from datetime import datetime, timezone
-
-TENANT_ID = "<tenant id>"                  # not a secret
-CLIENT_ID = "<sp-fabric-cicd client id>"    # not a secret — App Registration needs
-                                             # "Allow public client flows" = Yes
-
-dc = requests.post(
-    f"https://login.microsoftonline.com/{TENANT_ID}/oauth2/v2.0/devicecode",
-    data={"client_id": CLIENT_ID, "scope": "https://api.fabric.microsoft.com/.default offline_access"},
-).json()
-print(dc["message"])  # open the URL, enter the code, sign in (MFA if prompted)
-
-# Run this cell AFTER completing the browser sign-in above:
-poll = requests.post(
-    f"https://login.microsoftonline.com/{TENANT_ID}/oauth2/v2.0/token",
-    data={
-        "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
-        "client_id": CLIENT_ID,
-        "device_code": dc["device_code"],
-    },
-).json()
-
-_lh = notebookutils.lakehouse.get("lh_governance_bronze")
-spark.createDataFrame([{
-    "tenant_id": TENANT_ID,
-    "client_id": CLIENT_ID,
-    "refresh_token": poll["refresh_token"],
-    "updated_at": datetime.now(timezone.utc).isoformat(),
-}]).write.format("delta").mode("overwrite").save(f"{_lh['properties']['abfsPath']}/Tables/_auth_delegated")
-```
-
-**Prerequisites:** the app registration needs **"Allow public client flows"** enabled, and a **Delegated** (not Application) `Tenant.Read.All` permission for Power BI Service with admin consent. The signed-in user needs whatever role grants Admin API visibility in the tenant.
-
-**Operational note:** the refresh token is valid on a sliding window (~90 days of inactivity before invalidation) and rotates automatically on every use, so daily runs keep it alive indefinitely. If it ever expires, re-run this bootstrap once for that environment.
+Each new environment needs a one-time interactive bootstrap (device-code sign-in) to seed that token — see [`docs/runbooks/delegated-auth-bootstrap.md`](docs/runbooks/delegated-auth-bootstrap.md) for the script. It rotates automatically on every use afterward.
 
 ---
 
 ## Key Design Decisions
 
-**SCD Type 2 in Bronze, not Silver** — versions capacity/workspace/item metadata as early as possible, so change history (e.g. "this workspace moved to a Trial capacity two days before refreshes started failing") can't be lost or smoothed over by a downstream transformation.
-
-**Generic `raw_items`/`dim_item` instead of one table per item type** — Report, SemanticModel, Lakehouse, SQLEndpoint, DataPipeline, Notebook, Dataflow, Warehouse, SQLDatabase, and App are all rows in one table, discriminated by `item_type` — mirrors how the Admin API itself returns items.
-
-**Two separate audit sources, joined in Gold** — the Activity Log only attributes a user to *on-demand* refreshes; scheduled refreshes never show up there. `raw_refresh_history` captures every refresh (status, duration, error); `raw_activity_events` captures who did what. Combining both in `fact_activity`/`fact_refresh` is what makes "did this fail because of something someone changed?" answerable.
-
-**Two capacity-cost sources, not one** — `MetricsByItem` is a rolling 14-day total per item (fine to chart as a trend, mathematically wrong to sum across months — each operation is double-counted across ~14 snapshots). `CUDetail` has immutable, already-happened time buckets at the capacity level (safely summable, but no per-item breakdown). Used together: `fact_capacity_consumption` (item-level trend) and `fact_capacity_utilization` (capacity-level, genuinely additive).
-
-**Change-detection before SCD2 merge** — Bronze dimension notebooks only expire+reinsert a row when a tracked attribute actually changed, not on every run. Tenant metadata is mostly stable day to day; versioning every row regardless would turn the change history into noise.
-
-**Plain OLS regression for capacity forecasting, not a forecasting library** — `nb_gold_capacity_forecast` computes a weekly linear trend from explicit sum aggregates (the formulas are the entire algorithm, no `pyspark.ml` model object to save/load). A real limitation — no seasonality beyond weekly smoothing, no change-point detection — but honest, auditable by anyone who remembers the math, and every output row carries `n_weeks`/`r_squared`/`forecast_confidence` so a thin-history projection is never mistaken for a confident one.
-
-**`fact_capacity_forecast.sku → dim_capacity.sku` stays inactive, deliberately** — both `fact_capacity_utilization` and `fact_capacity_forecast` are already active on `dim_date`, which is already reachable from `dim_capacity` via `dim_workspace → dim_item → fact_activity`. Activating either fact's `sku` relationship closes a real cycle (two paths between `dim_capacity` and `dim_date`), not a false alarm — see `docs/design/capacity-planning-forecasting.md` for the full graph trace. Anything joining capacity attributes to CU/forecast data uses `USERELATIONSHIP` in the measure instead of relying on relationship auto-propagation.
+- **SCD Type 2 lives in Bronze, not Silver**, so a workspace or item's change history can't get smoothed over by a downstream transformation.
+- **One generic `raw_items`/`dim_item` table** instead of one per item type, discriminated by `item_type` — mirrors how the Admin API itself returns items.
+- **Two audit sources, joined in Gold**: the Activity Log only attributes a user to on-demand refreshes, so `raw_refresh_history` (every refresh) and `raw_activity_events` (who did what) are combined to make "did this fail because someone changed something?" answerable.
+- **Two capacity-cost tables, not merged**: `MetricsByItem` gives an item-level trend but double-counts if summed across months; `CUDetail` is capacity-level but genuinely additive. `fact_capacity_consumption` and `fact_capacity_utilization` each keep their own honest use case.
+- **Bronze only versions a row when something actually changed**, not on every run — tenant metadata is mostly stable, and versioning regardless would turn the history into noise.
+- **Forecasting is plain OLS, not a forecasting library** — a weekly linear trend from explicit sum aggregates, auditable by anyone who remembers the math. Every row carries `n_weeks`/`r_squared`/`forecast_confidence` so a thin-history projection is never mistaken for a confident one.
+- **`fact_capacity_forecast.sku → dim_capacity.sku` stays inactive** — both forecast and utilization facts already reach `dim_date` through `dim_capacity → dim_workspace → dim_item → fact_activity`, and activating it too would close a real relationship cycle. See `docs/design/capacity-planning-forecasting.md` for the full trace.
 
 ---
 
@@ -259,7 +206,7 @@ fabric-governance/
 
 ### Prerequisites
 
-The three Fabric workspaces and the Service Principal are reused from the sibling [microsoft-fabric-medallion-lakehouse](https://github.com/amxavier/microsoft-fabric-medallion-lakehouse) project. This project's only new infrastructure is its own Lakehouse trio inside those same workspaces, and its own semantic model + report + pipeline.
+The three Fabric workspaces and the Service Principal are reused from the sibling [microsoft-fabric-medallion-lakehouse](https://github.com/amxavier/microsoft-fabric-medallion-lakehouse) project. This project's only new infrastructure is its own Lakehouse trio inside those same workspaces, plus its own semantic model, report, and pipeline.
 
 ### Required GitHub Secrets
 
@@ -269,15 +216,15 @@ The three Fabric workspaces and the Service Principal are reused from the siblin
 | `AZURE_CLIENT_ID` | Shared Service Principal Application (Client) ID |
 | `AZURE_CLIENT_SECRET` | Shared Service Principal Client Secret (Value, not ID) |
 | `FABRIC_WORKSPACE_ID_DEV` / `_QA` / `_PRD` | Workspace GUIDs (also in `config/valueSets/*.json`) |
-| `FABRIC_PIPELINE_ID_DEV` / `_QA` / `_PRD` | `pl_governance_orchestration` item GUID per environment — known after the first deploy |
+| `FABRIC_PIPELINE_ID_DEV` / `_QA` / `_PRD` | `pl_governance_orchestration` item GUID per environment, known after the first deploy |
 
 ### Standing up a new environment
 
-1. `python scripts/provision_lakehouses.py <branch>` (or the `Provision Lakehouses` workflow) — creates `lh_governance_bronze/silver/gold` and wires the real `lh_governance_gold` ID into `config/valueSets/<branch>.json`.
-2. Run `CD - Deploy to Fabric` in **full** mode — publishes all notebooks, the pipeline, and the report (the report step will fail until step 3 is done; that's expected).
-3. Provision the semantic model — see [Semantic Model Lifecycle](#semantic-model-lifecycle) above — then re-run the full deploy so the report finds it, and so `pl_governance_orchestration`'s `refresh_semantic_model` activity gets auto-patched to point at this environment's own model (`groupId`/`datasetId`, resolved from the now-provisioned `sm_governance_medallion` — see the note at the end of [Semantic Model Lifecycle](#semantic-model-lifecycle)). No manual re-point needed here anymore.
-4. Run the [delegated-auth bootstrap](#one-time-bootstrap-per-environment) once for this environment.
-5. Trigger `schedule_ingestion.yml` manually (`environments` input) to run the pipeline once and confirm real data reaches the report.
+1. `python scripts/provision_lakehouses.py <branch>` (or the `Provision Lakehouses` workflow) creates `lh_governance_bronze/silver/gold` and wires the real `lh_governance_gold` ID into `config/valueSets/<branch>.json`.
+2. Run `CD - Deploy to Fabric` in **full** mode to publish all notebooks, the pipeline, and the report (the report step fails until step 3 is done — that's expected).
+3. Provision the semantic model (see [Semantic Model Lifecycle](#semantic-model-lifecycle)), then re-run the full deploy so the report finds it and the pipeline's refresh activity gets auto-patched to this environment.
+4. Run the [delegated-auth bootstrap](docs/runbooks/delegated-auth-bootstrap.md) once for this environment.
+5. Trigger `schedule_ingestion.yml` manually to run the pipeline once and confirm real data reaches the report.
 
 ---
 
@@ -285,9 +232,9 @@ The three Fabric workspaces and the Service Principal are reused from the siblin
 
 - **Microsoft Fabric** — Lakehouse, Data Pipeline, Direct Lake semantic model, Power BI report
 - **PySpark** / **Delta Lake** — Bronze/Silver/Gold transformations
-- **GitHub Actions** — CI/CD (test, deploy, provisioning workflows)
-- **semantic-link-labs** (`sempy_labs.tom`) — programmatic Direct Lake model relationship management
-- **[Claude](https://claude.com/claude-code)** — AI pair-programming assistant used throughout development (architecture decisions, debugging, and the CI/CD tooling in `scripts/`)
+- **GitHub Actions** — CI/CD, testing, and provisioning workflows
+- **semantic-link-labs** (`sempy_labs.tom`) — programmatic Direct Lake model management
+- **[Claude](https://claude.com/claude-code)** — AI pair-programming assistant used throughout development
 
 ---
 
@@ -298,4 +245,4 @@ The three Fabric workspaces and the Service Principal are reused from the siblin
 
 ---
 
-*Built as a Data Engineering portfolio project to demonstrate enterprise-realistic Fabric governance practices — including the CI/CD and platform-limitation problem-solving that a real production rollout across three environments actually requires.*
+*A Data Engineering portfolio project built to demonstrate enterprise-realistic Fabric governance across three real environments.*
