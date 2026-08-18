@@ -250,7 +250,8 @@ The three Fabric workspaces and the Service Principal are reused from the siblin
 
 ## Author
 
-**Andrelino Xavier** — Data Engineer
+**Andrelino Xavier**
+Data Portfolio Project
 [GitHub](https://github.com/amxavier)
 
 ---
